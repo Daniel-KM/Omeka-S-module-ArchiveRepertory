@@ -129,15 +129,12 @@ class Module extends AbstractModule
     public function getConfigForm(PhpRenderer $renderer)
     {
         $form = new ConfigArchiveRepertoryForm($this->getServiceLocator());
-
-        $view = $this->getServiceLocator()->get('viewrenderer');
-        echo $view->partial(
-            'plugins/archive-repertory-config-form.php',
-                            [
-                             'allow_unicode' => $this->_checkUnicodeInstallation(),
-                             'local_storage' => $this->_getLocalStoragePath(),
-                             'form' => $form
-                            ]);
+        return $renderer->render( 'plugins/archive-repertory-config-form',
+                          [
+                           'allow_unicode' => $this->_checkUnicodeInstallation(),
+                           'local_storage' => $this->_getLocalStoragePath(),
+                           'form' => $form
+                          ]);
     }
 
     /**
