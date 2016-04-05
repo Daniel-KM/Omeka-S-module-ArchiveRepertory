@@ -120,7 +120,7 @@ class Module extends AbstractModule
      */
     public function uninstall(ServiceLocatorInterface $serviceLocator)
     {
-        $this->_uninstallOptions($serviceLocatory);
+        $this->_uninstallOptions($serviceLocator);
     }
 
     /**
@@ -128,11 +128,11 @@ class Module extends AbstractModule
      */
     public function getConfigForm(PhpRenderer $renderer)
     {
-        $form = new ConfigArchiveRepertoryForm($this->getServiceLocator());
+        $form = new ConfigArchiveRepertoryForm($this->getServiceLocator(),
+                                               $this->_getLocalStoragePath(),
+                                               $this->_checkUnicodeInstallation());
         return $renderer->render( 'plugins/archive-repertory-config-form',
                           [
-                           'allow_unicode' => $this->_checkUnicodeInstallation(),
-                           'local_storage' => $this->_getLocalStoragePath(),
                            'form' => $form
                           ]);
     }
@@ -144,7 +144,8 @@ class Module extends AbstractModule
      */
     public function handleConfigForm(AbstractController $controller)
     {
-        $post = $args['post'];
+        $post =$controller->getRequest()->getPost();
+        xdebug_break();
         foreach ($this->_options as $optionKey => $optionValue) {
             if (isset($post[$optionKey])) {
                 $this->setOption($this->getServiceLocator(),$optionKey, $post[$optionKey]);
@@ -153,8 +154,8 @@ class Module extends AbstractModule
 
         // Unlike items, collections are few and stable, so they are kept as an
         // option.
-        $this->_setCollectionFolderNames($this->getServiceLocator());
-        $this->_createCollectionFolders($this->getServiceLocator());
+//        $this->_setCollectionFolderNames($this->getServiceLocator());
+        //      $this->_createCollectionFolders($this->getServiceLocator());
     }
 
     /**
@@ -547,7 +548,7 @@ class Module extends AbstractModule
     protected function _createCollectionFolders($serviceLocator)
     {
         if ($this->getOption($serviceLocator,'archive_repertory_collection_convert') != 'None') {
-            $collections = get_records('Collection', array(), 0);
+            $collections = get_records('Collection', [], 0);
             $collectionNames = unserialize(get_option('archive_repertory_collection_names'));
             set_loop_records('collections', $collections);
             foreach (loop('collections') as $collection) {
@@ -1083,7 +1084,7 @@ class Module extends AbstractModule
      */
     protected function _checkUnicodeInstallation()
     {
-        $result = array();
+        $result = [];
 
         // First character check.
         $filename = 'éfilé.jpg';

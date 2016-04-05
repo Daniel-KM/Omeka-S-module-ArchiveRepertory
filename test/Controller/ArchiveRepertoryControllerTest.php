@@ -4,6 +4,7 @@ namespace OmekaTest\Controller;
 
 use Omeka\Test\AbstractHttpControllerTestCase;
 
+
 class ArchiveRepertoryAdminControllerTest extends AbstractHttpControllerTestCase
 {
   protected $site_test = true;
@@ -30,15 +31,38 @@ class ArchiveRepertoryAdminControllerTest extends AbstractHttpControllerTestCase
 
   public function testTextAreaShouldBeDisplayOnConfigure()
   {
-    $this->dispatch('/admin/module/configure?id=ArchiveDirectory');
+    $this->dispatch('/admin/module/configure?id=ArchiveRepertory');
 
-    $this->assertXPathQuery('//div//select[@id="resource-class-select"]//option[@value="id"]');
+    $this->assertXPathQuery('//select[@id="archive_repertory_collection_folder"]');
   }
 
-  /** @test */
-  public function postCssShouldBeSaved() {
-    $this->postDispatch('/admin/module/configure?id=ArchiveDirectory', ['css' => "h1{display:none;}"]);
-    $this->assertEquals("h1 {\ndisplay:none\n}",$this->getApplicatinServiceLocator()->get('Omeka\Settings')->get('css_editor_css'));
+  public function datas() {
+      return [
+              ['archive_repertory_collection_convert', 'pre'],
+              ['archive_repertory_collection_prefix', 'pre'],
+              ['archive_repertory_collection_folder', 'pre'],
+              ['archive_repertory_item_convert', 'false'],
+              ['archive_repertory_item_prefix', 'prefix'],
+              ['archive_repertory_item_folder', 'foldername'],
+              ['archive_repertory_file_keep_original_name' ,true],
+              ['archive_repertory_file_convert', 'Full'],
+              ['archive_repertory_file_base_original_name' , false],
+              ['archive_repertory_derivative_folders' , 'derive'],
+              ['archive_repertory_move_process', 'omeka'],
+              ['archive_repertory_download_max_free_download' , 19],
+              ['archive_repertory_legal_text' , 'I disagree with terms of use.']
+      ];
+  }
+
+    /**
+   * @test
+   * @dataProvider datas
+   */
+  public function postConfigurationShouldBeSaved($name,$value) {
+
+    $this->postDispatch('/admin/module/configure?id=ArchiveRepertory', [$name => $value]);
+    $this->assertEquals($value,$this->getApplicationServiceLocator()->get('Omeka\Settings')->get($name));
+
   }
 
 }
