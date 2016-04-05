@@ -5,26 +5,28 @@ use Omeka\Form\AbstractForm;
 use Omeka\Form\Element\ResourceSelect;
 use Omeka\Form\Element\Ckeditor;
 use Zend\Form\Element;
+use Zend\ServiceManager\ServiceLocatorInterface;
 class ConfigArchiveRepertoryForm extends AbstractForm {
     protected $local_storage='';
     protected $allow_unicode=false;
 
-    public function setLocalStorage($local_storage) {
-        $this->local_storage=$local_storage;
-    }
 
-    public function setAllowUnicode($allow_unicode) {
+    public function __construct(ServiceLocatorInterface $serviceLocator,
+                                $local_storage,$allow_unicode,
+                                $name = null, $options = []) {
+        $this->local_storage=$local_storage;
         $this->allow_unicode=$allow_unicode;
+        parent::__construct($serviceLocator,$name,$options);
     }
 
     public function buildForm() {
         $this->setAttribute('id', 'config-form');
         $name=$this->translate('How do you want to name your item sets folder, if any?');
+
         $this->add($this->addResourceSelect('archive_repertory_collection_folder',$name,$this->getRepertoryCollectionFolderInfo()));
 
         $this->add([
                     'name' => 'archive_repertory_collection_prefix',
-
                     'type' => 'Text',
                     'options' => [
                                   'label' => $this->translate('Prefix for Item sets.'),
@@ -32,6 +34,7 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
                     ],
                     'attributes' => [
                                      'id' => 'title',
+                                     'value'=> $this->getSetting('archive_repertory_collection_prefix')
                     ],
                     ]);
 
@@ -50,14 +53,24 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
                     ],
                     'attributes' => [
                                      'id' => 'archive_repertory_item_prefix',
+                                     'value'=> $this->getSetting('archive_repertory_item_prefix')
                     ],
                     ]);
 
         $this->add($this->getRadioForConvertion('archive_repertory_item_convert',$this->translate('Convert item names')));
         $this->add($this->addResourceSelect('archive_repertory_item_folder',$name,$this->getInfoForItemFolder()));
-        $checkbox = new Element\CheckBox('archive_repertory_file_keep_original_name');
-        $checkbox->setLabel($this->translate('Keep original filenames'));
-        $this->add($checkbox);
+
+        $this->add([
+                    'name' => 'archive_repertory_file_keep_original_name',
+                    'type' =>'CheckBox',
+                    'options' => [
+                                  'label' =>$this->translate('Keep original filenames'),
+                                  'info' => $this->translate('If checked, Omeka will keep original filenames of uploaded files and will not hash it.')
+                    ],
+                    'attributes'=> [
+                                    'value'=> $this->getSetting('archive_repertory_file_keep_original_name')
+                    ]
+                    ]);
 
         $this->add($this->getRadioForConvertion('archive_repertory_file_convert', $this->translate('Convert file names')));
         $this->add([
@@ -66,7 +79,11 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
                     'options' => [
                                   'label' =>$this->translate('Keep only base of original filenames'),
                                   'info' => $this->translate('If checked, Omeka will keep original filenames of uploaded files and will not hash it.')
+                    ],
+                    'attributes'=> [
+                                    'value'=> $this->getSetting('archive_repertory_file_base_original_name')
                     ]
+
                     ]);
 
 
@@ -79,6 +96,7 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
                     ],
                     'attributes' => [
                                      'id' => 'archive_repertory_derivative_folders',
+                                     'value'=> $this->getSetting('archive_repertory_derivative_folders')
                     ],
                     ]);
 
@@ -95,6 +113,7 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
                     ],
                     'attributes' => [
                                      'id' => 'archive_repertory_download_max_free_download',
+                                     'value'=> $this->getSetting('archive_repertory_download_max_free_download')
 
                     ],
                     ]);
@@ -110,16 +129,20 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
                     ],
                     'attributes' => [
                                      'id' => 'archive_repertory_legal_text',
-                                  'rows'=> 5,
-                                  'cols'=> 60,
-                                  'class'=> 'media-html'
-
-
+                                     'value'=> $this->getSetting('archive_repertory_legal_text'),
+                                     'rows'=> 5,
+                                     'cols'=> 60,
+                                     'class'=> 'media-html'
                     ],
                     ]);
 
         $this->add($this->getRadioForProcess());
 
+    }
+
+
+    protected function getSetting($name) {
+        return $this->getServiceLocator()->get('Omeka\Settings')->get($name);
     }
 
 
@@ -139,6 +162,7 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
                                  'internal' => $this->translate('Omeka internal'),
                                  'direct'=> $this->translate('Php directly')
                                  ]);
+        $radio->setValue($this->getSetting('archive_repertory_move_process'));
         return $radio;
     }
 
@@ -148,17 +172,18 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
         $radio = new Element\Radio($name);
         $radio->setLabel($label);
         $radio->setOptions(['info' => $info]);
+        $radio->setValue($this->getSetting($name));
+
+        $not_recommended=(isset($this->allow_unicode['ascii']) ? ' ' . $this->translate('(not recommended because your server is not fully compatible with Unicode)') : '');
+
+        $recommended= (isset($allow_unicode['cli']) || isset($allow_unicode['fs'])) ? ' ' . $this->translate('(recommended because your server is not fully compatible with Unicode)') : '';
+//
         $radio->setValueOptions([
-                                 'Keep name' => $this->translate('Keep name as it'),
-//                                 . (isset($allow_unicode['ascii'])
-                                 //.                                  ? ' ' . $this->translate('(not recommended because your server is not fully compatible with Unicode)')
-//                                    : ''),
+                                 'Keep name' => $this->translate('Keep name as it').$not_recommended,
                                  'Spaces' => $this->translate('Convert spaces to underscores'),
                                  'First letter' => $this->translate('Convert first letter only'),
                                  'First and spaces' => $this->translate('Convert first letter and spaces'),
-                                 'Full' => $this->translate('Full conversion to Ascii')
-//                                 . ((isset($allow_unicode['cli']) || isset($allow_unicode['fs']))
-                                 //                                  ? ' (' . $this->translate('recommended because your server is not fully compatible with Unicode') . ')')
+                                 'Full' => $this->translate('Full conversion to Ascii.').$recommended
                                  ] );
 
         return $radio;
@@ -170,12 +195,15 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
         $serviceLocator = $this->getServiceLocator();
         $translator = $this->getTranslator();
         $classSelect = new ResourceSelect($serviceLocator);
+
         $classSelect
             ->setName($name)
             ->setAttribute('id', $name)
+            ->setValue($this->getServiceLocator()->get('Omeka\Settings')->get($name))
             ->setLabel($label)
             ->setEmptyOption($translator->translate('Don\'t add folder'))
             ->setOption('info', $info)
+            ->setValue($this->getSetting($name))
             ->setResourceValueOptions(
                                       'resource_classes',
                                       [
@@ -185,7 +213,7 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
                                                   $resourceClass->vocabulary()->label(),
                                                   $resourceClass->label()
                                           ];
-                }
+                                      }
             );
         $options=$classSelect->getValueOptions();
         $options['id']=$translator->translate('Internal item id');
@@ -205,20 +233,21 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
 
 
     protected function getInfoForItemFolder () {
-       $info=$this->translate('If you choose to add a folder, Omeka will add subfolders for each item in "files" folders, for example "files/original/unique_identifier/');
+        $info=$this->translate('If you choose to add a folder, Omeka will add subfolders for each item in "files" folders, for example "files/original/unique_identifier/');
         $info .= $this->translate('New files will be stored inside them. Old files will be moved when item will be updated.'). '<br />';;
 
         $info .= $this->translate("Note that if you choose a non unique name, files will be mixed in the same folder, with higher risk of name collision.");
         $info .= ' ' . $this->translate('So recommended ids are a specifc metadata, "Dublin Core Identifier", "Internal item id" and eventually "Dublin Core Title".');
         $info .= $this->translate('If this identifier does not exists, the Omeka internal item id will be used.');
         return $info;
-   }
+    }
 
 
     protected function getDerivativeFolderInfo()  {
+        xdebug_break();
         $info = $this->translate('By default, Omeka support three derivative folders: "fullsize", "thumbnails" and "square_thumbnails".');
         $info .= ' ' . $this->translate('You can add other ones if needed (comma-separated values, like "special_thumbnails, circles").');
-        $info .= ' ' . $this->translate('Folder names should be relative to the files dir "%s".', $this->local_storage);
+        $info .= ' ' . $this->translate('Folder names should be relative to the files dir ').'"'.$this->local_storage.'"';
         $info .= ' ' . $this->translate('If a plugin does not use a standard derivative extension (for example ".jpg" for images), you should specified it just after the folder name, separated with a pipe "|", for example "zoom_tiles|_zdata, circles".');
         $info .=' ' . $this->translate('When this option is used, you should not change collection or item identifier and, at the same time, use a feature of the plugin that create derivative files.');
         $info .=' ' . $this->translate('In that case, divide your process and change collection or identifier, save item, then use your plugin.');
