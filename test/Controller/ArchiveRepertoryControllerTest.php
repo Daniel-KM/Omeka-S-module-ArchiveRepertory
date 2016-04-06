@@ -2,6 +2,8 @@
 
 namespace OmekaTest\Controller;
 
+use Omeka\Entity\Item;
+use Omeka\Entity\Media;
 use Omeka\Test\AbstractHttpControllerTestCase;
 
 
@@ -9,15 +11,17 @@ class ArchiveRepertoryAdminControllerTest extends AbstractHttpControllerTestCase
 {
   protected $site_test = true;
   protected $traceError = true;
+  protected $item;
   public function setUp() {
 
     $this->connectAdminUser();
     $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
     $module = $manager->getModule('ArchiveRepertory');
     $manager->install($module);
-
+    $this->setDefaultSettings();
     parent::setUp();
     $this->connectAdminUser();
+
   }
 
   public function tearDown() {
@@ -65,59 +69,26 @@ class ArchiveRepertoryAdminControllerTest extends AbstractHttpControllerTestCase
 
   }
 
-}
+  protected function setDefaultSettings() {
+    $this->item = new Item;
+    $media = new Media;
+    $url ='/test/_files/image_test.png';
+    $fileUrl = dirname(dirname(__FILE__)).$url;
+    $media->setFilename($url);
+    $media->setItem($this->item);
+    foreach ($this->datas() as $data) {
+          $this->setSettings($data[0],$data[1]);
+      }
+
+    $this->persistAndSave($this->item);
+
+   }
 
 
-class ArchiveRepertorySiteControllerTest  extends AbstractHttpControllerTestCase{
-  public function setUp() {
-
-    $this->connectAdminUser();
-    $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
-    $module = $manager->getModule('ArchiveRepertory');
-    $manager->install($module);
-    $this->site_test=$this->addSite('test');
-    parent::setUp();
-    $this->connectAdminUser();
-  }
-
-  public function tearDown() {
-    $this->connectAdminUser();
-    $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
-    $module = $manager->getModule('ArchiveRepertory');
-    $manager->uninstall($module);
-    $this->cleanTable('site');
-  }
-  /** @test */
-  public function displayPublicPageShouldLoadCss() {
-    $this->setSettings('css_editor_css','h1 {display:none}');
-    $this->dispatch('/s/test');
-    $this->assertXPathQuery('//style[@type="text/css"][@media="screen"]');
-    $this->assertContains('h1 {display:none}',$this->getResponse()->getContent());
-  }
-
-
-
-  /** @test */
-  public function displayPublicSitePageShouldLoadSpecificCss() {
-    $this->setSettings('css_editor_css','h1 {display:none}');
-    $this->getSiteSettings()->set('css_editor_css', 'h2 { color:black;}');
-    $this->dispatch('/s/test');
-    $this->assertXPathQuery('//style[@type="text/css"][@media="screen"]');
-    $this->assertContains('h2 { color:black;}',$this->getResponse()->getContent());
-  }
-
-  protected function getSiteSettings() {
-    $settings=$this->getApplicationServiceLocator()->get('Omeka\SiteSettings');
-    $settings->setSite($this->getApplicationServiceLocator()->get('Omeka\EntityManager')->find('Omeka\Entity\Site',$this->site_test->getId()));
-    return $settings;
-
-  }
-
-  /** @test */
-  public function postCssShouldBeSavedForASite() {
-
-    $this->postDispatch('/admin/module/configure?id=ArchiveRepertory', ['css' => "h1{display:inline;}", 'site' =>$this->site_test->getId()]);
-    $this->assertEquals("h1 {\ndisplay:inline\n}",$this->getSiteSettings()->get('css_editor_css'));
+   /** @test */
+   public function postItemShouldMoveFile() {
+       $this->postDispatch('/admin/item/4/edit', ['dcterms:title[0][@value]' => "My item title"]);
+       $this->assertEquals($this->getApplicationServiceLocator()->get('Omeka\EntityManager')->getRepository('Omeka\Entity\Media')->findBy(['item_id' => $this->item->getId()]), []);
   }
 
 

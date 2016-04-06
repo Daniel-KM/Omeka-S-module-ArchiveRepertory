@@ -7,6 +7,10 @@ use Zend\Mvc\Controller\AbstractController;
 use ArchiveRepertory\Form\ConfigArchiveRepertoryForm;
 use Zend\View\Model\ViewModel;
 use Omeka\Service\FileManagerFactory;
+
+use Zend\EventManager\SharedEventManagerInterface;
+use Omeka\Event\Event;
+
 /**
  * Archive Repertory
  *
@@ -29,27 +33,27 @@ class Module extends AbstractModule
     /**
      * @var array This plugin's options.
      */
-  protected $_options = [
-                         // Collections options.
-                         'archive_repertory_collection_folder' => 'id',
-                         'archive_repertory_collection_prefix' => '',
-                         'archive_repertory_collection_names' => 'a:0:{}',
-                         'archive_repertory_collection_convert' => 'Full',
-                         // Items options.
-                         'archive_repertory_item_folder' => 'id',
-                         'archive_repertory_item_prefix' => '',
-                         'archive_repertory_item_convert' => 'Full',
-                         // Files options.
-                         'archive_repertory_file_keep_original_name' => true,
-                         'archive_repertory_file_convert' => 'Full',
-                         'archive_repertory_file_base_original_name' => false,
-                         // Other derivative folders.
-                         'archive_repertory_derivative_folders' => '',
-                         'archive_repertory_move_process' => 'internal',
-                         // Max download without captcha (default to 30 MB).
-                         'archive_repertory_download_max_free_download' => 30000000,
-                         'archive_repertory_legal_text' => 'I agree with terms of use.'
-  ];
+    protected $_options = [
+                           // Collections options.
+                           'archive_repertory_collection_folder' => 'id',
+                           'archive_repertory_collection_prefix' => '',
+                           'archive_repertory_collection_names' => 'a:0:{}',
+                           'archive_repertory_collection_convert' => 'Full',
+                           // Items options.
+                           'archive_repertory_item_folder' => 'id',
+                           'archive_repertory_item_prefix' => '',
+                           'archive_repertory_item_convert' => 'Full',
+                           // Files options.
+                           'archive_repertory_file_keep_original_name' => true,
+                           'archive_repertory_file_convert' => 'Full',
+                           'archive_repertory_file_base_original_name' => false,
+                           // Other derivative folders.
+                           'archive_repertory_derivative_folders' => '',
+                           'archive_repertory_move_process' => 'internal',
+                           // Max download without captcha (default to 30 MB).
+                           'archive_repertory_download_max_free_download' => 30000000,
+                           'archive_repertory_legal_text' => 'I agree with terms of use.'
+    ];
 
     /**
      * Default folder paths for each default type of files/derivatives.
@@ -58,10 +62,10 @@ class Module extends AbstractModule
      * @var array
      */
     static private $_pathsByType = array(
-        'original' => 'original',
-        'fullsize' => 'fullsize',
-        'thumbnail' => 'thumbnails',
-        'square_thumbnail' => 'square_thumbnails',
+                                         'original' => 'original',
+                                         'fullsize' => 'fullsize',
+                                         'thumbnail' => 'thumbnails',
+                                         'square_thumbnail' => 'square_thumbnails',
     );
 
     /**
@@ -89,17 +93,17 @@ class Module extends AbstractModule
 
 
     protected function _installOptions($serviceLocator) {
-      foreach ($this->_options as $key => $value) {
-        $serviceLocator->get('Omeka\Settings')->set($key, $value);
-      }
+        foreach ($this->_options as $key => $value) {
+            $serviceLocator->get('Omeka\Settings')->set($key, $value);
+        }
     }
 
 
 
     protected function _uninstallOptions($serviceLocator) {
-      foreach ($this->_options as $key => $value) {
-          $serviceLocator->get('Omeka\Settings')->delete($key);
-      }
+        foreach ($this->_options as $key => $value) {
+            $serviceLocator->get('Omeka\Settings')->delete($key);
+        }
     }
 
 
@@ -132,9 +136,9 @@ class Module extends AbstractModule
                                                $this->_getLocalStoragePath(),
                                                $this->_checkUnicodeInstallation());
         return $renderer->render( 'plugins/archive-repertory-config-form',
-                          [
-                           'form' => $form
-                          ]);
+                                 [
+                                  'form' => $form
+                                 ]);
     }
 
     /**
@@ -186,51 +190,56 @@ class Module extends AbstractModule
         $this->_setCollectionFolderName($collection);
 
         // Create collection folder if needed.
-        if (get_option('archive_repertory_collection_convert') != 'None') {
-            $collectionNames = unserialize(get_option('archive_repertory_collection_names'));
+        if ($this->getOption('archive_repertory_collection_convert') != 'None') {
+            $collectionNames = unserialize($this->getOption('archive_repertory_collection_names'));
             $result = $this->_createArchiveFolders($collectionNames[$collection->id]);
         }
     }
 
+
     /**
      * Manages folders for attached files of items.
      */
-    public function hookAfterSaveItem($args)
+    public function afterSaveItem(\Zend\EventManager\Event $event)
     {
-        $item = $args['record'];
+        $serviceLocator = $this->getServiceLocator();
+        if ($file = $event->getParam('request')->getFileData() == [])
+            return '';
+        $item = $this->entityApi()->find('Omeka\Entity\Item',$event->getParam('request')->getId());
+
 
         // Check if file is at the right place, with collection and item folders.
         $archiveFolder = $this->_getArchiveFolderName($item);
 
         // Check if files are already attached and if they are at the right place.
-        $files = $item->getFiles();
+        $files = $item->getMedia();
         foreach ($files as $file) {
             // Move file only if it is not in the right place.
             // We don't use original filename here, because this is managed in
             // hookAfterSaveFile() when the file is inserted. Here, the filename
             // is already sanitized.
-            $newFilename = $archiveFolder . basename_special($file->filename);
-            if ($file->filename != $newFilename) {
+            $newFilename = $archiveFolder . basename_special($file->getFilename());
+            if ($file->getFilename() != $newFilename) {
                 // Check if the original file exists, else this is an undetected
                 // error during the convert process.
                 $path = $this->_getFullArchivePath('original');
-                if (!file_exists($path . DIRECTORY_SEPARATOR . $file->filename)) {
-                    $msg = $this->translate('File "%s" [%s] is not present in the original directory.', $file->filename, $file->original_filename);
+                if (!file_exists($path . DIRECTORY_SEPARATOR . $file->getFilename())) {
+                    $msg = $this->translate('This file is not present in the original directory :'.$path.$file->getFilename());//, $file->original_filename);
                     $msg .= ' ' .$this->translate('There was an undetected error before storage, probably during the convert process.');
-                    throw new Omeka_Storage_Exception('[ArchiveRepertory] ' . $msg);
+                    throw new \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . $msg);
                 }
 
                 $result = $this->_moveFilesInArchiveSubfolders(
-                    $file->filename,
-                    $newFilename,
-                    $this->_getDerivativeExtension($file));
+                                                               $file->getFilename(),
+                                                               $newFilename,
+                                                               $this->_getDerivativeExtension($file));
                 if (!$result) {
                     $msg = $this->translate('Cannot move files inside archive directory.');
-                    throw new Omeka_Storage_Exception('[ArchiveRepertory] ' . $msg);
+                    throw new  \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . $msg);
                 }
 
                 // Update file in Omeka database immediately for each file.
-                $file->filename = $newFilename;
+                $file->setFilename($newFilename);
                 // As it's not a file hook, the file is not automatically saved.
                 $file->save();
             }
@@ -245,13 +254,18 @@ class Module extends AbstractModule
      *
      * If the name is a duplicate one, a suffix is added.
      */
-    public function hookAfterSaveFile($args)
+    public function afterSaveFile(Event $event)
     {
-        // Avoid multiple renames of a file.
-        static $processedFiles = array();
 
-        $post = $args['post'];
-        $file = $args['record'];
+        $serviceLocator = $this->getServiceLocator();
+        if ($file = $event->getParam('request')->getFileData() == [])
+            return '';
+
+        // Avoid multiple renames of a file.
+        static $processedFiles = [];
+
+        $post = $this->getServiceLocator()->getRequest()->getPost();
+
 
         // Files can't be moved during insert, because has_derivative is set
         // just after it. Of course, this can be bypassed, but we don't.
@@ -282,16 +296,16 @@ class Module extends AbstractModule
             $file_original_filename = $file->original_filename;
 
             // Keep only basename of original filename in metadata if wanted.
-            if ($this->getOption($serviceLocator,'archive_repertory_file_base_original_name')) {
+            if ($this->getOption('archive_repertory_file_base_original_name',$serviceLocator)) {
                 $file->original_filename = basename_special($file->original_filename);
             }
 
             // Rename file only if wanted and needed.
-            if (get_option('archive_repertory_file_keep_original_name')) {
+            if ($this->getOption('archive_repertory_file_keep_original_name')) {
                 // Get the new filename.
                 $newFilename = basename_special($file->original_filename);
                 $newFilename = $this->_sanitizeName($newFilename);
-                $newFilename = $this->_convertFilenameTo($newFilename, get_option('archive_repertory_file_convert'));
+                $newFilename = $this->_convertFilenameTo($newFilename, $this->getOption('archive_repertory_file_convert'));
 
                 // Move file only if the name is a new one.
                 $item = $file->getItem();
@@ -300,9 +314,9 @@ class Module extends AbstractModule
                 $newFilename = $this->_checkExistingFile($newFilename);
                 if ($file->filename != $newFilename) {
                     $result = $this->_moveFilesInArchiveSubfolders(
-                        $file->filename,
-                        $newFilename,
-                        $this->_getDerivativeExtension($file));
+                                                                   $file->filename,
+                                                                   $newFilename,
+                                                                   $this->_getDerivativeExtension($file));
                     if (!$result) {
                         $msg = $this->translate('Cannot move file inside archive directory.');
                         throw new Omeka_Storage_Exception('[ArchiveRepertory] ' . $msg);
@@ -319,9 +333,9 @@ class Module extends AbstractModule
             // will be call one more time, but filenames will be already updated
             // so there is no risk of infinite loop.
             if ($file_filename != $file->filename
-                    || $file_original_filename != $file->original_filename
-                ) {
-                $file->save();
+                || $file_original_filename != $file->original_filename
+            ) {
+                $this->entityApi()->persist($file);
             }
         }
     }
@@ -331,6 +345,7 @@ class Module extends AbstractModule
      */
     public function hookAfterDeleteFile($args)
     {
+
         $file = $args['record'];
         $item = $file->getItem();
         $archiveFolder = $this->_getArchiveFolderName($item);
@@ -353,32 +368,32 @@ class Module extends AbstractModule
         $recordType = get_class($record);
         switch ($recordType) {
             case 'Collection':
-                $folder = is_null($folder) ? get_option('archive_repertory_collection_folder') : $folder;
-                $prefix = get_option('archive_repertory_collection_prefix');
+                $folder = is_null($folder) ? $this->getOption('archive_repertory_collection_folder') : $folder;
+                $prefix = $this->getOption('archive_repertory_collection_prefix');
                 break;
             case 'Item':
-                $folder = is_null($folder) ? get_option('archive_repertory_item_folder') : $folder;
-                $prefix = get_option('archive_repertory_item_prefix');
+                $folder = is_null($folder) ? $this->getOption('archive_repertory_item_folder') : $folder;
+                $prefix = $this->getOption('archive_repertory_item_prefix');
                 break;
             default:
-                return array();
+                return [];
         }
 
         switch ($folder) {
             case '':
             case 'None':
-                return array();
+                return [];
             case 'id':
-                return array((string) $record->id);
+                return [(string) $record->id];
             default:
                 // Use a direct query in order to improve speed.
                 $db = $this->_db;
                 $select = $db->select()
-                    ->from($db->ElementText, array('text'))
-                    ->where('element_id = ?', $folder)
-                    ->where('record_type = ?', $recordType)
-                    ->where('record_id = ?', $record->id)
-                    ->order('id');
+                             ->from($db->ElementText, array('text'))
+                             ->where('element_id = ?', $folder)
+                             ->where('record_type = ?', $recordType)
+                             ->where('record_id = ?', $record->id)
+                             ->order('id');
                 if ($prefix) {
                     $select->where('text LIKE ?', $prefix . '%');
                 }
@@ -402,6 +417,7 @@ class Module extends AbstractModule
      */
     protected function _getArchiveFolderName($item)
     {
+
         $collectionFolder = $this->_getCollectionFolderName($item);
         $itemFolder = $this->_getItemFolderName($item);
         return $collectionFolder . $itemFolder;
@@ -419,8 +435,8 @@ class Module extends AbstractModule
         $name = '';
 
         // Collection folders are created when the module is configured.
-        if (get_option('archive_repertory_collection_convert') && !empty($item->collection_id)) {
-            $collectionNames = unserialize(get_option('archive_repertory_collection_names'));
+        if ($this->getOption('archive_repertory_collection_convert') && !empty($item->collection_id)) {
+            $collectionNames = unserialize($this->getOption('archive_repertory_collection_names'));
             if (isset($collectionNames[$item->collection_id])) {
                 $name = $collectionNames[$item->collection_id];
                 if ($name != '') {
@@ -441,7 +457,7 @@ class Module extends AbstractModule
      */
     protected function _getItemFolderName($item)
     {
-        $folder = get_option('archive_repertory_item_folder');
+        $folder = $this->getOption('archive_repertory_item_folder');
 
         switch ($folder) {
             case 'id':
@@ -451,13 +467,13 @@ class Module extends AbstractModule
                 return '';
             default:
                 $name = $this->_getRecordFolderNameFromMetadata(
-                    $item,
-                    $folder,
-                    get_option('archive_repertory_item_prefix')
+                                                                $item,
+                                                                $folder,
+                                                                $this->getOption('archive_repertory_item_prefix')
                 );
         }
 
-        return $this->_convertFilenameTo($name, get_option('archive_repertory_item_convert')) . DIRECTORY_SEPARATOR;
+        return $this->_convertFilenameTo($name, $this->getOption('archive_repertory_item_convert')) . DIRECTORY_SEPARATOR;
     }
 
     /**
@@ -474,7 +490,9 @@ class Module extends AbstractModule
         }
     }
 
-    protected function getOption($serviceLocator,$key) {
+    protected function getOption($key,$serviceLocator=null) {
+        if (!$serviceLocator)
+            $serviceLocator = $this->getServiceLocator();
         return $serviceLocator->get('Omeka\Settings')->get($key);
     }
 
@@ -501,9 +519,9 @@ class Module extends AbstractModule
                 break;
             default:
                 $collectionName = $this->_getRecordFolderNameFromMetadata(
-                    $collection,
-                    $folder,
-                    $this->getOption($serviceLocator,'archive_repertory_collection_prefix')
+                                                                          $collection,
+                                                                          $folder,
+                                                                          $this->getOption($serviceLocator,'archive_repertory_collection_prefix')
                 );
                 $collectionName = $this->_sanitizeName($collectionName);
                 break;
@@ -511,8 +529,8 @@ class Module extends AbstractModule
 
         $collectionNames = unserialize($this->getOption($serviceLocator,'archive_repertory_collection_names'));
         $collectionNames[$collection->getId()] = $this->_convertFilenameTo(
-                                                                      $collectionName,
-                                                                      $this->getOption($serviceLocator,'archive_repertory_collection_convert'));
+                                                                           $collectionName,
+                                                                           $this->getOption($serviceLocator,'archive_repertory_collection_convert'));
 
         $this->setOption($serviceLocator,'archive_repertory_collection_names', serialize($collectionNames));
     }
@@ -531,12 +549,14 @@ class Module extends AbstractModule
      */
     protected function _getRecordFolderNameFromMetadata($record, $elementId, $prefix)
     {
+
+
         $identifier = $this->_getRecordIdentifiers($record, null, true);
         if ($identifier && $prefix) {
             $identifier = trim(substr($identifier, strlen($prefix)));
         }
         return empty($identifier)
-            ? (string) $record->id
+            ? (string) $record->getId()
             : $this->_sanitizeName($identifier);
     }
 
@@ -549,7 +569,7 @@ class Module extends AbstractModule
     {
         if ($this->getOption($serviceLocator,'archive_repertory_collection_convert') != 'None') {
             $collections = get_records('Collection', [], 0);
-            $collectionNames = unserialize(get_option('archive_repertory_collection_names'));
+            $collectionNames = unserialize($this->getOption('archive_repertory_collection_names'));
             set_loop_records('collections', $collections);
             foreach (loop('collections') as $collection) {
                 $result = $this->_createArchiveFolders($collectionNames[$collection->id]);
@@ -606,12 +626,12 @@ class Module extends AbstractModule
     {
         $path = realpath($path);
         if (file_exists($path)
-                && is_dir($path)
-                && is_readable($path)
-                && ((count(@scandir($path)) == 2) // Only '.' and '..'.
-                    || $evenNonEmpty)
-                && is_writable($path)
-            ) {
+            && is_dir($path)
+            && is_readable($path)
+            && ((count(@scandir($path)) == 2) // Only '.' and '..'.
+                || $evenNonEmpty)
+            && is_writable($path)
+        ) {
             $this->_rrmdir($path);
         }
     }
@@ -644,7 +664,7 @@ class Module extends AbstractModule
     protected function _getLocalStoragePath()
     {
         $filemanager = (new FileManagerFactory())->createService($this->getServiceLocator());
-        return '/files';// $filemanager->getStore();
+        return './files';// $filemanager->getStore();
         $adapterOptions = Zend_Registry::get('storage')->getAdapter()->getOptions();
         return $adapterOptions['localDir'];
     }
@@ -663,8 +683,8 @@ class Module extends AbstractModule
     {
         $archivePaths = $this->_getFullArchivePaths();
         return isset($archivePaths[$namePath])
-             ? $archivePaths[$namePath]
-             : '';
+            ? $archivePaths[$namePath]
+            : '';
     }
 
     /**
@@ -675,7 +695,7 @@ class Module extends AbstractModule
      */
     protected function _getFullArchivePaths()
     {
-        static $archivePaths = array();
+        static $archivePaths = [];
 
         if (empty($archivePaths)) {
             $storagePath = $this->_getLocalStoragePath();
@@ -683,7 +703,7 @@ class Module extends AbstractModule
                 $archivePaths[$name] = $storagePath . DIRECTORY_SEPARATOR . $path;
             }
 
-            $derivatives = explode(',', get_option('archive_repertory_derivative_folders'));
+            $derivatives = explode(',', $this->getOption('archive_repertory_derivative_folders'));
             foreach ($derivatives as $key => $value) {
                 if (strpos($value, '|') === false) {
                     $name = trim($value);
@@ -746,10 +766,10 @@ class Module extends AbstractModule
     protected function _removeArchiveFolders($archiveFolder)
     {
         if (($archiveFolder != '.')
-                && ($archiveFolder != '..')
-                && ($archiveFolder != DIRECTORY_SEPARATOR)
-                && ($archiveFolder != '')
-            ) {
+            && ($archiveFolder != '..')
+            && ($archiveFolder != DIRECTORY_SEPARATOR)
+            && ($archiveFolder != '')
+        ) {
             foreach ($this->_getFullArchivePaths() as $path) {
                 $folderPath = $path . DIRECTORY_SEPARATOR . $archiveFolder;
                 if (realpath($path) != realpath($folderPath)) {
@@ -879,32 +899,32 @@ class Module extends AbstractModule
         $realSource = $path . DIRECTORY_SEPARATOR . $source;
         if (!file_exists($realSource)) {
             $msg = $this->translate('Error during move of a file from "%s" to "%s" (local dir: "%s"): source does not exist.',
-                $source, $destination, $path);
+                                    $source, $destination, $path);
             throw new Omeka_Storage_Exception('[ArchiveRepertory] ' . $msg);
         }
-
+        $serviceLocator = $this->getServiceLocator();
         $result = null;
         try {
-            switch (get_option('archive_repertory_move_process')) {
+            switch ($this->getOption('archive_repertory_move_process')) {
                 // Move file directly.
                 case 'direct':
                     $realDestination = $path . DIRECTORY_SEPARATOR . $destination;
                     $result = rename($realSource, $realDestination);
                     break;
 
-                // Move the main original file using Omeka API.
+                    // Move the main original file using Omeka API.
                 case 'internal':
                 default:
                     $operation = new Omeka_Storage_Adapter_Filesystem(array(
-                        'localDir' => $path,
-                    ));
+                                                                            'localDir' => $path,
+                                                                            ));
                     $operation->move($source, $destination);
                     $result = true;
                     break;
             }
         } catch (Omeka_Storage_Exception $e) {
-            $msg = $this->translate('Error during move of a file from "%s" to "%s" (local dir: "%s").',
-                $source, $destination, $path);
+            $msg = $serviceLocator->get('MvcTranslator')->translate('Error during move of a file from "%s" to "%s" (local dir: "%s").',
+                                                                    $source, $destination, $path);
             throw new Omeka_Storage_Exception($e->getMessage() . "\n" . '[ArchiveRepertory] ' . $msg);
         }
 
@@ -1034,7 +1054,7 @@ class Module extends AbstractModule
      */
     protected function _substr_unicode($string, $start, $length = null) {
         return join('', array_slice(
-            preg_split("//u", $string, -1, PREG_SPLIT_NO_EMPTY), $start, $length));
+                                    preg_split("//u", $string, -1, PREG_SPLIT_NO_EMPTY), $start, $length));
     }
 
     /**
@@ -1113,7 +1133,7 @@ class Module extends AbstractModule
     }
 
     public function getConfig() {
-      return include __DIR__ . '/config/module.config.php';
+        return include __DIR__ . '/config/module.config.php';
     }
 
     public function translate($string,$options='',$serviceLocator=null) {
@@ -1124,4 +1144,17 @@ class Module extends AbstractModule
         return $serviceLocator->get('MvcTranslator')->translate($string,$options);
     }
 
+
+    public function attachListeners(SharedEventManagerInterface $sharedEventManager) {
+        $sharedEventManager->attach('Omeka\Api\Adapter\ItemAdapter',
+                                    'api.update.post', [ $this, 'afterSaveItem' ]);
+
+    }
+
+
+    protected function entityApi($serviceLocator=null) {
+        if (!$serviceLocator)
+            $serviceLocator=$this->getServiceLocator();
+        return $serviceLocator->get('Omeka\EntityManager');
+    }
 }
