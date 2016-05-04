@@ -3,7 +3,7 @@
 namespace ArchiveRepertory\Service;
 use Omeka\Service;
 
-use Omeka\File\Manager as FileManager;
+use ArchiveRepertory\File\ArchiveManager as FileManager;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 

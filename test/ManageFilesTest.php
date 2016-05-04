@@ -21,10 +21,12 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
         $manager->install($module);
 
         parent::setUp();
+
         $this->module= $this->getApplicationServiceLocator()->get('ModuleManager')->getModule('ArchiveRepertory');
 
         $this->item = new Item;
         $this->persistAndSave($this->item);
+        $this->connectAdminUser();
         $this->_fileUrl = dirname(dirname(__FILE__)).'/test/_files/image_test.png';
     }
 
@@ -36,6 +38,7 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
         $fileManager = $this->getApplicationServiceLocator()->get('Omeka\File\Manager');
 
         $media = new Media;
+        xdebug_break();
         $media->setFilename($this->_fileUrl);
         $media->setItem($this->item);
         $fileManager->setMedia($media);
@@ -91,10 +94,10 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
     }
 
 
-    protected function createValue($id, $title) {
+    protected function createValue($id, $title,$item) {
         $value = new Value;
         $value->setProperty($this->getApplicationServiceLocator()->get('Omeka\EntityManager')->getRepository('Omeka\Entity\Property')->find($id));
-        $value->setResource($this->item);
+        $value->setResource($item);
         $value->setValue($title);
         $value->setType('literal');
         $this->persistAndSave($value);
@@ -102,7 +105,7 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
 
     /** @test */
     public function testStorageBasePathWithSpecificField() {
-        $this->createValue(1,'My title ?');
+        $this->createValue(1,'My title ?',$this->item);
         $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','1');
         $file = new File($this->_fileUrl);
         $file->setSourceName('image_test.png');
@@ -115,8 +118,8 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
 
     /** @test */
     public function testStorageBasePathWithPrefixSpecificField() {
-        $this->createValue(2,'My title ?');
-        $this->createValue(2,'term:another title');
+        $this->createValue(2,'My title ?',$this->item);
+        $this->createValue(2,'term:another title',$this->item);
         $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','2');
         $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_prefix','term:');
         $file = new File($this->_fileUrl);
@@ -129,39 +132,85 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
 
 
     /**
-     * Check insertion of a second file with a duplicate name.
-     *
-     * @internal Omeka allows to have two files with the same name.
+     * @test
      */
-    protected function _testInsertDuplicateFile()
-    {
-        $fileUrl = $this->_fileUrl;
-        $files = insert_files_for_item($this->item, 'Filesystem', array($fileUrl));
+    public function testInsertDuplicateFile()
+     {
+        $item2 = new Item;
+        $files = [0 => ['name'=> 'images',
+                               'type'=> 'image/png',
+                               'tmp_name'=> '/tmp/namae',
+                               'error'=> 0,
+                               'size'=>1]];
+        $this->persistAndSave($item2);
+        $api = $this->getApplicationServiceLocator()->get('Omeka\ApiManager');
+        $item_1 = $api->create('items', [ 'dcterms:title'=>
+                               [
+                                [
+                                 'property_id'=>  '1',
+                                 'type'=> 'literal',
+                                 '@value'=> 'A title']]],$files);
 
-        // Retrieve files from the database to get a fully inserted file, with
-        // all updated metadata.
-        $files = $this->item->getFiles();
-        $this->assertEquals(2, count($files));
-        // Get the second file.
-        $file = $files[1];
+        $response = $api->create('items', [
+            'dcterms:identifier' => [
+                [
+                    'type' => 'literal',
+                    'property_id' => '10',
+                    '@value' => 'item1',
+                ],
+            ],
+            'dcterms:title' => [
+                [
+                    'type' => 'literal',
+                    'property_id' => '1',
+                    '@value' => 'Item 1',
+                ],
+            ],
 
-        // Generic checks.
-        $this->assertThat($file, $this->isInstanceOf('File'));
-        $this->assertTrue($file->exists());
-        $this->assertEquals(filesize($fileUrl), $file->size);
-        $this->assertEquals(md5_file($fileUrl), $file->authentication);
-        $this->assertEquals(pathinfo($fileUrl, PATHINFO_BASENAME), $file->original_filename);
+            'o:media' => [
+                [
+                    'o:ingester' => 'url',
+                    'ingest_url' => 'http://youtube.fr/',
+                    'dcterms:identifier' => [
+                        [
+                            'type' => 'literal',
+                            'property_id' => 10,
+                            '@value' => 'media1',
+                        ],
+                    ],
+                ],
+            ],
+                                           ],$files);
+        $item_2 = $api->create('items',[
+                                        'o:is_public'=>1,
+                                        'add-item-submit'=> '',
+                                        'dcterms:title'=>
+                                        [
+                                         'property_id'=>  '1',
+                                         'type'=> 'literal',
+                                         '@value'=> 'A title'],
+                                        'o:media'=> ['o:is_public'=>'1',
+                                                     'file_index'=> 0 ,
+                                                     'o:ingester' => 'upload']
+                                        ], $files);
 
-        // Readable filename check.
-        $storageFilepath = $this->item->id
-            . DIRECTORY_SEPARATOR
-            . pathinfo($fileUrl, PATHINFO_FILENAME)
-            . '.1.'
-            . pathinfo($fileUrl, PATHINFO_EXTENSION);
-        $this->assertEquals($storageFilepath, $file->filename);
+        $fileManager = $this->getApplicationServiceLocator()->get('Omeka\File\Manager');
+        $entityManager = $this->getApplicationServiceLocator()->get('Omeka\EntityManager');
 
-        // Readable filepath check.
-        $this->_checkFile($file);
+
+        $this->createValue(2,'My title ?',$this->item);
+        $this->createValue(2,'My title ?',$item2);
+        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','2');
+        $file = new File($this->_fileUrl);
+        $file->setSourceName('image_test.png');
+        $storageFilepath = 'My_title'.DIRECTORY_SEPARATOR.pathinfo($this->_fileUrl, PATHINFO_BASENAME);
+        xdebug_break();
+
+
+        $fileManager->setMedia($response->getContent()->primaryMedia());
+
+        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
+
     }
 
     /**

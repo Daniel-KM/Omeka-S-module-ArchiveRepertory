@@ -1,10 +1,11 @@
 <?php
-namespace Omeka\File;
+namespace ArchiveRepertory\File;
+use Omeka\File\Manager;
+use Omeka\File\File;
 
 use Omeka\File\Store\StoreInterface;
 use Omeka\File\Thumbnailer\ThumbnailerInterface;
 use Omeka\Entity\Media;
-use Omeka\File\Manager;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 class ArchiveManager extends Manager
@@ -64,6 +65,7 @@ class ArchiveManager extends Manager
 
     public function getStoragePath($prefix, $name, $extension = null)
     {
+        xdebug_break();
 
         if ($this->media) {
             $prefix=($prefix ? $prefix.'/' : ''). ($this->_getItemFolderName($this->media->getItem()));

@@ -86,9 +86,13 @@ class ArchiveRepertoryAdminControllerTest extends AbstractHttpControllerTestCase
 
 
    /** @test */
-   public function postItemShouldMoveFile() {
-       $this->postDispatch('/admin/item/4/edit', ['dcterms:title[0][@value]' => "My item title"]);
-       $this->assertEquals($this->getApplicationServiceLocator()->get('Omeka\EntityManager')->getRepository('Omeka\Entity\Media')->findBy(['item_id' => $this->item->getId()]), []);
+  public function postItemShouldMoveFile() {
+      echo $this->item->getId();
+       $this->postDispatch('/admin/item/'.$this->item->getId().'/edit', ['dcterms:title[0][@value]' => "My item title"]);
+       foreach ($this->getApplicationServiceLocator()->get('Omeka\EntityManager')->find('Omeka\Entity\Item',$this->item->getId())->getMedia() as $media) {
+           var_dump($media);
+       }
+
   }
 
 

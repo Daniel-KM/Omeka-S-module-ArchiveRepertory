@@ -22,26 +22,6 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
 
     public function buildForm() {
         $this->setAttribute('id', 'config-form');
-        $name=$this->translate('How do you want to name your item sets folder, if any?');
-
-        $this->add($this->addResourceSelect('archive_repertory_collection_folder',$name,$this->getRepertoryCollectionFolderInfo()));
-
-        $this->add([
-                    'name' => 'archive_repertory_collection_prefix',
-                    'type' => 'Text',
-                    'options' => [
-                                  'label' => $this->translate('Prefix for Item sets.'),
-                                  'info' => $this->translate('Choose a prefix, for example "collection:", "record:" or "doc:", to select the appropriate metadata when they are multiple.').' '. $this->translate('Let empty to use simply the first one.')
-                    ],
-                    'attributes' => [
-                                     'id' => 'title',
-                                     'value'=> $this->getSetting('archive_repertory_collection_prefix')
-                    ],
-                    ]);
-
-
-
-        $this->add($this->getRadioForConvertion('archive_repertory_collection_convert',$this->translate('Convert item sets names')));
 
         $name=$this->translate('How do you want to name your item folder, if any?');
 
@@ -223,14 +203,6 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
         return $classSelect;
     }
 
-    protected function getRepertoryCollectionFolderInfo() {
-        $info = $this->translate('If you choose to add a folder, Omeka will add subfolders for each collection in "files" folders, for example "files/original/collection_identifier/".');
-        $info .= ' ' . $this->translate('New files will be stored inside them. Old files will be moved when collection will be updated.') . '<br />';
-        $info .= $this->translate("Note that if you choose a non unique name, files will be mixed in the same folder, with higher risk of name collision.");
-        $info .= ' ' . $this->translate('So recommended ids are a specific metadata, "Dublin Core:Identifier", "Internal collection id" and eventually "Dublin Core:Title".') . '<br />';
-        $info .= $this->translate('If this identifier does not exists, the Omeka internal collection id will be used.');
-        return $info;
-    }
 
 
     protected function getInfoForItemFolder () {
