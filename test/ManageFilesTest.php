@@ -2,58 +2,131 @@
 namespace OmekaTest;
 use Omeka\Test\AbstractHttpControllerTestCase;
 use Omeka\Entity\Item;
+use Omeka\Entity\Value;
+use Omeka\Entity\Property;
+use Omeka\File\File;
+use Omeka\ArchiveRepertory\Module;
 use Omeka\Entity\Media;
+use Omeka\File\ArchiveManager as ArchiveManager;
 class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
 {
     protected $_fileUrl;
+    protected $module;
+    public function setUp() {
 
-    /**
-     * All tests are managed here to simplify management of the item.
-     */
-/** @test */
-    public function testManageFiles()
-    {
-        $this->_fileUrl = dirname(dirname(__FILE__)).'/test/_files/image_test.png';
+        $this->connectAdminUser();
+        $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
+        $module = $manager->getModule('ArchiveRepertory');
+
+        $manager->install($module);
+
+        parent::setUp();
+        $this->module= $this->getApplicationServiceLocator()->get('ModuleManager')->getModule('ArchiveRepertory');
+
         $this->item = new Item;
-
-        $this->_testInsertFile();
-        $this->_testInsertDuplicateFile();
-        $this->_testChangeIdentifier();
-        $this->_testChangeCollection();
-        $this->_testChangeIdentifierAndCollection();
+        $this->persistAndSave($this->item);
+        $this->_fileUrl = dirname(dirname(__FILE__)).'/test/_files/image_test.png';
     }
 
 
-    protected function _testInsertFile()
-    {
-        $fileUrl = $this->_fileUrl;
-        $this->assertTrue(file_exists($fileUrl));
+
+    public function getFileManager() {
+
+        $fileData= file_get_contents($this->_fileUrl);
+        $fileManager = $this->getApplicationServiceLocator()->get('Omeka\File\Manager');
+
         $media = new Media;
-        $media->setFilename($fileUrl);
+        $media->setFilename($this->_fileUrl);
         $media->setItem($this->item);
-
-//        $this->assertEquals(1, count($files));
-
-        // Retrieve file from the database to get a fully inserted file, with
-        // all updated metadata.
-//        $file = $media->getFile();//$this->item->getMedia();
-
-        // Generic checks.
-
-
-        $this->assertEquals(filesize($fileUrl), $file->size);
-        $this->assertEquals(md5_file($fileUrl), $file->authentication);
-        $this->assertEquals(pathinfo($fileUrl, PATHINFO_BASENAME), $file->original_filename);
-
-        // Readable filename check.
-        $storageFilepath = $this->item->id
-            . DIRECTORY_SEPARATOR
-            . pathinfo($fileUrl, PATHINFO_BASENAME);
-        $this->assertEquals($storageFilepath, $file->filename);
-
-        // Readable filepath check.
-        $this->_checkFile($file);
+        $fileManager->setMedia($media);
+        return $fileManager;
     }
+
+    /** @test **/
+    public function testWithOptionKeepOriginalNameInsertFile()
+    {
+
+        $file = new File($this->_fileUrl);
+        $file->setSourceName('originalname.png');
+
+        $this->assertEquals('originalname.png', $this->getFileManager()->getStorageName($file));
+    }
+
+    /** @test */
+    public function testWithOptionNoKeepOriginalFileName() {
+        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_file_keep_original_name','false');
+        $file = new File($this->_fileUrl);
+//        $file->setSourceName('originalname.png');
+        $this->assertNotEquals('originalname.png', $this->getFileManager()->getStorageName($file));
+
+    }
+
+
+
+    /** @test */
+    public function testStorageBasePathWithItemId() {
+        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','id');
+        $file = new File($this->_fileUrl);
+        $file->setSourceName('image_test.png');
+        $storageFilepath = $this->item->getId()
+            . DIRECTORY_SEPARATOR
+            . pathinfo($this->_fileUrl, PATHINFO_BASENAME);
+        $fileManager=$this->getFileManager();
+        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
+
+    }
+
+
+
+    /** @test */
+    public function testStorageBasePathWithItemNone() {
+
+        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','');
+        $file = new File($this->_fileUrl);
+        $file->setSourceName('image_test.png');
+        $storageFilepath = DIRECTORY_SEPARATOR.pathinfo($this->_fileUrl, PATHINFO_BASENAME);
+        $fileManager=$this->getFileManager();
+        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
+
+    }
+
+
+    protected function createValue($id, $title) {
+        $value = new Value;
+        $value->setProperty($this->getApplicationServiceLocator()->get('Omeka\EntityManager')->getRepository('Omeka\Entity\Property')->find($id));
+        $value->setResource($this->item);
+        $value->setValue($title);
+        $value->setType('literal');
+        $this->persistAndSave($value);
+    }
+
+    /** @test */
+    public function testStorageBasePathWithSpecificField() {
+        $this->createValue(1,'My title ?');
+        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','1');
+        $file = new File($this->_fileUrl);
+        $file->setSourceName('image_test.png');
+        $storageFilepath = 'My_title'.DIRECTORY_SEPARATOR.pathinfo($this->_fileUrl, PATHINFO_BASENAME);
+        $fileManager=$this->getFileManager();
+        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
+
+    }
+
+
+    /** @test */
+    public function testStorageBasePathWithPrefixSpecificField() {
+        $this->createValue(2,'My title ?');
+        $this->createValue(2,'term:another title');
+        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','2');
+        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_prefix','term:');
+        $file = new File($this->_fileUrl);
+        $file->setSourceName('image_test.png');
+        $storageFilepath = 'another_title'.DIRECTORY_SEPARATOR.pathinfo($this->_fileUrl, PATHINFO_BASENAME);
+        $fileManager=$this->getFileManager();
+        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
+
+    }
+
 
     /**
      * Check insertion of a second file with a duplicate name.

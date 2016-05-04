@@ -5,6 +5,7 @@ use Omeka\Form\AbstractForm;
 use Omeka\Form\Element\ResourceSelect;
 use Omeka\Form\Element\Ckeditor;
 use Zend\Form\Element;
+use Omeka\Form\Element\PropertySelect;
 use Zend\ServiceManager\ServiceLocatorInterface;
 class ConfigArchiveRepertoryForm extends AbstractForm {
     protected $local_storage='';
@@ -194,7 +195,7 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
 
         $serviceLocator = $this->getServiceLocator();
         $translator = $this->getTranslator();
-        $classSelect = new ResourceSelect($serviceLocator);
+        $classSelect = new PropertySelect($serviceLocator);
 
         $classSelect
             ->setName($name)

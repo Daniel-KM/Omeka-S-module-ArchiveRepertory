@@ -12,6 +12,19 @@ return [
         ],
     ],
 
+    'media_ingesters' => [
+     'invokables' => [
+               'upload'  => 'ArchiveRepertory\Media\Ingester\UploadAnywhere',
+        ]],
+    'file_manager' => [
+        'store' => 'Omeka\File\ExternalStore',
+
+    ],
+        'service_manager' => [
+
+                              'factories' => [ 'Omeka\File\ExternalStore'       => 'ArchiveRepertory\Service\ExternalStoreFactory',
+                                              'Omeka\File\Manager'          => 'ArchiveRepertory\Service\FileArchiveManagerFactory']
+        ],
     'router' => [
         'routes' => [
             'my_route' => [

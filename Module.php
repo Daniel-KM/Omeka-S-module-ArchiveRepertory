@@ -202,7 +202,9 @@ class Module extends AbstractModule
      */
     public function afterSaveItem(\Zend\EventManager\Event $event)
     {
+        return true;
         $serviceLocator = $this->getServiceLocator();
+
         if ($file = $event->getParam('request')->getFileData() == [])
             return '';
         $item = $this->entityApi()->find('Omeka\Entity\Item',$event->getParam('request')->getId());
@@ -363,15 +365,16 @@ class Module extends AbstractModule
      *
      * @return string|array.
      */
-    protected function _getRecordIdentifiers($record, $folder = null, $first = false)
+    public function _getRecordIdentifiers($record, $folder = null, $first = false)
     {
+        $api = $this->serviceLocator->get('Omeka\ApiManager');
         $recordType = get_class($record);
         switch ($recordType) {
             case 'Collection':
                 $folder = is_null($folder) ? $this->getOption('archive_repertory_collection_folder') : $folder;
                 $prefix = $this->getOption('archive_repertory_collection_prefix');
                 break;
-            case 'Item':
+            case 'Omeka\Entity\Item':
                 $folder = is_null($folder) ? $this->getOption('archive_repertory_item_folder') : $folder;
                 $prefix = $this->getOption('archive_repertory_item_prefix');
                 break;
@@ -384,27 +387,21 @@ class Module extends AbstractModule
             case 'None':
                 return [];
             case 'id':
-                return [(string) $record->id];
+                return [(string) $record->getId()];
             default:
-                // Use a direct query in order to improve speed.
-                $db = $this->_db;
-                $select = $db->select()
-                             ->from($db->ElementText, array('text'))
-                             ->where('element_id = ?', $folder)
-                             ->where('record_type = ?', $recordType)
-                             ->where('record_id = ?', $record->id)
-                             ->order('id');
-                if ($prefix) {
-                    $select->where('text LIKE ?', $prefix . '%');
-                }
-                if ($first) {
-                    $select->limit(1);
-                    $identifiers = $db->fetchOne($select);
-                }
-                else {
-                    $identifiers = $db->fetchCol($select);
-                }
-                return $identifiers;
+                    xdebug_break();
+                    $itemr = $this->serviceLocator->get('Omeka\EntityManager')->getRepository('Omeka\Entity\Value')->findBy(['property' => $folder,
+                                                                                                                             'resource' => $record->getId()]);
+                    foreach ($itemr as $value) {
+                        //$value = new ValueRepresentation($valueEntity, $this->getServiceLocator());
+                        if ($prefix) {
+                            preg_match('/^'.$prefix.'(.*)/',$value->getValue(),$matches);
+                            if (isset($matches[1])) return trim($matches[1]);
+                            continue;
+                        }
+                        return $value->getValue();
+                    }
+                return '';
         }
     }
 
@@ -490,7 +487,7 @@ class Module extends AbstractModule
         }
     }
 
-    protected function getOption($key,$serviceLocator=null) {
+    public function getOption($key,$serviceLocator=null) {
         if (!$serviceLocator)
             $serviceLocator = $this->getServiceLocator();
         return $serviceLocator->get('Omeka\Settings')->get($key);
@@ -941,7 +938,7 @@ class Module extends AbstractModule
      *
      * @return string The sanitized string.
      */
-    protected function _sanitizeName($string)
+    public function _sanitizeName($string)
     {
         $string = strip_tags($string);
         // The first character is a space and the last one is a no-break space.
@@ -966,7 +963,7 @@ class Module extends AbstractModule
      *
      * @return string The sanitized string.
      */
-    protected function _convertFilenameTo($string, $format)
+    public function _convertFilenameTo($string, $format)
     {
         switch ($format) {
             case 'Keep name':
@@ -1145,7 +1142,21 @@ class Module extends AbstractModule
     }
 
 
+    public function hydrateMedia(Event $event) {
+        $serviceLocator = $this->getServiceLocator();
+
+        if ($file = $event->getParam('request')->getFileData() == [])
+            return '';
+
+        //      $request = $event->getParam('request')->setMetadata(['o:ingester'=>'bidon']);
+//        var_dump($event->getParam('request')->getValue('o:ingester')); exit;
+    }
+
+
     public function attachListeners(SharedEventManagerInterface $sharedEventManager) {
+       $sharedEventManager->attach('Omeka\Api\Adapter\MediaAdapter',
+                                    'api.hydrate.pre', [ $this, 'hydrateMedia' ]);
+
         $sharedEventManager->attach('Omeka\Api\Adapter\ItemAdapter',
                                     'api.update.post', [ $this, 'afterSaveItem' ]);
 
