@@ -7,12 +7,25 @@ use Omeka\Entity\Property;
 use Omeka\File\File;
 use Omeka\ArchiveRepertory\Module;
 use Omeka\Entity\Media;
+use Omeka\File\OmekaRenameUpload;
 use Omeka\File\ArchiveManager as ArchiveManager;
 class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
 {
+    protected $_pathsByType = array(
+        'original' => 'original',
+        'fullsize' => 'large',
+        'thumbnail' => 'medium',
+        'square_thumbnail' => 'square',
+    );
+
+
     protected $_fileUrl;
     protected $module;
+    protected $_storagePath;
     public function setUp() {
+//        $mock=$this->getMock('FileWriter');
+        //      $mock->expects($this->any())->method('moveUploadedFile')->will($this->returnValue(true));
+        OmekaRenameUpload::setFileWriter(new MockFileWriter());
 
         $this->connectAdminUser();
         $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
@@ -28,9 +41,21 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
         $this->persistAndSave($this->item);
         $this->connectAdminUser();
         $this->_fileUrl = dirname(dirname(__FILE__)).'/test/_files/image_test.png';
+        $config = $this->getApplicationServiceLocator()->get('Config');
+        $this->_storagePath = $config['local_dir'];
+
+
     }
 
 
+    public function tearDown() {
+        $this->connectAdminUser();
+
+        $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
+        $module = $manager->getModule('ArchiveRepertory');
+        $manager->uninstall($module);
+
+    }
 
     public function getFileManager() {
 
@@ -38,7 +63,6 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
         $fileManager = $this->getApplicationServiceLocator()->get('Omeka\File\Manager');
 
         $media = new Media;
-        xdebug_break();
         $media->setFilename($this->_fileUrl);
         $media->setItem($this->item);
         $fileManager->setMedia($media);
@@ -101,6 +125,7 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
         $value->setValue($title);
         $value->setType('literal');
         $this->persistAndSave($value);
+        $this->persistAndSave($item);
     }
 
     /** @test */
@@ -130,28 +155,64 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
 
     }
 
+    protected function getUpload($name, $url) {
+        $upload = new \Zend\Stdlib\Parameters([
+    'file' => [[
+                 'name' => $name,
+                 'type' => 'image/png',
+                 'tmp_name' => $url,
 
-    /**
-     * @test
-     */
-    public function testInsertDuplicateFile()
-     {
-        $item2 = new Item;
-        $files = [0 => ['name'=> 'images',
-                               'type'=> 'image/png',
-                               'tmp_name'=> '/tmp/namae',
-                               'error'=> 0,
-                               'size'=>1]];
-        $this->persistAndSave($item2);
+                'content' => file_get_contents($url),
+                 'error' => 0,
+               'size' => 1999]
+
+    ]
+                                               ]);
+        $this->getRequest()->setFiles($upload);
+
+        return $upload;
+    }
+
+    protected function updateItem($id, $title,$upload,$file_index=0) {
         $api = $this->getApplicationServiceLocator()->get('Omeka\ApiManager');
-        $item_1 = $api->create('items', [ 'dcterms:title'=>
-                               [
-                                [
-                                 'property_id'=>  '1',
-                                 'type'=> 'literal',
-                                 '@value'=> 'A title']]],$files);
+        return $api->update('items', $id, [
+                                      'dcterms:identifier' => [
+                                                               [
+                                                               'type' => 'literal',
+                                                               'property_id' => '10',
+                                                               '@value' => 'item1',
+                                      ],
+                                      ],
+                            'dcterms:title' => [
+                                                [
+                                                 'type' => 'literal',
+                                                 'property_id' => '1',
+                                                 '@value' => $title,
+                                                ],
+                            ],
 
-        $response = $api->create('items', [
+                            'o:media' => [
+                                          [
+                                           'o:ingester' => 'upload',
+                                           'file_index' => $file_index,
+                                           'dcterms:identifier' => [
+                                                                    [
+                                                                     'type' => 'literal',
+                            'property_id' => 10,
+                            '@value' => 'media1',
+                                                                    ],
+                                           ],
+                                          ],
+                            ]]
+                                           ,$upload);
+
+
+    }
+
+
+    protected function createMediaItem($title,$upload,$file_index=0) {
+        $api = $this->getApplicationServiceLocator()->get('Omeka\ApiManager');
+        return $api->create('items', [
             'dcterms:identifier' => [
                 [
                     'type' => 'literal',
@@ -163,14 +224,14 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
                 [
                     'type' => 'literal',
                     'property_id' => '1',
-                    '@value' => 'Item 1',
+                    '@value' => $title,
                 ],
             ],
 
             'o:media' => [
                 [
-                    'o:ingester' => 'url',
-                    'ingest_url' => 'http://youtube.fr/',
+                    'o:ingester' => 'upload',
+                 'file_index' => $file_index,
                     'dcterms:identifier' => [
                         [
                             'type' => 'literal',
@@ -180,107 +241,111 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
                     ],
                 ],
             ],
-                                           ],$files);
-        $item_2 = $api->create('items',[
-                                        'o:is_public'=>1,
-                                        'add-item-submit'=> '',
-                                        'dcterms:title'=>
-                                        [
-                                         'property_id'=>  '1',
-                                         'type'=> 'literal',
-                                         '@value'=> 'A title'],
-                                        'o:media'=> ['o:is_public'=>'1',
-                                                     'file_index'=> 0 ,
-                                                     'o:ingester' => 'upload']
-                                        ], $files);
+                                           ],$upload);
 
+}
+    /**
+     * @test
+     */
+    public function testInsertDuplicateFile()
+     {
+        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_file_keep_original_name','1');
+        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','1');
+        $_FILES['file'] = [['size' => 1000000,
+                        'name' => 'photo.png',
+                        'type' => 'image/png',
+                        'tmp_name' => $this->_fileUrl,
+                        'error' => 0]];
+        $files =  [
+                   'file' => [[
+                               'name'=> 'photo.png',
+                              'type'=> 'image/png',
+                               'tmp_name'=> $this->_fileUrl,
+                              'error'=> 0,
+                              'size'=>1,
+                   'content' => file_get_contents($this->_fileUrl)]]];
+        $api = $this->getApplicationServiceLocator()->get('Omeka\ApiManager');
+        $upload = $this->getUpload('photo.png',$this->_fileUrl);
+        $item = $this->createMediaItem('Item 1',$upload);
+        $item2 = $this->createMediaItem('Item 1',$upload);
+        $this->postDispatch('/admin/item/'.$item->getContent()->id().'/edit', [
+            'dcterms:identifier' => [
+                [
+                    'type' => 'literal',
+                    'property_id' => '10',
+                    '@value' => 'item1',
+                ],
+            ],
+            'dcterms:title' => [
+                [
+                    'type' => 'literal',
+                    'property_id' => '1',
+                    '@value' => 'Itemee 1',
+                ],
+            ],
+                                                                                  'file' =>                 file_get_contents($this->_fileUrl),
+                                                                                  'csrf' => (new \Zend\Form\Element\Csrf('csrf'))->getValue(),
+                                               'o:media'=> [[
+                                                        'o:ingester' => 'upload',
+                                                        'o:is_public'=>'1',
+                                                        'file_index'=> 1 ,
+                                                        ]]
+
+                         ]);
+
+
+
+        $files = $item2->getContent()->media();
+        foreach ($files as $file) {
+            $this->assertEquals('Item_1/photo.1.png',$file->filename());
+        }
         $fileManager = $this->getApplicationServiceLocator()->get('Omeka\File\Manager');
         $entityManager = $this->getApplicationServiceLocator()->get('Omeka\EntityManager');
 
 
         $this->createValue(2,'My title ?',$this->item);
-        $this->createValue(2,'My title ?',$item2);
-        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','2');
+        $this->createValue(2,'My title ?',$this->getApplicationServiceLocator()->get('Omeka\ApiAdapterManager')->get('items')->findEntity($item->getContent()->id()));
+
         $file = new File($this->_fileUrl);
         $file->setSourceName('image_test.png');
         $storageFilepath = 'My_title'.DIRECTORY_SEPARATOR.pathinfo($this->_fileUrl, PATHINFO_BASENAME);
-        xdebug_break();
 
 
-        $fileManager->setMedia($response->getContent()->primaryMedia());
+        $fileManager->setMedia($entityManager->find('Omeka\Entity\Media',($item->getContent()->primaryMedia()->id())));
 
         $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
 
     }
 
     /**
-     * Check change of the identifier of the item.
+     * @test
      */
-    protected function _testChangeIdentifier()
+    public function testChangeIdentifier()
     {
-        // Set default option for identifier of items.
-        $elementSetName = 'Dublin Core';
-        $elementName = 'Identifier';
-        $element = $this->db->getTable('Element')->findByElementSetNameAndElementName($elementSetName, $elementName);
-        set_option('archive_repertory_item_folder', $element->id);
+        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_file_keep_original_name','1');
+        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','1');
 
-        // Update item.
-        update_item(
-            $this->item,
-            array(),
-            array($elementSetName => array(
-                $elementName => array(array('text' => 'my_first_item', 'html' => false)),
-        )));
+        $upload = $this->getUpload('photo.png',$this->_fileUrl);
+        $item = $this->createMediaItem('Item 1',$upload);
+        xdebug_break();
+        $this->updateItem($item->getContent()->id(), 'Autre essai', $upload);
 
-        $files = $this->item->getFiles();
-        foreach ($files as $key => $file) {
+//        $item2 = $this->createMediaItem('Item 1',$upload,1);
+        xdebug_break();
+
+        $files = $item->getContent()->media();
+        foreach ($files as $file) {
             $this->_checkFile($file);
         }
     }
 
-    /**
-     * Check change of the collection of the item.
-     */
-    protected function _testChangeCollection()
-    {
-        // Create a new collection.
-        $this->collection = insert_collection(array('public' => true));
-
-        // Update item.
-        update_item($this->item, array('collection_id' => $this->collection->id));
-
-        $files = $this->item->getFiles();
-        foreach ($files as $key => $file) {
-            $this->_checkFile($file);
-        }
-    }
 
     /**
      * Check simultaneous change of identifier and collection of the item.
      */
-    protected function _testChangeIdentifierAndCollection()
+    protected function _testChangeIdentifierAndItem()
     {
-        $elementSetName = 'Dublin Core';
-        $elementName = 'Identifier';
 
-        // Create a new collection.
-        $this->collection = insert_collection(array('public' => true));
-
-        // Need to release item and to reload it.
-        $itemId = $this->item->id;
-        release_object($this->item);
-        $this->item = get_record_by_id('Item', $itemId);
-
-        // Update item.
-        update_item(
-            $this->item,
-            array(
-                'collection_id' => $this->collection->id,
-                'overwriteElementTexts' => true,
-            ),
-            array($elementSetName => array(
-                $elementName => array(array('text' => 'my_new_item_identifier', 'html' => false)),
-        )));
 
         $files = $this->item->getFiles();
         foreach ($files as $key => $file) {
@@ -294,8 +359,22 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
     protected function _checkFile($file)
     {
         foreach ($this->_pathsByType as $type => $path) {
-            $storageFilepath = $this->_storagePath . DIRECTORY_SEPARATOR . $file->getStoragePath($type);
+            $storageFilepath = $this->_storagePath . DIRECTORY_SEPARATOR.$path.DIRECTORY_SEPARATOR . $file->filename();
+            if ($type != 'original')
+                $storageFilepath=str_replace('.png','.jpg',$storageFilepath);
+            echo "\npath=".$storageFilepath;
             $this->assertTrue(file_exists($storageFilepath));
         }
     }
+
+}
+    class MockFileWriter {
+  public function moveUploadedFile($source,$destination) {
+      echo $destination;
+        return copy($source, $destination);
+  }
+
+
+
+
 }

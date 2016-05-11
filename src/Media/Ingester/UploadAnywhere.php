@@ -5,13 +5,15 @@ use Omeka\Media\Ingester\Upload;
 use Omeka\Api\Request;
 use Omeka\Entity\Media;
 use Omeka\Stdlib\ErrorStore;
-use Zend\Filter\File\RenameUpload;
+use Omeka\File\OmekaRenameUpload;
 use Zend\Form\Element\File;
 use Zend\InputFilter\FileInput;
 use Zend\View\Renderer\PhpRenderer;
 
 class UploadAnywhere extends Upload
 {
+
+
 
     /**
      * {@inheritDoc}
@@ -42,7 +44,7 @@ class UploadAnywhere extends Upload
         $file = $fileManager->getTempFile();
 
         $fileInput = new FileInput('file');
-        $fileInput->getFilterChain()->attach(new RenameUpload([
+        $fileInput->getFilterChain()->attach(new OmekaRenameUpload([
             'target' => $file->getTempPath(),
             'overwrite' => true
         ]));

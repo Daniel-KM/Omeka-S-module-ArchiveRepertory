@@ -6,7 +6,7 @@ use Zend\View\Renderer\PhpRenderer;
 use Zend\Mvc\Controller\AbstractController;
 use ArchiveRepertory\Form\ConfigArchiveRepertoryForm;
 use Zend\View\Model\ViewModel;
-use Omeka\Service\FileManagerFactory;
+use ArchiveRepertory\Service\FileArchiveManagerFactory;
 
 use Zend\EventManager\SharedEventManagerInterface;
 use Omeka\Event\Event;
@@ -29,22 +29,17 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEP
  */
 class Module extends AbstractModule
 {
-
+    use \Omeka\File\StaticFileWriterTrait;
     /**
      * @var array This plugin's options.
      */
     protected $_options = [
-                           // Collections options.
-                           'archive_repertory_collection_folder' => 'id',
-                           'archive_repertory_collection_prefix' => '',
-                           'archive_repertory_collection_names' => 'a:0:{}',
-                           'archive_repertory_collection_convert' => 'Full',
                            // Items options.
                            'archive_repertory_item_folder' => 'id',
                            'archive_repertory_item_prefix' => '',
                            'archive_repertory_item_convert' => 'Full',
                            // Files options.
-                           'archive_repertory_file_keep_original_name' => true,
+                           'archive_repertory_file_keep_original_name' => '1',
                            'archive_repertory_file_convert' => 'Full',
                            'archive_repertory_file_base_original_name' => false,
                            // Other derivative folders.
@@ -63,9 +58,9 @@ class Module extends AbstractModule
      */
     static private $_pathsByType = array(
                                          'original' => 'original',
-                                         'fullsize' => 'fullsize',
-                                         'thumbnail' => 'thumbnails',
-                                         'square_thumbnail' => 'square_thumbnails',
+                                         'fullsize' => 'large',
+                                         'thumbnail' => 'medium',
+                                         'square_thumbnails' => 'square',
     );
 
     /**
@@ -79,7 +74,7 @@ class Module extends AbstractModule
      *
      * @var array
      */
-    private $_derivativeExtensionsByType = array();
+    private $_derivativeExtensionsByType = [];
 
     /**
      * Installs the plugin.
@@ -87,8 +82,6 @@ class Module extends AbstractModule
     public function install(ServiceLocatorInterface $serviceLocator) {
         $this->_installOptions($serviceLocator);
 
-        // Set default names of collection folders. Folders are created by config.
-        $this->_setCollectionFolderNames($serviceLocator);
     }
 
 
@@ -149,17 +142,12 @@ class Module extends AbstractModule
     public function handleConfigForm(AbstractController $controller)
     {
         $post =$controller->getRequest()->getPost();
-        xdebug_break();
         foreach ($this->_options as $optionKey => $optionValue) {
             if (isset($post[$optionKey])) {
                 $this->setOption($this->getServiceLocator(),$optionKey, $post[$optionKey]);
             }
         }
 
-        // Unlike items, collections are few and stable, so they are kept as an
-        // option.
-//        $this->_setCollectionFolderNames($this->getServiceLocator());
-        //      $this->_createCollectionFolders($this->getServiceLocator());
     }
 
     /**
@@ -176,41 +164,15 @@ class Module extends AbstractModule
     }
 
     /**
-     * Create a collection folder when a collection is created.
-     *
-     * @todo Add a job to process the move of items when the name of a
-     * collection changes or when a collection is removed.
-     */
-    public function hookAfterSaveCollection($args)
-    {
-        $post = $args['post'];
-        $collection = $args['record'];
-
-        // Create or update the collection folder name.
-        $this->_setCollectionFolderName($collection);
-
-        // Create collection folder if needed.
-        if ($this->getOption('archive_repertory_collection_convert') != 'None') {
-            $collectionNames = unserialize($this->getOption('archive_repertory_collection_names'));
-            $result = $this->_createArchiveFolders($collectionNames[$collection->id]);
-        }
-    }
-
-
-    /**
      * Manages folders for attached files of items.
      */
     public function afterSaveItem(\Zend\EventManager\Event $event)
     {
-        return true;
+
         $serviceLocator = $this->getServiceLocator();
 
-        if ($file = $event->getParam('request')->getFileData() == [])
-            return '';
         $item = $this->entityApi()->find('Omeka\Entity\Item',$event->getParam('request')->getId());
 
-
-        // Check if file is at the right place, with collection and item folders.
         $archiveFolder = $this->_getArchiveFolderName($item);
 
         // Check if files are already attached and if they are at the right place.
@@ -220,13 +182,13 @@ class Module extends AbstractModule
             // We don't use original filename here, because this is managed in
             // hookAfterSaveFile() when the file is inserted. Here, the filename
             // is already sanitized.
-            $newFilename = $archiveFolder . basename_special($file->getFilename());
+            $newFilename = $archiveFolder . '/'.basename_special($file->getFilename());
             if ($file->getFilename() != $newFilename) {
                 // Check if the original file exists, else this is an undetected
                 // error during the convert process.
                 $path = $this->_getFullArchivePath('original');
                 if (!file_exists($path . DIRECTORY_SEPARATOR . $file->getFilename())) {
-                    $msg = $this->translate('This file is not present in the original directory :'.$path.$file->getFilename());//, $file->original_filename);
+                    $msg = $this->translate('This file is not present in the original directory :'.$path.'/'.$file->getFilename());//, $file->original_filename);
                     $msg .= ' ' .$this->translate('There was an undetected error before storage, probably during the convert process.');
                     throw new \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . $msg);
                 }
@@ -243,7 +205,9 @@ class Module extends AbstractModule
                 // Update file in Omeka database immediately for each file.
                 $file->setFilename($newFilename);
                 // As it's not a file hook, the file is not automatically saved.
-                $file->save();
+                $em= $this->getServiceLocator()->get('Omeka\EntityManager');
+                $em->persist($file);
+                $em->flush();
             }
         }
     }
@@ -303,7 +267,7 @@ class Module extends AbstractModule
             }
 
             // Rename file only if wanted and needed.
-            if ($this->getOption('archive_repertory_file_keep_original_name')) {
+            if ($this->getOption('archive_repertory_file_keep_original_name') === '1') {
                 // Get the new filename.
                 $newFilename = basename_special($file->original_filename);
                 $newFilename = $this->_sanitizeName($newFilename);
@@ -313,7 +277,8 @@ class Module extends AbstractModule
                 $item = $file->getItem();
                 $archiveFolder = $this->_getArchiveFolderName($item);
                 $newFilename = $archiveFolder . $newFilename;
-                $newFilename = $this->_checkExistingFile($newFilename);
+                $newFilename = $this->checkExistingFile($newFilename);
+                xdebug_break();
                 if ($file->filename != $newFilename) {
                     $result = $this->_moveFilesInArchiveSubfolders(
                                                                    $file->filename,
@@ -370,10 +335,7 @@ class Module extends AbstractModule
         $api = $this->serviceLocator->get('Omeka\ApiManager');
         $recordType = get_class($record);
         switch ($recordType) {
-            case 'Collection':
-                $folder = is_null($folder) ? $this->getOption('archive_repertory_collection_folder') : $folder;
-                $prefix = $this->getOption('archive_repertory_collection_prefix');
-                break;
+
             case 'Omeka\Entity\Item':
                 $folder = is_null($folder) ? $this->getOption('archive_repertory_item_folder') : $folder;
                 $prefix = $this->getOption('archive_repertory_item_prefix');
@@ -389,10 +351,11 @@ class Module extends AbstractModule
             case 'id':
                 return [(string) $record->getId()];
             default:
-                    xdebug_break();
-                    $itemr = $this->serviceLocator->get('Omeka\EntityManager')->getRepository('Omeka\Entity\Value')->findBy(['property' => $folder,
-                                                                                                                             'resource' => $record->getId()]);
-                    foreach ($itemr as $value) {
+                    //                    $itemr = $this->serviceLocator->get('Omeka\EntityManager')->getRepository('Omeka\Entity\Value')->findBy(['property' => $folder,
+                    //'resource' => $record->getId()]);
+                    foreach ($record->getValues() as $value) {
+                        if ($value->getProperty()->getId() != $folder)
+                            continue;
                         //$value = new ValueRepresentation($valueEntity, $this->getServiceLocator());
                         if ($prefix) {
                             preg_match('/^'.$prefix.'(.*)/',$value->getValue(),$matches);
@@ -405,45 +368,12 @@ class Module extends AbstractModule
         }
     }
 
-    /**
-     * Gets archive folder name of an item, that depends on activation of options.
-     *
-     * @param object $item
-     *
-     * @return string Unique and sanitized name folder name of the item.
-     */
+
     protected function _getArchiveFolderName($item)
     {
-
-        $collectionFolder = $this->_getCollectionFolderName($item);
-        $itemFolder = $this->_getItemFolderName($item);
-        return $collectionFolder . $itemFolder;
+        return $this->_getItemFolderName($item);
     }
 
-    /**
-     * Gets collection folder name from an item.
-     *
-     * @param object $item
-     *
-     * @return string Unique sanitized name of the collection.
-     */
-    protected function _getCollectionFolderName($item)
-    {
-        $name = '';
-
-        // Collection folders are created when the module is configured.
-        if ($this->getOption('archive_repertory_collection_convert') && !empty($item->collection_id)) {
-            $collectionNames = unserialize($this->getOption('archive_repertory_collection_names'));
-            if (isset($collectionNames[$item->collection_id])) {
-                $name = $collectionNames[$item->collection_id];
-                if ($name != '') {
-                    $name .= DIRECTORY_SEPARATOR;
-                }
-            }
-        }
-
-        return $name;
-    }
 
     /**
      * Gets item folder name from an item and create folder if needed.
@@ -458,7 +388,7 @@ class Module extends AbstractModule
 
         switch ($folder) {
             case 'id':
-                return (string) $item->id . DIRECTORY_SEPARATOR;
+                return (string) $item->getId() . DIRECTORY_SEPARATOR;
             case 'none':
             case '':
                 return '';
@@ -473,19 +403,7 @@ class Module extends AbstractModule
         return $this->_convertFilenameTo($name, $this->getOption('archive_repertory_item_convert')) . DIRECTORY_SEPARATOR;
     }
 
-    /**
-     * Prepare collection folder names.
-     *
-     * @return void.
-     */
-    protected function _setCollectionFolderNames($serviceLocator)
-    {
-        $collections = $serviceLocator->get('Omeka\EntityManager')->getRepository('Omeka\Entity\Site')->findAll();
 
-        foreach ($collections as $collection) {
-            $this->_setCollectionFolderName($collection,$serviceLocator);
-        }
-    }
 
     public function getOption($key,$serviceLocator=null) {
         if (!$serviceLocator)
@@ -495,42 +413,6 @@ class Module extends AbstractModule
 
 
 
-    /**
-     * Creates the default name for a collection folder.
-     *
-     * @param object $collection
-     *
-     * @return string Unique sanitized name of the collection.
-     */
-    protected function _setCollectionFolderName($collection,$serviceLocator)
-    {
-
-        $folder = $this->getOption($serviceLocator,'archive_repertory_collection_folder');
-        switch ($folder) {
-            case 'id':
-                $collectionName = (string) $collection->getId();
-                break;
-            case 'none':
-            case '':
-                $collectionName = '';
-                break;
-            default:
-                $collectionName = $this->_getRecordFolderNameFromMetadata(
-                                                                          $collection,
-                                                                          $folder,
-                                                                          $this->getOption($serviceLocator,'archive_repertory_collection_prefix')
-                );
-                $collectionName = $this->_sanitizeName($collectionName);
-                break;
-        }
-
-        $collectionNames = unserialize($this->getOption($serviceLocator,'archive_repertory_collection_names'));
-        $collectionNames[$collection->getId()] = $this->_convertFilenameTo(
-                                                                           $collectionName,
-                                                                           $this->getOption($serviceLocator,'archive_repertory_collection_convert'));
-
-        $this->setOption($serviceLocator,'archive_repertory_collection_names', serialize($collectionNames));
-    }
 
     /**
      * Creates a unique name for a record folder from first metadata.
@@ -557,22 +439,7 @@ class Module extends AbstractModule
             : $this->_sanitizeName($identifier);
     }
 
-    /**
-     * Create collection folders if needed.
-     *
-     * @return void.
-     */
-    protected function _createCollectionFolders($serviceLocator)
-    {
-        if ($this->getOption($serviceLocator,'archive_repertory_collection_convert') != 'None') {
-            $collections = get_records('Collection', [], 0);
-            $collectionNames = unserialize($this->getOption('archive_repertory_collection_names'));
-            set_loop_records('collections', $collections);
-            foreach (loop('collections') as $collection) {
-                $result = $this->_createArchiveFolders($collectionNames[$collection->id]);
-            }
-        }
-    }
+
 
     /**
      * Checks and creates a folder.
@@ -660,10 +527,9 @@ class Module extends AbstractModule
      */
     protected function _getLocalStoragePath()
     {
-        $filemanager = (new FileManagerFactory())->createService($this->getServiceLocator());
-        return './files';// $filemanager->getStore();
-        $adapterOptions = Zend_Registry::get('storage')->getAdapter()->getOptions();
-        return $adapterOptions['localDir'];
+        $config = $this->getServiceLocator()->get('Config');
+        return $config['local_dir'];
+
     }
 
     /**
@@ -808,7 +674,10 @@ class Module extends AbstractModule
      *   Extension used for derivative files (usually "jpg" for images).
      */
     protected function _getDerivativeExtension($file)
-    {
+    {return 'jpg';
+        $filemanager = (new FileArchiveManagerFactory())->createService($this->getServiceLocator());
+        $filemanager->setMedia($file);
+        return         $filemanager->getStorageName($file);
         return $file->has_derivative_image ? pathinfo($file->getDerivativeFilename(), PATHINFO_EXTENSION) : '';
     }
 
@@ -841,6 +710,7 @@ class Module extends AbstractModule
         // Move file only if it is not in the right place.
         // If the main file is at the right place, this is always the case for
         // the derivatives.
+        $newArchiveFilename = str_replace('//','/',$newArchiveFilename);
         if ($currentArchiveFilename == $newArchiveFilename) {
             return true;
         }
@@ -851,6 +721,7 @@ class Module extends AbstractModule
         // Move the original file.
         $path = $this->_getFullArchivePath('original');
         $result = $this->_createArchiveFolders($newArchiveFolder, $path);
+
         $this->_moveFile($currentArchiveFilename, $newArchiveFilename, $path);
 
         // If any, move derivative files using Omeka API.
@@ -872,7 +743,9 @@ class Module extends AbstractModule
 
                 // Check if the derivative file exists or not to avoid some
                 // errors when moving.
+
                 if (file_exists($path . DIRECTORY_SEPARATOR . $currentDerivativeFilename)) {
+
                     $this->_moveFile($currentDerivativeFilename, $newDerivativeFilename, $path);
                 }
             }
@@ -893,6 +766,7 @@ class Module extends AbstractModule
      */
     protected function _moveFile($source, $destination, $path)
     {
+
         $realSource = $path . DIRECTORY_SEPARATOR . $source;
         if (!file_exists($realSource)) {
             $msg = $this->translate('Error during move of a file from "%s" to "%s" (local dir: "%s"): source does not exist.',
@@ -912,10 +786,8 @@ class Module extends AbstractModule
                     // Move the main original file using Omeka API.
                 case 'internal':
                 default:
-                    $operation = new Omeka_Storage_Adapter_Filesystem(array(
-                                                                            'localDir' => $path,
-                                                                            ));
-                    $operation->move($source, $destination);
+
+                    self::getFileWriter()->rename($source, $destination);
                     $result = true;
                     break;
             }
@@ -1067,8 +939,9 @@ class Module extends AbstractModule
      * @return string
      * The unique filename, that can be the same as input name.
      */
-    protected function _checkExistingFile($filename)
+    public function checkExistingFile($filename)
     {
+        xdebug_break();
         // Get the partial path.
         $dirname = pathinfo($filename, PATHINFO_DIRNAME);
 

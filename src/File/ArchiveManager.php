@@ -13,7 +13,7 @@ class ArchiveManager extends Manager
 
     protected $media;
     protected $moduleObject = null;
-
+    protected $storageName = null;
     public function __construct(array $config, $tempDir, ServiceLocatorInterface $serviceLocator)
     {
         parent::__construct($config,$tempDir,$serviceLocator);
@@ -28,6 +28,12 @@ class ArchiveManager extends Manager
         return $this;
     }
 
+
+
+    public function storeThumbnails(File $file) {
+        $file->setStorageBaseName(str_replace('.'.$this->getExtension($file),'',$this->getStorageName($file)));
+        parent::storeThumbnails($file);
+    }
 
     protected function _getItemFolderName($item)
     {
@@ -53,7 +59,6 @@ class ArchiveManager extends Manager
 
     protected function _getRecordFolderNameFromMetadata($record, $elementId)
     {
-        xdebug_break();
 
         $identifier = $this->moduleObject->_getRecordIdentifiers($record, null, true);
 
@@ -65,7 +70,6 @@ class ArchiveManager extends Manager
 
     public function getStoragePath($prefix, $name, $extension = null)
     {
-        xdebug_break();
 
         if ($this->media) {
             $prefix=($prefix ? $prefix.'/' : ''). ($this->_getItemFolderName($this->media->getItem()));
@@ -76,19 +80,20 @@ class ArchiveManager extends Manager
 
     public function getStorageName(File $file)
     {
-
+        if ($this->storageName)
+            return $this->storageName;
         $extension = $this->getExtension($file);
-        if ($this->media) {
 
-            if ($this->moduleObject->getOption('archive_repertory_file_keep_original_name') === true)  {
-                return $file->getSourceName();
-            }
+        if ($this->moduleObject->getOption('archive_repertory_file_keep_original_name') === '1')  {
+                $path =$this->moduleObject->checkExistingFile($this->getStoragePath('',$file->getSourceName())) ;
+                return $this->storageName=pathinfo($path, PATHINFO_FILENAME).($extension ? ".$extension": '');
+
         }
 
-        $storageName = sprintf('%s%s', $file->getStorageBaseName(),
+        $this->storageName = sprintf('%s%s', $file->getStorageBaseName(),
             $extension ? ".$extension" : null);
 
-        return $storageName;
+        return $this->storageName;
     }
 
 

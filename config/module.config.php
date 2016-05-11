@@ -11,7 +11,7 @@ return [
                          'ArchiveRepertory\Controller\DownloadController' => 'ArchiveRepertory\Controller\DownloadController',
         ],
     ],
-
+        'local_dir'=> 'files',
     'media_ingesters' => [
      'invokables' => [
                'upload'  => 'ArchiveRepertory\Media\Ingester\UploadAnywhere',
@@ -23,6 +23,7 @@ return [
         'service_manager' => [
 
                               'factories' => [ 'Omeka\File\ExternalStore'       => 'ArchiveRepertory\Service\ExternalStoreFactory',
+                                              'Omeka\Service\LocalStoreFactory'=> 'ArchiveRepertory\Service\LocalStoreFactory',
                                               'Omeka\File\Manager'          => 'ArchiveRepertory\Service\FileArchiveManagerFactory']
         ],
     'router' => [
