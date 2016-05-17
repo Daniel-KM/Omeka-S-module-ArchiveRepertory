@@ -83,7 +83,7 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
 
 
 
-        $this->add([
+/*        $this->add([
                     'name' => 'archive_repertory_download_max_free_download',
                     'type' => 'Text',
                     'options'=> [
@@ -98,7 +98,7 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
 
                     ],
                     ]);
-
+*/
         $this->add([
                     'name' => 'archive_repertory_legal_text',
                     'type' => 'TextArea',
@@ -217,7 +217,6 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
 
 
     protected function getDerivativeFolderInfo()  {
-        xdebug_break();
         $info = $this->translate('By default, Omeka support three derivative folders: "fullsize", "thumbnails" and "square_thumbnails".');
         $info .= ' ' . $this->translate('You can add other ones if needed (comma-separated values, like "special_thumbnails, circles").');
         $info .= ' ' . $this->translate('Folder names should be relative to the files dir ').'"'.$this->local_storage.'"';

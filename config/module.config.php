@@ -1,4 +1,4 @@
-<?php
+ <?php
 return [
         'forms' => [
         'invokables' => [
@@ -6,7 +6,7 @@ return [
         ],
 
         ],
-    'controllers' => [
+        'controllers' => [
         'invokables' => [
                          'ArchiveRepertory\Controller\DownloadController' => 'ArchiveRepertory\Controller\DownloadController',
         ],
@@ -23,8 +23,7 @@ return [
         'service_manager' => [
 
                               'factories' => [ 'Omeka\File\ExternalStore'       => 'ArchiveRepertory\Service\ExternalStoreFactory',
-                                              'Omeka\Service\LocalStoreFactory'=> 'ArchiveRepertory\Service\LocalStoreFactory',
-                                              'Omeka\File\Manager'          => 'ArchiveRepertory\Service\FileArchiveManagerFactory']
+                                               'Omeka\File\Manager'          => 'ArchiveRepertory\Service\FileArchiveManagerFactory']
         ],
     'router' => [
         'routes' => [
@@ -50,12 +49,6 @@ return [
 
         ],
     ],
-//
-        //  'view_helpers' => [
-//        'invokables' => [
-        //                       'myViewHelper' => 'ArchiveRepertory\View\Helper\MyViewHelper',
-//        ],
-//    ],
     'translator' => [
         'translation_file_patterns' => [
             [

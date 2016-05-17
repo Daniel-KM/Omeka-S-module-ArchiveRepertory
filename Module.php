@@ -46,10 +46,10 @@ class Module extends AbstractModule
                            'archive_repertory_derivative_folders' => '',
                            'archive_repertory_move_process' => 'internal',
                            // Max download without captcha (default to 30 MB).
-                           'archive_repertory_download_max_free_download' => 30000000,
+//                           'archive_repertory_download_max_free_download' => 30000000,
                            'archive_repertory_legal_text' => 'I agree with terms of use.'
     ];
-
+    static public  $config;
     /**
      * Default folder paths for each default type of files/derivatives.
      *
@@ -278,7 +278,7 @@ class Module extends AbstractModule
                 $archiveFolder = $this->_getArchiveFolderName($item);
                 $newFilename = $archiveFolder . $newFilename;
                 $newFilename = $this->checkExistingFile($newFilename);
-                xdebug_break();
+
                 if ($file->filename != $newFilename) {
                     $result = $this->_moveFilesInArchiveSubfolders(
                                                                    $file->filename,
@@ -780,7 +780,7 @@ class Module extends AbstractModule
                 // Move file directly.
                 case 'direct':
                     $realDestination = $path . DIRECTORY_SEPARATOR . $destination;
-                    $result = rename($realSource, $realDestination);
+                    $result = self::getFileWriter()->rename($realSource, $realDestination);
                     break;
 
                     // Move the main original file using Omeka API.
@@ -1003,8 +1003,15 @@ class Module extends AbstractModule
     }
 
     public function getConfig() {
+        if (self::$config)
+            return self::$config;
         return include __DIR__ . '/config/module.config.php';
     }
+
+    public static function setConfig($config) {
+        self::$config=$config;
+    }
+
 
     public function translate($string,$options='',$serviceLocator=null) {
 
