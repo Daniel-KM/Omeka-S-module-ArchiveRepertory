@@ -941,7 +941,7 @@ class Module extends AbstractModule
      */
     public function checkExistingFile($filename)
     {
-        xdebug_break();
+
         // Get the partial path.
         $dirname = pathinfo($filename, PATHINFO_DIRNAME);
 
