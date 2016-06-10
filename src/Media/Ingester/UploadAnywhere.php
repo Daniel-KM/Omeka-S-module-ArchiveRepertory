@@ -5,7 +5,7 @@ use Omeka\Media\Ingester\Upload;
 use Omeka\Api\Request;
 use Omeka\Entity\Media;
 use Omeka\Stdlib\ErrorStore;
-use Omeka\File\OmekaRenameUpload;
+use ArchiveRepertory\File\OmekaRenameUpload;
 use Zend\Form\Element\File;
 use Zend\InputFilter\FileInput;
 use Zend\View\Renderer\PhpRenderer;
