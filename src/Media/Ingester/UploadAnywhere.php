@@ -40,7 +40,7 @@ class UploadAnywhere extends Upload
             return;
         }
 
-        $fileManager = $this->getServiceLocator()->get('Omeka\File\Manager');
+        $fileManager = $this->fileManager;
         $file = $fileManager->getTempFile();
 
         $fileInput = new FileInput('file');
@@ -64,7 +64,6 @@ class UploadAnywhere extends Upload
         $file->setSourceName($fileData['name']);
         $hasThumbnails = $fileManager->storeThumbnails($file);
         $fileManager->storeOriginal($file);
-//        var_dump($media->getItem()->getId());exit;
         $media->setFilename($fileManager->getStoragePath('',$fileManager->getStorageName($file)));
         $media->setMediaType($file->getMediaType());
         $media->setHasThumbnails($hasThumbnails);

@@ -16,6 +16,11 @@ return [
      'factories' => [
                      'upload'  => 'ArchiveRepertory\Service\MediaIngester\UploadFactory',
         ]],
+
+    'file_manager' => [
+        'store' => 'Omeka\File\ExternalStore',
+
+    ],
         'service_manager' => [
 
                               'factories' => [ 'Omeka\File\ExternalStore'       => 'ArchiveRepertory\Service\ExternalStoreFactory',
