@@ -1,44 +1,43 @@
- <?php
+<?php
 return [
-        'forms' => [
+    'forms' => [
         'invokables' => [
-                         'ArchiveRepertory\Form\ConfigArchiveRepertoryForm' => 'ArchiveRepertory\Form\ConfigArchiveRepertoryForm',
-        ],
-
-        ],
-        'controllers' => [
-        'invokables' => [
-                         'ArchiveRepertory\Controller\DownloadController' => 'ArchiveRepertory\Controller\DownloadController',
+            'ArchiveRepertory\Form\ConfigArchiveRepertoryForm' => 'ArchiveRepertory\Form\ConfigArchiveRepertoryForm',
         ],
     ],
-        'local_dir'=> 'files',
+    'controllers' => [
+        'invokables' => [
+            'ArchiveRepertory\Controller\DownloadController' => 'ArchiveRepertory\Controller\DownloadController',
+        ],
+    ],
+    'local_dir'=> 'files',
     'media_ingesters' => [
-     'factories' => [
-                     'upload'  => 'ArchiveRepertory\Service\MediaIngester\UploadFactory',
-        ]],
-
+        'factories' => [
+            'upload'  => 'ArchiveRepertory\Service\MediaIngester\UploadFactory',
+        ]
+    ],
     'file_manager' => [
         'store' => 'Omeka\File\ExternalStore',
-
     ],
-        'service_manager' => [
-
-                              'factories' => [ 'Omeka\File\ExternalStore'       => 'ArchiveRepertory\Service\ExternalStoreFactory',
-                                               'Omeka\File\Manager'          => 'ArchiveRepertory\Service\FileArchiveManagerFactory']
+    'service_manager' => [
+        'factories' => [
+            'Omeka\File\ExternalStore' => 'ArchiveRepertory\Service\ExternalStoreFactory',
+            'Omeka\File\Manager' => 'ArchiveRepertory\Service\FileArchiveManagerFactory',
         ],
+    ],
     'router' => [
         'routes' => [
             'my_route' => [
-                           'type' => 'segment',
+                'type' => 'segment',
                 'options' => [
-                              'route' => 'archive-repertory/download/files/$id',
+                    'route' => 'archive-repertory/download/files/$id',
                     'constraints' => [
-                                      'id' => '([^/]+)/(.*)',
+                        'id' => '([^/]+)/(.*)',
                     ],
                     'defaults' => [
-                                   '__NAMESPACE__' => 'ArchiveRepertory\Controller',
-                                   'controller' => 'Download',
-                                   'action' => 'files',
+                        '__NAMESPACE__' => 'ArchiveRepertory\Controller',
+                        'controller' => 'Download',
+                        'action' => 'files',
                     ],
                 ],
             ],
@@ -46,17 +45,17 @@ return [
     ],
     'view_manager' => [
         'template_path_stack' => [
-                                __DIR__ . '/../view/admin/',
+            __DIR__ . '/../view/admin/',
 
         ],
     ],
     'translator' => [
         'translation_file_patterns' => [
             [
-             'type' => 'gettext',
-             'base_dir' => __DIR__ . '/../language',
-             'pattern' => '%s.mo',
-             'text_domain' => null,
+                'type' => 'gettext',
+                'base_dir' => __DIR__ . '/../language',
+                'pattern' => '%s.mo',
+                'text_domain' => null,
             ],
         ],
     ],
