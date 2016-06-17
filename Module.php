@@ -101,18 +101,6 @@ class Module extends AbstractModule
 
 
     /**
-     * Upgrades the plugin.
-     */
-    public function upgrade($oldVersion, $newVersion,
-                            ServiceLocatorInterface $serviceLocator)
-    {
-        $oldVersion = $args['old_version'];
-        $newVersion = $args['new_version'];
-
-        require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'upgrade.php';
-    }
-
-    /**
      * Uninstalls the plugin.
      */
     public function uninstall(ServiceLocatorInterface $serviceLocator)
@@ -150,18 +138,6 @@ class Module extends AbstractModule
 
     }
 
-    /**
-     * Defines route for direct download count.
-     */
-    public function hookDefineRoutes($args)
-    {
-        // ".htaccess" always redirects direct downloads to a public url.
-        if (is_admin_theme()) {
-            return;
-        }
-
-        $args['router']->addConfig(new Zend_Config_Ini(dirname(__FILE__) . '/routes.ini', 'routes'));
-    }
 
     /**
      * Manages folders for attached files of items.
@@ -173,7 +149,7 @@ class Module extends AbstractModule
 
         $item = $this->entityApi()->find('Omeka\Entity\Item',$event->getParam('request')->getId());
 
-        $archiveFolder = $this->_getArchiveFolderName($item);
+        $archiveFolder = $this->_getItemFolderName($item);
 
         // Check if files are already attached and if they are at the right place.
         $files = $item->getMedia();
@@ -275,7 +251,7 @@ class Module extends AbstractModule
 
                 // Move file only if the name is a new one.
                 $item = $file->getItem();
-                $archiveFolder = $this->_getArchiveFolderName($item);
+                $archiveFolder = $this->_getItemFolderName($item);
                 $newFilename = $archiveFolder . $newFilename;
                 $newFilename = $this->checkExistingFile($newFilename);
 
@@ -315,7 +291,7 @@ class Module extends AbstractModule
 
         $file = $args['record'];
         $item = $file->getItem();
-        $archiveFolder = $this->_getArchiveFolderName($item);
+        $archiveFolder = $this->_getItemFolderName($item);
         $result = $this->_removeArchiveFolders($archiveFolder);
         return true;
     }
@@ -368,11 +344,6 @@ class Module extends AbstractModule
         }
     }
 
-
-    protected function _getArchiveFolderName($item)
-    {
-        return $this->_getItemFolderName($item);
-    }
 
 
     /**

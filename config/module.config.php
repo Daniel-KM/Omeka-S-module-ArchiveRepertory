@@ -7,7 +7,6 @@ return [
     ],
     'controllers' => [
         'invokables' => [
-            'ArchiveRepertory\Controller\DownloadController' => 'ArchiveRepertory\Controller\DownloadController',
         ],
     ],
     'local_dir'=> 'files',
@@ -23,24 +22,6 @@ return [
         'factories' => [
             'Omeka\File\ExternalStore' => 'ArchiveRepertory\Service\ExternalStoreFactory',
             'Omeka\File\Manager' => 'ArchiveRepertory\Service\FileArchiveManagerFactory',
-        ],
-    ],
-    'router' => [
-        'routes' => [
-            'my_route' => [
-                'type' => 'segment',
-                'options' => [
-                    'route' => 'archive-repertory/download/files/$id',
-                    'constraints' => [
-                        'id' => '([^/]+)/(.*)',
-                    ],
-                    'defaults' => [
-                        '__NAMESPACE__' => 'ArchiveRepertory\Controller',
-                        'controller' => 'Download',
-                        'action' => 'files',
-                    ],
-                ],
-            ],
         ],
     ],
     'view_manager' => [

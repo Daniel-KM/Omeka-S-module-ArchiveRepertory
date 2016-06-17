@@ -1,4 +1,5 @@
 <?php
+
 $form->prepare();
  echo $this->form()->openTag($form);
  ?>
@@ -84,7 +85,7 @@ $form->prepare();
     var fieldItemPrefix = document.getElementById("item-prefix");
     var fieldItemAscii = document.getElementById("item-ascii");
     dropItem.onclick = function() {
-        if (dropItem.value == "none" || dropItem.value == "id"){
+        if (dropItem.value == "none" || dropItem.value == "id"){
             fieldItemPrefix.style.display = "none";
             fieldItemAscii.style.display = "none";
         } else {

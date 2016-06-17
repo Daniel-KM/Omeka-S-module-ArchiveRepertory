@@ -7,7 +7,7 @@ use Omeka\Entity\Property;
 use Omeka\File\File;
 use Omeka\ArchiveRepertory\Module;
 use Omeka\Entity\Media;
-use Omeka\File\OmekaRenameUpload;
+use Omeka\File\OmekaRenameUpload as OmekaRenameUpload;
 use Omeka\File\ArchiveManager as ArchiveManager;
 class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
 {
@@ -36,7 +36,7 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
         if (!file_exists('tests/files'))
             mkdir('tests/files',0777);
 
-        OmekaRenameUpload::setFileWriter(new MockFileWriter());
+
 
         $this->connectAdminUser();
 
@@ -45,6 +45,7 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
         $this->setConfig();
         $manager->install($module);
 
+        OmekaRenameUpload::setFileWriter(new MockFileWriter());
         parent::setUp();
 
         $this->module= $this->getApplicationServiceLocator()->get('ModuleManager')->getModule('ArchiveRepertory');

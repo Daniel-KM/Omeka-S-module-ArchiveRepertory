@@ -1,23 +1,28 @@
 <?php
 namespace ArchiveRepertory\Form;
 
-use Omeka\Form\AbstractForm;
 use Omeka\Form\Element\ResourceSelect;
 use Omeka\Form\Element\Ckeditor;
 use Zend\Form\Element;
+use Zend\Form\Form;
 use ArchiveRepertory\Form\Element\PropertySelect;
+use Zend\ServiceManager\ServiceLocatorAwareTrait;
 use Zend\ServiceManager\ServiceLocatorInterface;
-class ConfigArchiveRepertoryForm extends AbstractForm {
+class ConfigArchiveRepertoryForm extends Form {
     protected $local_storage='';
     protected $allow_unicode=false;
-
+    protected $translator;
+    use ServiceLocatorAwareTrait;
 
     public function __construct(ServiceLocatorInterface $serviceLocator,
                                 $local_storage,$allow_unicode,
                                 $name = null, $options = []) {
         $this->local_storage=$local_storage;
         $this->allow_unicode=$allow_unicode;
-        parent::__construct($serviceLocator,$name,$options);
+        $this->setServiceLocator($serviceLocator);
+        parent::__construct($name, array_merge($this->options, $options));
+
+        $this->buildForm();
     }
 
     public function buildForm() {
@@ -126,6 +131,13 @@ class ConfigArchiveRepertoryForm extends AbstractForm {
         return $this->getServiceLocator()->get('Omeka\Settings')->get($name);
     }
 
+    public function getTranslator()
+    {
+        if (!$this->translator instanceof TranslatorInterface) {
+            $this->translator = $this->getServiceLocator()->get('MvcTranslator');
+        }
+        return $this->translator;
+    }
 
     protected function translate($args) {
         $serviceLocator = $this->getServiceLocator();
