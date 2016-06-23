@@ -24,7 +24,7 @@ class ExternalStoreFactory implements FactoryInterface
         $serverUrl = $viewHelpers->get('ServerUrl');
         $basePath = $viewHelpers->get('BasePath');
         $config = $serviceLocator->get('Config');
-        $localPath = OMEKA_PATH . '/'. $config['local_dir'];
+        $localPath = $config['local_dir'];
         $webPath = $serverUrl($basePath('files'));
         $fileStore = new LocalStore($localPath, $webPath, $logger);
         return $fileStore;

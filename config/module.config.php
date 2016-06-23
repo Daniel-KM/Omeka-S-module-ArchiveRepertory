@@ -9,7 +9,7 @@ return [
         'invokables' => [
         ],
     ],
-    'local_dir'=> 'files',
+    'local_dir'=> OMEKA_PATH.'/files',
     'media_ingesters' => [
         'factories' => [
             'upload'  => 'ArchiveRepertory\Service\MediaIngester\UploadFactory',

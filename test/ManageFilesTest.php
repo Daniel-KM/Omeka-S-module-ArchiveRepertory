@@ -7,8 +7,10 @@ use Omeka\Entity\Property;
 use Omeka\File\File;
 use Omeka\ArchiveRepertory\Module;
 use Omeka\Entity\Media;
-use Omeka\File\OmekaRenameUpload as OmekaRenameUpload;
 use Omeka\File\ArchiveManager as ArchiveManager;
+include __DIR__ . '/../src/File/OmekaRenameUpload.php';
+
+
 class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
 {
     protected $_pathsByType = array(
@@ -45,7 +47,7 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
         $this->setConfig();
         $manager->install($module);
 
-        OmekaRenameUpload::setFileWriter(new MockFileWriter());
+        \ArchiveRepertory\File\OmekaRenameUpload::setFileWriter(new MockFileWriter());
         parent::setUp();
 
         $this->module= $this->getApplicationServiceLocator()->get('ModuleManager')->getModule('ArchiveRepertory');
@@ -401,7 +403,6 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
 
 class MockFileWriter {
     public function moveUploadedFile($source,$destination) {
-        echo $destination;
         return copy($source, $destination);
     }
 

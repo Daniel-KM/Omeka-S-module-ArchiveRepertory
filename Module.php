@@ -81,7 +81,7 @@ class Module extends AbstractModule
      */
     public function install(ServiceLocatorInterface $serviceLocator) {
         $this->_installOptions($serviceLocator);
-
+        $config = $serviceLocator->get('Config');
     }
 
 
@@ -253,6 +253,7 @@ class Module extends AbstractModule
                 $item = $file->getItem();
                 $archiveFolder = $this->_getItemFolderName($item);
                 $newFilename = $archiveFolder . $newFilename;
+
                 $newFilename = $this->checkExistingFile($newFilename);
 
                 if ($file->filename != $newFilename) {
@@ -288,7 +289,6 @@ class Module extends AbstractModule
      */
     public function hookAfterDeleteFile($args)
     {
-
         $file = $args['record'];
         $item = $file->getItem();
         $archiveFolder = $this->_getItemFolderName($item);
@@ -399,8 +399,6 @@ class Module extends AbstractModule
      */
     protected function _getRecordFolderNameFromMetadata($record, $elementId, $prefix)
     {
-
-
         $identifier = $this->_getRecordIdentifiers($record, null, true);
         if ($identifier && $prefix) {
             $identifier = trim(substr($identifier, strlen($prefix)));
@@ -499,6 +497,9 @@ class Module extends AbstractModule
     protected function _getLocalStoragePath()
     {
         $config = $this->getServiceLocator()->get('Config');
+        if (!is_dir($config['local_dir']))
+            throw new  \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . 'local_dir is not configured properly in module.config.php, check if the repertory exists'.$config['local_dir']);
+
         return $config['local_dir'];
 
     }
@@ -692,7 +693,6 @@ class Module extends AbstractModule
         // Move the original file.
         $path = $this->_getFullArchivePath('original');
         $result = $this->_createArchiveFolders($newArchiveFolder, $path);
-
         $this->_moveFile($currentArchiveFilename, $newArchiveFilename, $path);
 
         // If any, move derivative files using Omeka API.
@@ -739,6 +739,7 @@ class Module extends AbstractModule
     {
 
         $realSource = $path . DIRECTORY_SEPARATOR . $source;
+        $realDestination = $path . DIRECTORY_SEPARATOR . $destination;
         if (!file_exists($realSource)) {
             $msg = $this->translate('Error during move of a file from "%s" to "%s" (local dir: "%s"): source does not exist.',
                                     $source, $destination, $path);
@@ -747,21 +748,8 @@ class Module extends AbstractModule
         $serviceLocator = $this->getServiceLocator();
         $result = null;
         try {
-            switch ($this->getOption('archive_repertory_move_process')) {
-                // Move file directly.
-                case 'direct':
-                    $realDestination = $path . DIRECTORY_SEPARATOR . $destination;
-                    $result = self::getFileWriter()->rename($realSource, $realDestination);
-                    break;
+            $result = self::getFileWriter()->rename($realSource, $realDestination);
 
-                    // Move the main original file using Omeka API.
-                case 'internal':
-                default:
-
-                    self::getFileWriter()->rename($source, $destination);
-                    $result = true;
-                    break;
-            }
         } catch (Omeka_Storage_Exception $e) {
             $msg = $serviceLocator->get('MvcTranslator')->translate('Error during move of a file from "%s" to "%s" (local dir: "%s").',
                                                                     $source, $destination, $path);
@@ -999,8 +987,6 @@ class Module extends AbstractModule
         if ($file = $event->getParam('request')->getFileData() == [])
             return '';
 
-        //      $request = $event->getParam('request')->setMetadata(['o:ingester'=>'bidon']);
-//        var_dump($event->getParam('request')->getValue('o:ingester')); exit;
     }
 
 

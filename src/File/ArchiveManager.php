@@ -32,7 +32,7 @@ class ArchiveManager extends Manager
 
     public function storeThumbnails(File $file) {
         $file->setStorageBaseName(str_replace('.'.$this->getExtension($file),'',$this->getStorageName($file)));
-        parent::storeThumbnails($file);
+        return parent::storeThumbnails($file);
     }
 
     protected function _getItemFolderName($item)
@@ -70,7 +70,6 @@ class ArchiveManager extends Manager
 
     public function getStoragePath($prefix, $name, $extension = null)
     {
-
         if ($this->media) {
             $prefix=($prefix ? $prefix.'/' : ''). ($this->_getItemFolderName($this->media->getItem()));
         }
