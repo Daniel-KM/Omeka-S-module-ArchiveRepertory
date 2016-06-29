@@ -6,7 +6,6 @@ use Omeka\Entity\Item;
 use Omeka\Entity\Media;
 use Omeka\Test\AbstractHttpControllerTestCase;
 
-include __DIR__ . '/../../src/File/OmekaRenameUpload.php';
 class ArchiveRepertoryAdminControllerTest extends AbstractHttpControllerTestCase
 {
     protected $site_test = true;
@@ -18,6 +17,7 @@ class ArchiveRepertoryAdminControllerTest extends AbstractHttpControllerTestCase
         $module = $manager->getModule('ArchiveRepertory');
         $manager->install($module);
         $this->setDefaultSettings();
+        \ArchiveRepertory\Media\Ingester\UploadAnywhere::setFileInput(new MockFileInput());
         \ArchiveRepertory\File\OmekaRenameUpload::setFileWriter(new MockFileWriter());
         \Omeka\File\Store\LocalStore::setFileWriter(new MockFileWriter());
         parent::setUp();
@@ -168,6 +168,13 @@ class MockFileWriter {
 
     public function mkdir($directory_name, $permissions='0777') {
         echo $directory_name;
+        return true;
+    }
+}
+
+
+class MockFileInput extends \Zend\InputFilter\FileInput {
+    public function isValid($context=null) {
         return true;
     }
 }

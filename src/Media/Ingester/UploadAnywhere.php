@@ -13,7 +13,7 @@ use Zend\View\Renderer\PhpRenderer;
 class UploadAnywhere extends Upload
 {
 
-
+    public static $fileInput=false;
 
     /**
      * {@inheritDoc}
@@ -43,12 +43,7 @@ class UploadAnywhere extends Upload
         $fileManager = $this->fileManager;
         $file = $fileManager->getTempFile();
 
-        $fileInput = new FileInput('file');
-        $fileInput->getFilterChain()->attach(new OmekaRenameUpload([
-            'target' => $file->getTempPath(),
-            'overwrite' => true
-        ]));
-
+        $fileInput=$this->getFileInput();
         $fileData = $fileData['file'][$index];
         $fileInput->setValue($fileData);
         if (!$fileInput->isValid()) {
@@ -72,6 +67,21 @@ class UploadAnywhere extends Upload
         if (!array_key_exists('o:source', $data)) {
             $media->setSource($fileData['name']);
         }
+    }
+
+    public static function setFileInput($fileInput) {
+        self::$fileInput=$fileInput;
+    }
+
+    protected function getFileInput() {
+        if (self::$fileInput)
+            return self::$fileInput;
+        $fileInput = new FileInput('file');
+        $fileInput->getFilterChain()->attach(new OmekaRenameUpload([
+            'target' => $file->getTempPath(),
+            'overwrite' => true
+        ]));
+        return $fileInput;
     }
 
     /**
