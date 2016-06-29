@@ -13,7 +13,6 @@ class ArchiveRepertoryAdminControllerTest extends AbstractHttpControllerTestCase
     protected $traceError = true;
     protected $item;
     public function setUp() {
-
         $this->connectAdminUser();
         $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
         $module = $manager->getModule('ArchiveRepertory');
@@ -23,7 +22,6 @@ class ArchiveRepertoryAdminControllerTest extends AbstractHttpControllerTestCase
         \Omeka\File\Store\LocalStore::setFileWriter(new MockFileWriter());
         parent::setUp();
         $this->connectAdminUser();
-
     }
 
     public function tearDown() {
@@ -31,16 +29,8 @@ class ArchiveRepertoryAdminControllerTest extends AbstractHttpControllerTestCase
         $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
         $module = $manager->getModule('ArchiveRepertory');
         $manager->uninstall($module);
-
     }
 
-
-    public function testTextAreaShouldBeDisplayOnConfigure()
-    {
-        $this->dispatch('/admin/module/configure?id=ArchiveRepertory');
-
-        $this->assertXPathQuery('//select[@id="archive_repertory_collection_folder"]');
-    }
 
     public function datas() {
         return [
@@ -62,10 +52,8 @@ class ArchiveRepertoryAdminControllerTest extends AbstractHttpControllerTestCase
      * @dataProvider datas
      */
     public function postConfigurationShouldBeSaved($name,$value) {
-
         $this->postDispatch('/admin/module/configure?id=ArchiveRepertory', [$name => $value]);
         $this->assertEquals($value,$this->getApplicationServiceLocator()->get('Omeka\Settings')->get($name));
-
     }
 
     protected function setDefaultSettings() {
@@ -93,10 +81,7 @@ class ArchiveRepertoryAdminControllerTest extends AbstractHttpControllerTestCase
 
     /** @test */
     public function postItemShouldMoveFileInAnotherDirectory() {
-
         $this->module= $this->getApplicationServiceLocator()->get('ModuleManager')->getModule('ArchiveRepertory');
-
-
         $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder',1);
         $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_file_keep_original_name','1');
         $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_prefix','prefix:');
@@ -156,13 +141,7 @@ class ArchiveRepertoryAdminControllerTest extends AbstractHttpControllerTestCase
         foreach ($this->getApplicationServiceLocator()->get('Omeka\EntityManager')->find('Omeka\Entity\Item',$this->item->getId())->getMedia() as $media) {
             $this->assertEquals('Other_modified_title/photo.png', $media->getFileName());
         }
-
-
-
     }
-
-
-
 }
 
 

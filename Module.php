@@ -1,4 +1,34 @@
 <?php
+/*
+ * Archive Repertory
+ *
+ * Keeps original names of files and put them in a hierarchical structure.
+ *
+ * Copyright BibLibre, 2016
+ *
+ * This software is governed by the CeCILL license under French law and abiding
+ * by the rules of distribution of free software.  You can use, modify and/ or
+ * redistribute the software under the terms of the CeCILL license as circulated
+ * by CEA, CNRS and INRIA at the following URL "http://www.cecill.info".
+ *
+ * As a counterpart to the access to the source code and rights to copy, modify
+ * and redistribute granted by the license, users are provided only with a
+ * limited warranty and the software's author, the holder of the economic
+ * rights, and the successive licensors have only limited liability.
+ *
+ * In this respect, the user's attention is drawn to the risks associated with
+ * loading, using, modifying and/or developing or reproducing the software by
+ * the user in light of its specific status of free software, that may mean that
+ * it is complicated to manipulate, and that also therefore means that it is
+ * reserved for developers and experienced professionals having in-depth
+ * computer knowledge. Users are therefore encouraged to load and test the
+ * software's suitability as regards their requirements in conditions enabling
+ * the security of their systems and/or data to be ensured and, more generally,
+ * to use and operate it in the same conditions as regards security.
+ *
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL license and that you accept its terms.
+ */
 namespace ArchiveRepertory;
 use Omeka\Module\AbstractModule;
 use Zend\ServiceManager\ServiceLocatorInterface;
@@ -7,26 +37,13 @@ use Zend\Mvc\Controller\AbstractController;
 use ArchiveRepertory\Form\ConfigArchiveRepertoryForm;
 use Zend\View\Model\ViewModel;
 use ArchiveRepertory\Service\FileArchiveManagerFactory;
-
 use Zend\EventManager\SharedEventManagerInterface;
 use Omeka\Event\Event;
 
-/**
- * Archive Repertory
- *
- * Keeps original names of files and put them in a hierarchical structure.
- *
- * @copyright Copyright Daniel Berthereau, 2012-2016
- * @license http://www.cecill.info/licences/Licence_CeCILL_V2.1-en.txt
- * @package ArchiveRepertory
- */
 
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'ArchiveRepertoryFunctions.php';
 
-/**
- * The Archive Repertory plugin.
- * @package Omeka\Plugins\ArchiveRepertory
- */
+
 class Module extends AbstractModule
 {
     use \Omeka\File\StaticFileWriterTrait;
@@ -56,12 +73,12 @@ class Module extends AbstractModule
      * @see application/models/File::_pathsByType()
      * @var array
      */
-    static private $_pathsByType = array(
-                                         'original' => 'original',
-                                         'fullsize' => 'large',
-                                         'thumbnail' => 'medium',
-                                         'square_thumbnails' => 'square',
-    );
+    static private $_pathsByType = [
+                                    'original' => 'original',
+                                    'fullsize' => 'large',
+                                    'thumbnail' => 'medium',
+                                    'square_thumbnails' => 'square'];
+
 
     /**
      * Derivative extension for each type of files/derivatives, used when a
@@ -76,9 +93,7 @@ class Module extends AbstractModule
      */
     private $_derivativeExtensionsByType = [];
 
-    /**
-     * Installs the plugin.
-     */
+
     public function install(ServiceLocatorInterface $serviceLocator) {
         $this->_installOptions($serviceLocator);
         $config = $serviceLocator->get('Config');
@@ -100,17 +115,12 @@ class Module extends AbstractModule
     }
 
 
-    /**
-     * Uninstalls the plugin.
-     */
     public function uninstall(ServiceLocatorInterface $serviceLocator)
     {
         $this->_uninstallOptions($serviceLocator);
     }
 
-    /**
-     * Shows plugin configuration page.
-     */
+
     public function getConfigForm(PhpRenderer $renderer)
     {
         $form = new ConfigArchiveRepertoryForm($this->getServiceLocator(),
@@ -144,9 +154,7 @@ class Module extends AbstractModule
      */
     public function afterSaveItem(\Zend\EventManager\Event $event)
     {
-
         $serviceLocator = $this->getServiceLocator();
-
         $item = $this->entityApi()->find('Omeka\Entity\Item',$event->getParam('request')->getId());
 
         $archiveFolder = $this->_getItemFolderName($item);
@@ -154,16 +162,12 @@ class Module extends AbstractModule
         // Check if files are already attached and if they are at the right place.
         $files = $item->getMedia();
         foreach ($files as $file) {
-            // Move file only if it is not in the right place.
-            // We don't use original filename here, because this is managed in
-            // hookAfterSaveFile() when the file is inserted. Here, the filename
-            // is already sanitized.
             $newFilename = $archiveFolder . '/'.basename_special($file->getFilename());
             if ($file->getFilename() != $newFilename) {
                 // Check if the original file exists, else this is an undetected
                 // error during the convert process.
                 $path = $this->_getFullArchivePath('original');
-                if (!file_exists($path . DIRECTORY_SEPARATOR . $file->getFilename())) {
+                if (!file_exists($this->concatWithSeparator($path, $file->getFilename()))) {
                     $msg = $this->translate('This file is not present in the original directory :'.$path.'/'.$file->getFilename());//, $file->original_filename);
                     $msg .= ' ' .$this->translate('There was an undetected error before storage, probably during the convert process.');
                     throw new \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . $msg);
@@ -188,113 +192,6 @@ class Module extends AbstractModule
         }
     }
 
-    /**
-     * Moves/renames an attached file just at the end of the save process.
-     *
-     * Original file name can be cleaned too (user can choose to keep base name
-     * only).
-     *
-     * If the name is a duplicate one, a suffix is added.
-     */
-    public function afterSaveFile(Event $event)
-    {
-
-        $serviceLocator = $this->getServiceLocator();
-        if ($file = $event->getParam('request')->getFileData() == [])
-            return '';
-
-        // Avoid multiple renames of a file.
-        static $processedFiles = [];
-
-        $post = $this->getServiceLocator()->getRequest()->getPost();
-
-
-        // Files can't be moved during insert, because has_derivative is set
-        // just after it. Of course, this can be bypassed, but we don't.
-        if (!$args['insert']) {
-            // Check stored file status.
-            if ($file->stored == 0) {
-                return;
-            }
-
-            // Check if file is processed.
-            if (isset($processedFiles[$file->id])) {
-                return;
-            }
-
-            // Check if file is a previous inserted file (check a value that
-            // does not exist in an already saved file).
-            if (!isset($file->_storage)) {
-                return;
-            }
-
-            // Check if main file is already in the archive folder.
-            if (!is_file($this->_getFullArchivePath('original') . DIRECTORY_SEPARATOR . $file->filename)) {
-                return;
-            }
-
-            // Memorize current filenames.
-            $file_filename = $file->filename;
-            $file_original_filename = $file->original_filename;
-
-            // Keep only basename of original filename in metadata if wanted.
-            if ($this->getOption('archive_repertory_file_base_original_name',$serviceLocator)) {
-                $file->original_filename = basename_special($file->original_filename);
-            }
-
-            // Rename file only if wanted and needed.
-            if ($this->getOption('archive_repertory_file_keep_original_name') === '1') {
-                // Get the new filename.
-                $newFilename = basename_special($file->original_filename);
-                $newFilename = $this->_sanitizeName($newFilename);
-                $newFilename = $this->_convertFilenameTo($newFilename, $this->getOption('archive_repertory_file_convert'));
-
-                // Move file only if the name is a new one.
-                $item = $file->getItem();
-                $archiveFolder = $this->_getItemFolderName($item);
-                $newFilename = $archiveFolder . $newFilename;
-
-                $newFilename = $this->checkExistingFile($newFilename);
-
-                if ($file->filename != $newFilename) {
-                    $result = $this->_moveFilesInArchiveSubfolders(
-                                                                   $file->filename,
-                                                                   $newFilename,
-                                                                   $this->_getDerivativeExtension($file));
-                    if (!$result) {
-                        $msg = $this->translate('Cannot move file inside archive directory.');
-                        throw new Omeka_Storage_Exception('[ArchiveRepertory] ' . $msg);
-                    }
-
-                    // Update filename.
-                    $file->filename = $newFilename;
-                }
-            }
-
-            $processedFiles[$file->id] = true;
-
-            // Update file only if needed. It uses normal hook, so this hook
-            // will be call one more time, but filenames will be already updated
-            // so there is no risk of infinite loop.
-            if ($file_filename != $file->filename
-                || $file_original_filename != $file->original_filename
-            ) {
-                $this->entityApi()->persist($file);
-            }
-        }
-    }
-
-    /**
-     * Manages deletion of the folder of a file when this file is removed.
-     */
-    public function hookAfterDeleteFile($args)
-    {
-        $file = $args['record'];
-        $item = $file->getItem();
-        $archiveFolder = $this->_getItemFolderName($item);
-        $result = $this->_removeArchiveFolders($archiveFolder);
-        return true;
-    }
 
     /**
      * Gets identifiers of a record (with prefix if any, and only them).
@@ -327,19 +224,16 @@ class Module extends AbstractModule
             case 'id':
                 return [(string) $record->getId()];
             default:
-                    //                    $itemr = $this->serviceLocator->get('Omeka\EntityManager')->getRepository('Omeka\Entity\Value')->findBy(['property' => $folder,
-                    //'resource' => $record->getId()]);
-                    foreach ($record->getValues() as $value) {
-                        if ($value->getProperty()->getId() != $folder)
-                            continue;
-                        //$value = new ValueRepresentation($valueEntity, $this->getServiceLocator());
-                        if ($prefix) {
-                            preg_match('/^'.$prefix.'(.*)/',$value->getValue(),$matches);
-                            if (isset($matches[1])) return trim($matches[1]);
-                            continue;
-                        }
-                        return $value->getValue();
+                foreach ($record->getValues() as $value) {
+                    if ($value->getProperty()->getId() != $folder)
+                        continue;
+                    if ($prefix) {
+                        preg_match('/^'.$prefix.'(.*)/',$value->getValue(),$matches);
+                        if (isset($matches[1])) return trim($matches[1]);
+                        continue;
                     }
+                    return $value->getValue();
+                }
                 return '';
         }
     }
@@ -356,7 +250,7 @@ class Module extends AbstractModule
     protected function _getItemFolderName($item)
     {
         $folder = $this->getOption('archive_repertory_item_folder');
-
+        xdebug_break();
         switch ($folder) {
             case 'id':
                 return (string) $item->getId() . DIRECTORY_SEPARATOR;
@@ -522,6 +416,24 @@ class Module extends AbstractModule
             : '';
     }
 
+
+    protected function concatWithSeparator($first_dir, $second_dir)
+    {
+        if (!$first_dir || $first_dir=='')
+            return $second_dir;
+        if (!$second_dir || $second_dir=='')
+            return $first_dir;
+        if (substr($first_dir,-1)==DIRECTORY_SEPARATOR)
+            $first_dir = substr($first_dir,0,-1);
+
+        if ($second_dir[0]==DIRECTORY_SEPARATOR)
+            $second_dir = substr($second_dir,1);
+
+        return $first_dir.DIRECTORY_SEPARATOR.$second_dir;
+
+    }
+
+
     /**
      * Get all archive folders with full paths, eventually with other derivative
      * folders. This function updates the derivative extensions too.
@@ -535,7 +447,7 @@ class Module extends AbstractModule
         if (empty($archivePaths)) {
             $storagePath = $this->_getLocalStoragePath();
             foreach (self::$_pathsByType as $name => $path) {
-                $archivePaths[$name] = $storagePath . DIRECTORY_SEPARATOR . $path;
+                $archivePaths[$name] = $this->concatWithSeparator($storagePath, $path);
             }
 
             $derivatives = explode(',', $this->getOption('archive_repertory_derivative_folders'));
@@ -551,7 +463,7 @@ class Module extends AbstractModule
                         $this->_derivativeExtensionsByType[$name] = $extension;
                     }
                 }
-                $path = realpath($storagePath . DIRECTORY_SEPARATOR . $name);
+                $path = realpath($this->concatWithSeparator($storagePath, $name));
                 if (!empty($name) && !empty($path) && $path != '/') {
                     $archivePaths[$name] = $path;
                 }
@@ -584,7 +496,7 @@ class Module extends AbstractModule
                 ? $this->_getFullArchivePaths()
                 : array($pathFolder);
             foreach ($folders as $path) {
-                $fullpath = $path . DIRECTORY_SEPARATOR . $archiveFolder;
+                $fullpath = $this->concatWithSeparator($path, $archiveFolder);
                 $result = $this->_createFolder($fullpath);
             }
         }
@@ -606,7 +518,7 @@ class Module extends AbstractModule
             && ($archiveFolder != '')
         ) {
             foreach ($this->_getFullArchivePaths() as $path) {
-                $folderPath = $path . DIRECTORY_SEPARATOR . $archiveFolder;
+                $folderPath = $this->concatWithSeparator($path, $archiveFolder);
                 if (realpath($path) != realpath($folderPath)) {
                     $this->_removeFolder($folderPath);
                 }
@@ -715,7 +627,7 @@ class Module extends AbstractModule
                 // Check if the derivative file exists or not to avoid some
                 // errors when moving.
 
-                if (file_exists($path . DIRECTORY_SEPARATOR . $currentDerivativeFilename)) {
+                if (file_exists($this->concatWithSeparator($path, $currentDerivativeFilename))) {
 
                     $this->_moveFile($currentDerivativeFilename, $newDerivativeFilename, $path);
                 }
@@ -738,8 +650,8 @@ class Module extends AbstractModule
     protected function _moveFile($source, $destination, $path)
     {
 
-        $realSource = $path . DIRECTORY_SEPARATOR . $source;
-        $realDestination = $path . DIRECTORY_SEPARATOR . $destination;
+        $realSource = $this->concatWithSeparator($path, $source);
+        $realDestination = $this->concatWithSeparator($path, $destination);
         if (!file_exists($realSource)) {
             $msg = $this->translate('Error during move of a file from "%s" to "%s" (local dir: "%s"): source does not exist.',
                                     $source, $destination, $path);
@@ -905,7 +817,7 @@ class Module extends AbstractModule
         $dirname = pathinfo($filename, PATHINFO_DIRNAME);
 
         // Get the real archive path.
-        $filepath = $this->_getFullArchivePath('original') . DIRECTORY_SEPARATOR . $filename;
+        $filepath = $this->concatWithSeparator($this->_getFullArchivePath('original'), $filename);
         $folder = pathinfo($filepath, PATHINFO_DIRNAME);
         $name = pathinfo($filepath, PATHINFO_FILENAME);
         $extension = pathinfo($filepath, PATHINFO_EXTENSION);
@@ -949,7 +861,7 @@ class Module extends AbstractModule
         }
 
         // File system check.
-        $filepath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $filename;
+        $filepath = $this->concatWithSeparator(sys_get_temp_dir(), $filename);
         if (!(touch($filepath) && file_exists($filepath))) {
             $result['fs'] = $this->translate('A file system error occurs when testing function "touch \'%s\'".', $filepath);
         }

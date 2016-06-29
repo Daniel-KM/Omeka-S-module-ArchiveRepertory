@@ -8,7 +8,7 @@ use Omeka\File\File;
 use Omeka\ArchiveRepertory\Module;
 use Omeka\Entity\Media;
 use Omeka\File\ArchiveManager as ArchiveManager;
-include __DIR__ . '/../src/File/OmekaRenameUpload.php';
+//include __DIR__ . '/../src/File/OmekaRenameUpload.php';
 
 
 class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
@@ -28,6 +28,9 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
     public function setConfig() {
         $config = include __DIR__ . '/../config/module.config.php';
         $config['local_dir']='tests/files';
+        $this->_storagePath=$config['local_dir'];
+        if (!is_dir('tests/files'))
+            mkdir('tests/files','0777',true);
         \ArchiveRepertory\Module::setConfig($config);
     }
 
@@ -46,7 +49,6 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
         $module = $manager->getModule('ArchiveRepertory');
         $this->setConfig();
         $manager->install($module);
-
         \ArchiveRepertory\File\OmekaRenameUpload::setFileWriter(new MockFileWriter());
         parent::setUp();
 
@@ -76,7 +78,6 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
 
     public function tearDown() {
         $this->connectAdminUser();
-
         $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
         $module = $manager->getModule('ArchiveRepertory');
         $manager->uninstall($module);
@@ -84,7 +85,6 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
     }
 
     public function getFileManager() {
-
         $fileData= file_get_contents($this->_fileUrl);
         $fileManager = $this->getApplicationServiceLocator()->get('Omeka\File\Manager');
 
@@ -109,7 +109,6 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
     public function testWithOptionNoKeepOriginalFileName() {
         $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_file_keep_original_name','false');
         $file = new File($this->_fileUrl);
-//        $file->setSourceName('originalname.png');
         $this->assertNotEquals('originalname.png', $this->getFileManager()->getStorageName($file));
 
     }
@@ -133,53 +132,17 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
 
     /** @test */
     public function testStorageBasePathWithItemNone() {
-
         $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','');
         $file = new File($this->_fileUrl);
         $file->setSourceName('image_test.png');
         $storageFilepath = DIRECTORY_SEPARATOR.pathinfo($this->_fileUrl, PATHINFO_BASENAME);
         $fileManager=$this->getFileManager();
+
         $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
 
     }
 
 
-    protected function createValue($id, $title,$item) {
-        $value = new Value;
-        $value->setProperty($this->getApplicationServiceLocator()->get('Omeka\EntityManager')->getRepository('Omeka\Entity\Property')->find($id));
-        $value->setResource($item);
-        $value->setValue($title);
-        $value->setType('literal');
-        $this->persistAndSave($value);
-        $this->persistAndSave($item);
-    }
-
-    /** @test */
-    public function testStorageBasePathWithSpecificField() {
-        $this->createValue(1,'My title ?',$this->item);
-        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','1');
-        $file = new File($this->_fileUrl);
-        $file->setSourceName('image_test.png');
-        $storageFilepath = 'My_title'.DIRECTORY_SEPARATOR.pathinfo($this->_fileUrl, PATHINFO_BASENAME);
-        $fileManager=$this->getFileManager();
-        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
-
-    }
-
-
-    /** @test */
-    public function testStorageBasePathWithPrefixSpecificField() {
-        $this->createValue(2,'My title ?',$this->item);
-        $this->createValue(2,'term:another title',$this->item);
-        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','2');
-        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_prefix','term:');
-        $file = new File($this->_fileUrl);
-        $file->setSourceName('image_test.png');
-        $storageFilepath = 'another_title'.DIRECTORY_SEPARATOR.pathinfo($this->_fileUrl, PATHINFO_BASENAME);
-        $fileManager=$this->getFileManager();
-        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
-
-    }
 
     protected function getUpload($name, $url) {
         $upload = new \Zend\Stdlib\Parameters([
@@ -272,6 +235,41 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
     }
 
 
+    /** @test */
+    public function testStorageBasePathWithSpecificField() {
+
+        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder',1);
+        $upload = $this->getUpload('image_test.png',$this->_fileUrl);
+
+        $item = $this->createMediaItem('My_title?',$upload);
+        $file = new File($this->_fileUrl);
+        $file->setSourceName('image_test.png');
+        $storageFilepath = 'My_title'.DIRECTORY_SEPARATOR.pathinfo($this->_fileUrl, PATHINFO_BASENAME);
+
+
+        $fileManager = $this->getApplicationServiceLocator()->get('Omeka\File\Manager');
+
+        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
+
+    }
+
+
+    /** @test */
+    public function testStorageBasePathWithIdDirectory() {
+
+        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','id');
+        $upload = $this->getUpload('image_uploaded.png',$this->_fileUrl);
+
+        $item = $this->createMediaItem('My_title?',$upload);
+        $file = new File($this->_fileUrl);
+        $storageFilepath = $item->getContent()->id().DIRECTORY_SEPARATOR.'image_uploaded.png';
+        $fileManager = $this->getApplicationServiceLocator()->get('Omeka\File\Manager');
+
+        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
+
+    }
+
+
     protected function postItem($item) {
         $this->postDispatch('/admin/item/'.$item->getContent()->id().'/edit', [
                                                                                'dcterms:identifier' => [
@@ -324,31 +322,24 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
                                'size'=>1,
                                'content' => file_get_contents($this->_fileUrl)]]];
         $api = $this->getApplicationServiceLocator()->get('Omeka\ApiManager');
+        $_fileUrl2 = dirname(dirname(__FILE__)).'/test/_files/image_test.save.png';
         $upload = $this->getUpload('photo.png',$this->_fileUrl);
-//        $item = $this->createMediaItem('Item 1',$upload);
+
+        $item = $this->createMediaItem('Item 1',$upload);
         $item2 = $this->createMediaItem('Item 1',$upload);
         $this->updateItem($item2->getContent()->id(),'Item 1',$upload,1);
 
         $files = $item2->getContent()->media();
-        foreach ($files as $file) {
-            echo $file->filename();
-//            $this->assertEquals('Item_1/photo.1.png',$file->filename());
-        }
+
         $fileManager = $this->getApplicationServiceLocator()->get('Omeka\File\Manager');
         $entityManager = $this->getApplicationServiceLocator()->get('Omeka\EntityManager');
 
 
-//       $this->createValue(2,'My title ?',$this->item);
-//       $this->createValue(2,'My title ?',$this->getApplicationServiceLocator()->get('Omeka\ApiAdapterManager')->get('items')->findEntity($item->getContent()->id()));
+        $file = new File($_fileUrl2);
 
-        $file = new File($this->_fileUrl);
-        $file->setSourceName('image_test.png');
-        $storageFilepath = 'My_title'.DIRECTORY_SEPARATOR.pathinfo($this->_fileUrl, PATHINFO_BASENAME);
+        $storageFilepath = 'Item_1/photo.png';
 
-
-//        $fileManager->setMedia($entityManager->find('Omeka\Entity\Media',($item->getContent()->primaryMedia()->id())));
-
-        //      $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
+        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
 
     }
 
@@ -393,7 +384,6 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
             $storageFilepath = $this->_storagePath . DIRECTORY_SEPARATOR.$path.DIRECTORY_SEPARATOR . $file->filename();
             if ($type != 'original')
                 $storageFilepath=str_replace('.png','.jpg',$storageFilepath);
-            echo "\npath=".$storageFilepath;
             $this->assertTrue(file_exists($storageFilepath));
         }
     }
@@ -405,6 +395,4 @@ class MockFileWriter {
     public function moveUploadedFile($source,$destination) {
         return copy($source, $destination);
     }
-
-
 }
