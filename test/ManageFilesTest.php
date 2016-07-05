@@ -10,6 +10,9 @@ use Omeka\Entity\Media;
 use Omeka\File\ArchiveManager as ArchiveManager;
 include_once __DIR__ . '/../src/Media/Ingester/UploadAnywhere.php';
 include_once __DIR__ . '/../src/File/OmekaRenameUpload.php';
+include_once __DIR__ . '/../src/File/ArchiveManager.php';
+include_once __DIR__ . '/../src/Service/FileArchiveManagerFactory.php';
+
 
 
 class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
@@ -28,21 +31,17 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
 
     public function setConfig() {
         $config = include __DIR__ . '/../config/module.config.php';
-        $config['local_dir']='tests/files';
+        $config['local_dir']=__DIR__;
         $this->_storagePath=$config['local_dir'];
-        if (!is_dir('tests/files'))
-            mkdir('tests/files','0777',true);
         \ArchiveRepertory\Module::setConfig($config);
+        $this->filewriter = new MockFileWriter();
+        \ArchiveRepertory\Module::setFileWriter($this->filewriter);
     }
 
 
     protected $_storagePath;
 
     public function setUp() {
-        if (!file_exists('tests/files'))
-            mkdir('tests/files',0777);
-
-
 
         $this->connectAdminUser();
 
@@ -50,7 +49,10 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
         $module = $manager->getModule('ArchiveRepertory');
         $this->setConfig();
         $manager->install($module);
-        \ArchiveRepertory\File\OmekaRenameUpload::setFileWriter(new MockFileWriter());
+        $this->mockFileManager= MockFileManager::class;
+        \ArchiveRepertory\File\OmekaRenameUpload::setFileWriter($this->filewriter);
+        \ArchiveRepertory\Service\FileArchiveManagerFactory::setFileManager($this->mockFileManager);
+        \Omeka\File\Store\LocalStore::setFileWriter($this->filewriter);
         \ArchiveRepertory\Media\Ingester\UploadAnywhere::setFileInput(new MockFileInput());
         parent::setUp();
 
@@ -59,8 +61,8 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
         $this->item = new Item;
         $this->persistAndSave($this->item);
         $this->connectAdminUser();
-        $this->_fileUrl = dirname(dirname(__FILE__)).'/test/_files/image_test.png';
 
+        $this->_fileUrl = dirname(dirname(__FILE__)).'/test/_files/image_test.png';
 
     }
 
@@ -83,7 +85,7 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
         $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
         $module = $manager->getModule('ArchiveRepertory');
         $manager->uninstall($module);
-        $this->rrmdir('tests/files');
+//        $this->rrmdir('tests/files');
     }
 
     public function getFileManager() {
@@ -310,58 +312,10 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
     {
         $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_file_keep_original_name','1');
         $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','1');
-        $_FILES['file'] = [['size' => 1000000,
-                            'name' => 'photo.png',
-                            'type' => 'image/png',
-                            'tmp_name' => $this->_fileUrl,
-                            'error' => 0]];
-        $files =  [
-                   'file' => [[
-                               'name'=> 'photo.png',
-                               'type'=> 'image/png',
-                               'tmp_name'=> $this->_fileUrl,
-                               'error'=> 0,
-                               'size'=>1,
-                               'content' => file_get_contents($this->_fileUrl)]]];
-        $api = $this->getApplicationServiceLocator()->get('Omeka\ApiManager');
-        $_fileUrl2 = dirname(dirname(__FILE__)).'/test/_files/image_test.save.png';
-        $upload = $this->getUpload('photo.png',$this->_fileUrl);
-
-        $item = $this->createMediaItem('Item 1',$upload);
-        $item2 = $this->createMediaItem('Item 1',$upload);
-        $this->updateItem($item2->getContent()->id(),'Item 1',$upload,1);
-
-        $files = $item2->getContent()->media();
-
-        $fileManager = $this->getApplicationServiceLocator()->get('Omeka\File\Manager');
-        $entityManager = $this->getApplicationServiceLocator()->get('Omeka\EntityManager');
-
-
-        $file = new File($_fileUrl2);
-
         $storageFilepath = 'Item_1/photo.png';
-
-        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
-
-    }
-
-    /**
-     * @test
-     */
-    public function testChangeIdentifier()
-    {
-        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_file_keep_original_name','1');
-        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','1');
-
-        $upload = $this->getUpload('photo.png',$this->_fileUrl);
-        $item = $this->createMediaItem('Item 1',$upload);
-
-        $this->updateItem($item->getContent()->id(), 'Autre essai', $upload);
-
-        $files = $item->getContent()->media();
-        foreach ($files as $file) {
-            $this->_checkFile($file);
-        }
+        $this->filewriter->addFile(dirname(dirname(__FILE__)).'/test/original/photo.png');
+        $this->filewriter->addFile(dirname(dirname(__FILE__)).'/test/original/photo.1.png');
+        $this->assertEquals('./photo.2.png',$this->module->checkExistingFile('photo.png'));
     }
 
 
@@ -386,7 +340,7 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
             $storageFilepath = $this->_storagePath . DIRECTORY_SEPARATOR.$path.DIRECTORY_SEPARATOR . $file->filename();
             if ($type != 'original')
                 $storageFilepath=str_replace('.png','.jpg',$storageFilepath);
-            $this->assertTrue(file_exists($storageFilepath));
+            $this->assertTrue($this->filewriter->fileExists($storageFilepath));
         }
     }
 
@@ -394,8 +348,47 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
 
 
 class MockFileWriter {
+    protected $files = [];
     public function moveUploadedFile($source,$destination) {
-        return copy($source, $destination);
+        array_diff($this->files,[$source]);
+        $this->files[]=$destination;
+        return true;
+    }
+    public function is_dir($path) {
+        return true;
+    }
+
+    public function addFile($path) {
+        $this->files[]=$path;
+    }
+
+    public function fileExists($path) {
+        if (in_array($path,$this->files))
+            return true;
+        return false;
+    }
+
+    public function is_writable($path) {
+        return true;
+    }
+    public function chmod($path, $permission) {
+        return true;
+    }
+
+    public function rename($path, $destination) {
+        array_diff($this->files,[$path]);
+        $this->files[]=$destination;
+        return true;
+    }
+
+    public function mkdir($directory_name, $permissions='0777') {
+        echo $directory_name;
+        return true;
+    }
+
+    public function glob($pattern, $flag=0) {
+        $file=str_replace('{.*,.,\,,}','.png',$pattern);
+        return $this->fileExists($file);
     }
 }
 
@@ -404,4 +397,13 @@ class MockFileInput extends \Zend\InputFilter\FileInput {
     public function isValid($context=null) {
         return true;
     }
+}
+
+
+class MockFileManager extends \ArchiveRepertory\File\ArchiveManager {
+    public function storeThumbnails(File $file) {
+        return true;
+    }
+
+
 }

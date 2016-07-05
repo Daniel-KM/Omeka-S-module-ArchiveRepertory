@@ -43,7 +43,7 @@ class UploadAnywhere extends Upload
         $fileManager = $this->fileManager;
         $file = $fileManager->getTempFile();
 
-        $fileInput=$this->getFileInput();
+        $fileInput=$this->getFileInput($file);
         $fileData = $fileData['file'][$index];
         $fileInput->setValue($fileData);
         if (!$fileInput->isValid()) {
@@ -58,6 +58,7 @@ class UploadAnywhere extends Upload
         $fileManager->setMedia($media);
         $file->setSourceName($fileData['name']);
         $hasThumbnails = $fileManager->storeThumbnails($file);
+
         $fileManager->storeOriginal($file);
         $media->setFilename($fileManager->getStoragePath('',$fileManager->getStorageName($file)));
         $media->setMediaType($file->getMediaType());
@@ -73,7 +74,7 @@ class UploadAnywhere extends Upload
         self::$fileInput=$fileInput;
     }
 
-    protected function getFileInput() {
+    protected function getFileInput($file) {
         if (self::$fileInput)
             return self::$fileInput;
         $fileInput = new FileInput('file');

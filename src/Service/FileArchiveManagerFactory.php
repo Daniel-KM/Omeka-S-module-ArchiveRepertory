@@ -9,6 +9,12 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 
 class FileArchiveManagerFactory implements FactoryInterface
 {
+    static $fileManager;
+
+    public static function setFileManager($fileManager) {
+        self::$fileManager=$fileManager;
+    }
+
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
         $config = $serviceLocator->get('Config');
@@ -70,6 +76,10 @@ class FileArchiveManagerFactory implements FactoryInterface
             throw new Exception\ConfigException('Missing temporary directory configuration');
         }
         $tempDir = $config['temp_dir'];
+
+        if (self::$fileManager)
+            return new self::$fileManager($config['file_manager'], $tempDir, $serviceLocator);
+
         return new FileManager($config['file_manager'], $tempDir, $serviceLocator);
     }
 }

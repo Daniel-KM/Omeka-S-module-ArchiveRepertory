@@ -32,6 +32,7 @@ class ArchiveManager extends Manager
 
     public function storeThumbnails(File $file) {
         $file->setStorageBaseName(str_replace('.'.$this->getExtension($file),'',$this->getStorageName($file)));
+
         return parent::storeThumbnails($file);
     }
 
@@ -80,7 +81,7 @@ class ArchiveManager extends Manager
     public function getStorageName(File $file)
     {
         if ($this->storageName)
-            return $this->storageName;
+                  return $this->storageName;
         $extension = $this->getExtension($file);
 
         if ($this->moduleObject->getOption('archive_repertory_file_keep_original_name') === '1')  {
@@ -105,9 +106,9 @@ class ArchiveManager extends Manager
         return $base . $fullExtension;
     }
 
-    protected function _getDerivativeExtension($file)
+    public function _getDerivativeExtension($file)
     {
-        return $file->has_derivative_image ? pathinfo($file->getDerivativeFilename(), PATHINFO_EXTENSION) : '';
+        return 'jpg';
     }
 
 

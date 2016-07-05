@@ -162,13 +162,13 @@ class Module extends AbstractModule
         // Check if files are already attached and if they are at the right place.
         $files = $item->getMedia();
         foreach ($files as $file) {
-            $newFilename = $archiveFolder . '/'.basename_special($file->getFilename());
+            $newFilename = $this->concatWithSeparator($archiveFolder,basename_special($file->getFilename()));
             if ($file->getFilename() != $newFilename) {
                 // Check if the original file exists, else this is an undetected
                 // error during the convert process.
                 $path = $this->_getFullArchivePath('original');
-                if (!file_exists($this->concatWithSeparator($path, $file->getFilename()))) {
-                    $msg = $this->translate('This file is not present in the original directory :'.$path.'/'.$file->getFilename());//, $file->original_filename);
+                if (!self::getFileWriter()->fileExists($this->concatWithSeparator($path, $file->getFilename()))) {
+                    $msg = $this->translate('This file is not present in the original directory :'.$path.'/'.$file->getFilename());
                     $msg .= ' ' .$this->translate('There was an undetected error before storage, probably during the convert process.');
                     throw new \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . $msg);
                 }
@@ -316,10 +316,10 @@ class Module extends AbstractModule
     protected function _createFolder($path)
     {
         if ($path != '') {
-            if (file_exists($path)) {
-                if (is_dir($path)) {
+            if (self::getFileWriter()->fileExists($path)) {
+                if (self::getFileWriter()->is_dir($path)) {
                     @chmod($path, 0755);
-                    if (is_writable($path)) {
+                    if (self::getFileWriter()->is_writable($path)) {
                         return true;
                     }
                     $msg = $this->translate('Error directory non writable: "%s".', $path);
@@ -391,7 +391,7 @@ class Module extends AbstractModule
     protected function _getLocalStoragePath()
     {
         $config = $this->getServiceLocator()->get('Config');
-        if (!is_dir($config['local_dir']))
+        if (!self::getFileWriter()->is_dir($config['local_dir']))
             throw new  \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . 'local_dir is not configured properly in module.config.php, check if the repertory exists'.$config['local_dir']);
 
         return $config['local_dir'];
@@ -558,11 +558,9 @@ class Module extends AbstractModule
      *   Extension used for derivative files (usually "jpg" for images).
      */
     protected function _getDerivativeExtension($file)
-    {return 'jpg';
+    {
         $filemanager = (new FileArchiveManagerFactory())->createService($this->getServiceLocator());
-        $filemanager->setMedia($file);
-        return         $filemanager->getStorageName($file);
-        return $file->has_derivative_image ? pathinfo($file->getDerivativeFilename(), PATHINFO_EXTENSION) : '';
+        return $filemanager->_getDerivativeExtension($file);
     }
 
     /**
@@ -614,6 +612,7 @@ class Module extends AbstractModule
                 if ($derivativeType == 'original') {
                     continue;
                 }
+
                 // We create a folder in any case, even if there isn't any file
                 // inside, in order to be fully compatible with any plugin that
                 // manages base filename only.
@@ -627,7 +626,7 @@ class Module extends AbstractModule
                 // Check if the derivative file exists or not to avoid some
                 // errors when moving.
 
-                if (file_exists($this->concatWithSeparator($path, $currentDerivativeFilename))) {
+                if (self::getFileWriter()->fileExists($this->concatWithSeparator($path, $currentDerivativeFilename))) {
 
                     $this->_moveFile($currentDerivativeFilename, $newDerivativeFilename, $path);
                 }
@@ -652,7 +651,7 @@ class Module extends AbstractModule
 
         $realSource = $this->concatWithSeparator($path, $source);
         $realDestination = $this->concatWithSeparator($path, $destination);
-        if (!file_exists($realSource)) {
+        if (!self::getFileWriter()->fileExists($realSource)) {
             $msg = $this->translate('Error during move of a file from "%s" to "%s" (local dir: "%s"): source does not exist.',
                                     $source, $destination, $path);
             throw new Omeka_Storage_Exception('[ArchiveRepertory] ' . $msg);
@@ -825,7 +824,7 @@ class Module extends AbstractModule
         // Check folder for file with any extension or without any extension.
         $checkName = $name;
         $i = 1;
-        while (glob($folder . DIRECTORY_SEPARATOR . $checkName . '{.*,.,\,,}', GLOB_BRACE)) {
+        while (self::getFileWriter()->glob($folder . DIRECTORY_SEPARATOR . $checkName . '{.*,.,\,,}', GLOB_BRACE)) {
             $checkName = $name . '.' . $i++;
         }
 
@@ -862,7 +861,7 @@ class Module extends AbstractModule
 
         // File system check.
         $filepath = $this->concatWithSeparator(sys_get_temp_dir(), $filename);
-        if (!(touch($filepath) && file_exists($filepath))) {
+        if (!(touch($filepath) && self::getFileWriter()->fileExists($filepath))) {
             $result['fs'] = $this->translate('A file system error occurs when testing function "touch \'%s\'".', $filepath);
         }
 
