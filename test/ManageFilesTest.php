@@ -8,16 +8,18 @@ use Omeka\File\File;
 use Omeka\ArchiveRepertory\Module;
 use Omeka\Entity\Media;
 use Omeka\File\ArchiveManager as ArchiveManager;
+include_once __DIR__ . '/../src/Media/Ingester/UploadAnywhere.php';
+include_once __DIR__ . '/../src/File/OmekaRenameUpload.php';
 
 
 class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
 {
-    protected $_pathsByType = array(
-                                    'original' => 'original',
-                                    'fullsize' => 'large',
-                                    'thumbnail' => 'medium',
-                                    'square_thumbnail' => 'square',
-    );
+    protected $_pathsByType = [
+                               'original' => 'original',
+                               'fullsize' => 'large',
+                               'thumbnail' => 'medium',
+                               'square_thumbnail' => 'square',
+    ];
 
 
     protected $_fileUrl;

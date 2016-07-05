@@ -5,7 +5,8 @@ namespace OmekaTest\Controller;
 use Omeka\Entity\Item;
 use Omeka\Entity\Media;
 use Omeka\Test\AbstractHttpControllerTestCase;
-
+include_once __DIR__ . '/../../src/Media/Ingester/UploadAnywhere.php';
+include_once __DIR__ . '/../../src/File/OmekaRenameUpload.php';
 class ArchiveRepertoryAdminControllerTest extends AbstractHttpControllerTestCase
 {
     protected $site_test = true;
