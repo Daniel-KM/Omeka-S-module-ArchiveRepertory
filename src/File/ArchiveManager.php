@@ -69,6 +69,11 @@ class ArchiveManager extends Manager
     }
 
 
+    public function getBasename($name)
+    {
+        return substr($name,0,strrpos($name, '.')) ? substr($name,0,strrpos($name, '.')): $name;
+    }
+
     public function getStoragePath($prefix, $name, $extension = null)
     {
         if ($this->media) {
