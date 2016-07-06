@@ -150,6 +150,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
 
         foreach ($this->getApplicationServiceLocator()->get('Omeka\EntityManager')->find('Omeka\Entity\Item',$this->item->getId())->getMedia() as $media) {
             $this->assertEquals('Other_modified_title/photo.png', $media->getFileName());
+            break;
         }
     }
 
@@ -247,6 +248,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
 
         foreach ($this->getApplicationServiceLocator()->get('Omeka\EntityManager')->find('Omeka\Entity\Item',$this->item->getId())->getMedia() as $media) {
             $this->assertEquals('My_modified_title/photo.png', $media->getFileName());
+            break;
         }
     }
 
@@ -256,7 +258,8 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
 
 class MockFileManager extends \ArchiveRepertory\File\ArchiveManager {
     public function storeThumbnails(File $file) {
-//        $file->setStorageBaseName(str_replace('.'.$this->getExtension($file),'',$this->getStorageName($file)));
+
+        $file->setStorageBaseName(str_replace('.'.$this->getExtension($file),'',$this->getStorageName($file)));
         return true;
     }
 

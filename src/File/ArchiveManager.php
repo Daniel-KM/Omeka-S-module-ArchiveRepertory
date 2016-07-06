@@ -13,7 +13,7 @@ class ArchiveManager extends Manager
 
     protected $media;
     protected $moduleObject = null;
-    protected $storageName = null;
+    protected $storageName = [];
     public function __construct(array $config, $tempDir, ServiceLocatorInterface $serviceLocator)
     {
         parent::__construct($config,$tempDir,$serviceLocator);
@@ -80,20 +80,22 @@ class ArchiveManager extends Manager
 
     public function getStorageName(File $file)
     {
-        if ($this->storageName)
-                  return $this->storageName;
+        $idfile=spl_object_hash($file);
+        if (isset($this->storageName[$idfile]))
+            return $this->storageName[$idfile];
+
         $extension = $this->getExtension($file);
 
         if ($this->moduleObject->getOption('archive_repertory_file_keep_original_name') === '1')  {
                 $path =$this->moduleObject->checkExistingFile($this->getStoragePath('',$file->getSourceName())) ;
-                return $this->storageName=pathinfo($path, PATHINFO_FILENAME).($extension ? ".$extension": '');
+                return $this->storageName[$idfile]=pathinfo($path, PATHINFO_FILENAME).($extension ? ".$extension": '');
 
         }
 
-        $this->storageName = sprintf('%s%s', $file->getStorageBaseName(),
+        $this->storageName[$idfile] = sprintf('%s%s', $file->getStorageBaseName(),
             $extension ? ".$extension" : null);
 
-        return $this->storageName;
+        return $this->storageName[$idfile];
     }
 
 
