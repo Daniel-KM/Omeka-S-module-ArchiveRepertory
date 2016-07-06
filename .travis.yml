@@ -19,6 +19,7 @@ install:
   - ant init
   - cd modules/ArchiveRepertory/
   - composer install
+  - cd ../..
 
 before_script:
   - mysql -e "create database IF NOT EXISTS omeka_test;" -uroot

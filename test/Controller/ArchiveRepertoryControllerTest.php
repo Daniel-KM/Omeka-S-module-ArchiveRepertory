@@ -29,7 +29,6 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         \ArchiveRepertory\Service\FileArchiveManagerFactory::setFileManager($this->mockFileManager);
         \ArchiveRepertory\Media\Ingester\UploadAnywhere::setFileInput(new MockFileInput());
         \OmekaTestHelper\File\Store\LocalStore::setFileWriter($this->filewriter);
-        \ArchiveRepertory\Media\Ingester\UploadAnywhere::setFileInput(new MockFileInput());
 
         parent::setUp();
         $this->loginAsAdmin();
@@ -257,7 +256,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
 
 class MockFileManager extends \ArchiveRepertory\File\ArchiveManager {
     public function storeThumbnails(File $file) {
-        $file->setStorageBaseName(str_replace('.'.$this->getExtension($file),'',$this->getStorageName($file)));
+//        $file->setStorageBaseName(str_replace('.'.$this->getExtension($file),'',$this->getStorageName($file)));
         return true;
     }
 
