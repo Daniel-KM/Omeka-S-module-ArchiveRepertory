@@ -50,7 +50,7 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
         $this->mockFileManager= MockFileManager::class;
         \ArchiveRepertory\File\OmekaRenameUpload::setFileWriter($this->filewriter);
         \ArchiveRepertory\Service\FileArchiveManagerFactory::setFileManager($this->mockFileManager);
-        \Omeka\File\Store\LocalStore::setFileWriter($this->filewriter);
+        \OmekaTestHelper\File\Store\LocalStore::setFileWriter($this->filewriter);
         \ArchiveRepertory\Media\Ingester\UploadAnywhere::setFileInput(new MockFileInput());
         parent::setUp();
 

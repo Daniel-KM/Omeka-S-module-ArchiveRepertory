@@ -2,7 +2,7 @@
 namespace ArchiveRepertory\Service;
 use Omeka\Service;
 
-use Omeka\File\Store\LocalStore;
+use OmekaTestHelper\File\Store\LocalStore;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 

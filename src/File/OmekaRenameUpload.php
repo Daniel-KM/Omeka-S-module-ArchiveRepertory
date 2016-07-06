@@ -1,6 +1,6 @@
 <?php
 namespace ArchiveRepertory\File;
-use Omeka\File\StaticFileWriterTrait;
+use OmekaTestHelper\File\StaticFileWriterTrait;
 use Zend\Filter\File\RenameUpload;
 use Zend\Filter\AbstractFilter;
 use Zend\Filter\Exception;

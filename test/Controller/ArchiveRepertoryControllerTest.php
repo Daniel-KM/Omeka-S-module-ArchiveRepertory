@@ -5,6 +5,7 @@ use Omeka\File\File;
 use Omeka\Entity\Item;
 use Omeka\Entity\Media;
 use OmekaTestHelper\File\MockFileWriter;
+use OmekaTestHelper\File\Store\LocalStore;
 use OmekaTestHelper\Controller\OmekaControllerTestCase;
 use Omeka\Test\AbstractHttpControllerTestCase;
 
@@ -17,6 +18,8 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $this->loginAsAdmin();
         $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
         $module = $manager->getModule('ArchiveRepertory');
+
+
         $manager->install($module);
         $this->setDefaultSettings();
         $this->mockFileManager= MockFileManager::class;
@@ -25,7 +28,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         \ArchiveRepertory\Module::setFileWriter($this->filewriter);
         \ArchiveRepertory\Service\FileArchiveManagerFactory::setFileManager($this->mockFileManager);
         \ArchiveRepertory\Media\Ingester\UploadAnywhere::setFileInput(new MockFileInput());
-        \Omeka\File\Store\LocalStore::setFileWriter($this->filewriter);
+        \OmekaTestHelper\File\Store\LocalStore::setFileWriter($this->filewriter);
         \ArchiveRepertory\Media\Ingester\UploadAnywhere::setFileInput(new MockFileInput());
 
         parent::setUp();

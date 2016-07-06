@@ -46,7 +46,7 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEP
 
 class Module extends AbstractModule
 {
-    use \Omeka\File\StaticFileWriterTrait;
+    use \OmekaTestHelper\File\StaticFileWriterTrait;
     /**
      * @var array This plugin's options.
      */

@@ -25,7 +25,7 @@ class FileArchiveManagerFactory implements FactoryInterface
         if (!isset($fileManager['store'])
             || !$serviceLocator->has($fileManager['store'])
         ) {
-            throw new Exception\ConfigException('Missing file store service');
+            throw new \Exception\ConfigException('Missing file store service');
         }
         if (!isset($fileManager['thumbnailer'])
             || !$serviceLocator->has($fileManager['thumbnailer'])

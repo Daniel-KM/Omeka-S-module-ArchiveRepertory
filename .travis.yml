@@ -17,6 +17,8 @@ install:
   - cp -a $(readlink -e $(cd -)) omeka-s/modules/ArchiveRepertory
   - cd omeka-s
   - ant init
+  - cd modules/ArchiveRepertory/
+  - composer.phar install
 
 before_script:
   - mysql -e "create database IF NOT EXISTS omeka_test;" -uroot
@@ -24,5 +26,6 @@ before_script:
   - sed -i 's/^user.*/user = "root"/' application/test/config/database.ini
   - sed -i 's/^dbname.*/dbname = "omeka_test"/' application/test/config/database.ini
   - cd modules/ArchiveRepertory/test
+
 
 script: phpunit
