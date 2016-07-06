@@ -6,6 +6,6 @@
         "psr-4": {
             "OmekaTest\\": "test/"
         }
-    },
+    }
 
 }
