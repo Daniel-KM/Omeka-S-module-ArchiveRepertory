@@ -39,7 +39,7 @@ use Zend\View\Model\ViewModel;
 use ArchiveRepertory\Service\FileArchiveManagerFactory;
 use Zend\EventManager\SharedEventManagerInterface;
 use Omeka\Event\Event;
-
+use Zend\Math\Rand;
 
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'ArchiveRepertoryFunctions.php';
 
@@ -147,7 +147,10 @@ class Module extends AbstractModule
         }
 
     }
-
+    public function filenameMatchingSourceName($media) {
+        return
+            strstr($media->getSource(),'.',true) == basename_special(strstr($media->getFilename(),'.',true));
+    }
 
     /**
      * Manages folders for attached files of items.
@@ -157,12 +160,26 @@ class Module extends AbstractModule
         $serviceLocator = $this->getServiceLocator();
         $item = $this->entityApi()->find('Omeka\Entity\Item',$event->getParam('request')->getId());
 
-        $archiveFolder = $this->_getItemFolderName($item);
+        $archiveFolder = $this->getItemFolderName($item);
 
         // Check if files are already attached and if they are at the right place.
         $files = $item->getMedia();
+
+        $filemanager = $serviceLocator->get('Omeka\File\Manager');
         foreach ($files as $file) {
+            if ($file->getIngester() != 'upload')
+                continue;
+            $filemanager->setMedia($file);
             $newFilename = $this->concatWithSeparator($archiveFolder,basename_special($file->getFilename()));
+            if (($this->getOption('archive_repertory_file_keep_original_name') === '1') &&
+                !$this->filenameMatchingSourceName($file)) {
+               $newFilename = $this->checkExistingFile($filemanager->getStoragePath('',$file->getSource())) ;
+            }
+            if (($this->getOption('archive_repertory_file_keep_original_name') !== '1') &&
+                $this->filenameMatchingSourceName($file)) {
+                $extension = pathinfo($file->getFilename(), PATHINFO_EXTENSION);
+                $newFilename= $this->concatWithSeparator($archiveFolder,bin2hex(Rand::getBytes(20))).'.'.$extension;
+            }
             if ($file->getFilename() != $newFilename) {
                 // Check if the original file exists, else this is an undetected
                 // error during the convert process.
@@ -247,13 +264,13 @@ class Module extends AbstractModule
      *
      * @return string Unique sanitized name of the item.
      */
-    protected function _getItemFolderName($item)
+    public function getItemFolderName($item)
     {
         $folder = $this->getOption('archive_repertory_item_folder');
-        xdebug_break();
+
         switch ($folder) {
             case 'id':
-                return (string) $item->getId() . DIRECTORY_SEPARATOR;
+                return (string) $item->getId();
             case 'none':
             case '':
                 return '';
@@ -265,7 +282,7 @@ class Module extends AbstractModule
                 );
         }
 
-        return $this->_convertFilenameTo($name, $this->getOption('archive_repertory_item_convert')) . DIRECTORY_SEPARATOR;
+        return $this->_convertFilenameTo($name, $this->getOption('archive_repertory_item_convert'));
     }
 
 
@@ -294,9 +311,7 @@ class Module extends AbstractModule
     protected function _getRecordFolderNameFromMetadata($record, $elementId, $prefix)
     {
         $identifier = $this->_getRecordIdentifiers($record, null, true);
-        if ($identifier && $prefix) {
-            $identifier = trim(substr($identifier, strlen($prefix)));
-        }
+
         return empty($identifier)
             ? (string) $record->getId()
             : $this->_sanitizeName($identifier);
@@ -329,7 +344,7 @@ class Module extends AbstractModule
                 throw new \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . $msg);
             }
 
-            if (!@mkdir($path, 0755, true)) {
+            if (!self::getFileWriter()->mkdir($path, 0755, true)) {
                 $msg = $this->translate('Error making directory: "%s".', $path);
                 throw new \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . $msg);
             }

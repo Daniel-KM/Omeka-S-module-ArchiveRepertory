@@ -76,8 +76,9 @@ class ArchiveManager extends Manager
 
     public function getStoragePath($prefix, $name, $extension = null)
     {
+        xdebug_break();
         if ($this->media) {
-            $prefix=($prefix ? $prefix.'/' : ''). ($this->_getItemFolderName($this->media->getItem()));
+            $prefix=($prefix ? $prefix.'/' : ''). ($this->moduleObject->getItemFolderName($this->media->getItem()));
         }
         return sprintf('%s/%s%s', $prefix, $name, $extension ? ".$extension" : null);
     }

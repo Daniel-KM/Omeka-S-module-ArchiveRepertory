@@ -236,7 +236,7 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
 
 
         $fileManager = $this->getApplicationServiceLocator()->get('Omeka\File\Manager');
-
+        xdebug_break();
         $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
 
     }
@@ -246,6 +246,7 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
     public function testStorageBasePathWithIdDirectory() {
 
         $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','id');
+        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_file_keep_original_name','1');
         $upload = $this->getUpload('image_uploaded.png',$this->_fileUrl);
 
         $item = $this->createMediaItem('My_title?',$upload);

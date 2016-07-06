@@ -7,10 +7,5 @@
             "OmekaTest\\": "test/"
         }
     },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/biblibre/omeka-s-test-helper.git"
-        }
-    ]
+
 }
