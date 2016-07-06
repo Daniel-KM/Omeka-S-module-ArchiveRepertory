@@ -232,7 +232,7 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
         $item = $this->createMediaItem('My_title?',$upload);
         $file = new File($this->_fileUrl);
         $file->setSourceName('image_test.png');
-        $storageFilepath = 'My_title'.DIRECTORY_SEPARATOR.pathinfo($this->_fileUrl, PATHINFO_BASENAME);
+        $storageFilepath = 'My_title/image_test.1.png';
 
 
         $fileManager = $this->getApplicationServiceLocator()->get('Omeka\File\Manager');
@@ -251,9 +251,10 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
 
         $item = $this->createMediaItem('My_title?',$upload);
         $file = new File($this->_fileUrl);
+        $file->setSourceName('image_uploaded.png');
         $storageFilepath = $item->getContent()->id().DIRECTORY_SEPARATOR.'image_uploaded.png';
         $fileManager = $this->getApplicationServiceLocator()->get('Omeka\File\Manager');
-
+        xdebug_break();
         $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
 
     }

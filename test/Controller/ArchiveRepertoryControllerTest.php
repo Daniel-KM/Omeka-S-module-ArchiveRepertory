@@ -263,7 +263,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
                                                               'tmp_name' => $this->_fileUrl2,
                                                               'size'=>1,
                                                               'error' => 0,
-                                                              'content' => file_get_contents($this->_fileUrl2)]
+                                                              'content' => file_get_contents($this->_fileUrl)]
 ]]);
         $this->getRequest()->setFiles($files);
 
