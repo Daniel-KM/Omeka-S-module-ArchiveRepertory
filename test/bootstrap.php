@@ -1,12 +1,11 @@
 <?php
-require __DIR__ . '/../../../bootstrap.php';
+require __DIR__ . '/../vendor/autoload.php';
+use OmekaTestHelper\Bootstrap;
+Bootstrap::bootstrap(__DIR__);
+include_once __DIR__ . '/../src/Media/Ingester/UploadAnywhere.php';
+include_once __DIR__ . '/../src/File/OmekaRenameUpload.php';
+include_once __DIR__ . '/../src/File/ArchiveManager.php';
+include_once __DIR__ . '/../src/Service/FileArchiveManagerFactory.php';
 
-//make sure error reporting is on for testing
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
-// Install a fresh database.
-file_put_contents('php://stdout', "Dropping test database schema...\n");
-\Omeka\Test\DbTestCase::dropSchema();
-file_put_contents('php://stdout', "Creating test database schema...\n");
-\Omeka\Test\DbTestCase::installSchema();
+Bootstrap::loginAsAdmin();

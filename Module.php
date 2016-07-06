@@ -323,15 +323,15 @@ class Module extends AbstractModule
                         return true;
                     }
                     $msg = $this->translate('Error directory non writable: "%s".', $path);
-                    throw new Omeka_Storage_Exception('[ArchiveRepertory] ' . $msg);
+                    throw new \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . $msg);
                 }
                 $msg = $this->translate('Failed to create folder "%s": a file with the same name exists...', $path);
-                throw new Omeka_Storage_Exception('[ArchiveRepertory] ' . $msg);
+                throw new \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . $msg);
             }
 
             if (!@mkdir($path, 0755, true)) {
                 $msg = $this->translate('Error making directory: "%s".', $path);
-                throw new Omeka_Storage_Exception('[ArchiveRepertory] ' . $msg);
+                throw new \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . $msg);
             }
             @chmod($path, 0755);
         }

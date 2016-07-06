@@ -4,19 +4,17 @@ namespace OmekaTest\Controller;
 use Omeka\File\File;
 use Omeka\Entity\Item;
 use Omeka\Entity\Media;
+use OmekaTestHelper\File\MockFileWriter;
+use OmekaTestHelper\Controller\OmekaControllerTestCase;
 use Omeka\Test\AbstractHttpControllerTestCase;
-include_once __DIR__ . '/../../src/Media/Ingester/UploadAnywhere.php';
-include_once __DIR__ . '/../../src/File/OmekaRenameUpload.php';
-include_once __DIR__ . '/../../src/File/ArchiveManager.php';
-include_once __DIR__ . '/../../src/Service/FileArchiveManagerFactory.php';
 
-class ArchiveRepertoryAdminControllerTest extends AbstractHttpControllerTestCase
+class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
 {
     protected $site_test = true;
     protected $traceError = true;
     protected $item;
     public function setUp() {
-        $this->connectAdminUser();
+        $this->loginAsAdmin();
         $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
         $module = $manager->getModule('ArchiveRepertory');
         $manager->install($module);
@@ -24,17 +22,18 @@ class ArchiveRepertoryAdminControllerTest extends AbstractHttpControllerTestCase
         $this->mockFileManager= MockFileManager::class;
         $this->filewriter = new MockFileWriter();
         \ArchiveRepertory\File\OmekaRenameUpload::setFileWriter($this->filewriter);
+        \ArchiveRepertory\Module::setFileWriter($this->filewriter);
         \ArchiveRepertory\Service\FileArchiveManagerFactory::setFileManager($this->mockFileManager);
         \ArchiveRepertory\Media\Ingester\UploadAnywhere::setFileInput(new MockFileInput());
         \Omeka\File\Store\LocalStore::setFileWriter($this->filewriter);
         \ArchiveRepertory\Media\Ingester\UploadAnywhere::setFileInput(new MockFileInput());
 
         parent::setUp();
-        $this->connectAdminUser();
+        $this->loginAsAdmin();
     }
 
     public function tearDown() {
-        $this->connectAdminUser();
+        $this->loginAsAdmin();
         $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
         $module = $manager->getModule('ArchiveRepertory');
         $manager->uninstall($module);
@@ -252,52 +251,6 @@ class ArchiveRepertoryAdminControllerTest extends AbstractHttpControllerTestCase
 
 }
 
-
-
-class MockFileWriter {
-    protected $files = [];
-    public function moveUploadedFile($source,$destination) {
-        array_diff($this->files,[$source]);
-        $this->files[]=$destination;
-        return true;
-    }
-    public function is_dir($path) {
-        return true;
-    }
-
-    public function addFile($path) {
-        $this->files[]=$path;
-    }
-
-    public function fileExists($path) {
-        if (in_array($path,$this->files))
-            return true;
-        return false;
-    }
-
-    public function is_writable($path) {
-        return true;
-    }
-    public function chmod($path, $permission) {
-        return true;
-    }
-
-    public function rename($path, $destination) {
-        array_diff($this->files,[$path]);
-        $this->files[]=$destination;
-        return true;
-    }
-
-    public function mkdir($directory_name, $permissions='0777') {
-        echo $directory_name;
-        return true;
-    }
-
-    public function glob($pattern, $flag=0) {
-        $file=str_replace('{.*,.,\,,}','.png',$pattern);
-        return $this->fileExists($file);
-    }
-}
 
 class MockFileManager extends \ArchiveRepertory\File\ArchiveManager {
     public function storeThumbnails(File $file) {

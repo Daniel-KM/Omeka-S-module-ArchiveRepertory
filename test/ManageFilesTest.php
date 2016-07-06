@@ -1,5 +1,7 @@
 <?php
 namespace OmekaTest;
+use OmekaTestHelper\File\MockFileWriter;
+use OmekaTestHelper\Controller\OmekaControllerTestCase;
 use Omeka\Test\AbstractHttpControllerTestCase;
 use Omeka\Entity\Item;
 use Omeka\Entity\Value;
@@ -8,14 +10,10 @@ use Omeka\File\File;
 use Omeka\ArchiveRepertory\Module;
 use Omeka\Entity\Media;
 use Omeka\File\ArchiveManager as ArchiveManager;
-include_once __DIR__ . '/../src/Media/Ingester/UploadAnywhere.php';
-include_once __DIR__ . '/../src/File/OmekaRenameUpload.php';
-include_once __DIR__ . '/../src/File/ArchiveManager.php';
-include_once __DIR__ . '/../src/Service/FileArchiveManagerFactory.php';
 
 
 
-class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
+class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
 {
     protected $_pathsByType = [
                                'original' => 'original',
@@ -43,7 +41,7 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
 
     public function setUp() {
 
-        $this->connectAdminUser();
+        $this->loginAsAdmin();
 
         $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
         $module = $manager->getModule('ArchiveRepertory');
@@ -60,32 +58,18 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
 
         $this->item = new Item;
         $this->persistAndSave($this->item);
-        $this->connectAdminUser();
+        $this->loginAsAdmin();
 
         $this->_fileUrl = dirname(dirname(__FILE__)).'/test/_files/image_test.png';
 
     }
 
 
-    protected function rrmdir($dir) {
-        if (is_dir($dir)) {
-            $objects = scandir($dir);
-            foreach ($objects as $object) {
-                if ($object != "."&& $object != "..") {
-                    if (filetype($dir."/".$object) == "dir") $this->rrmdir($dir."/".$object); else unlink($dir."/".$object);
-                }
-            }
-            reset($objects);
-            rmdir($dir);
-        }
-    }
-
     public function tearDown() {
-        $this->connectAdminUser();
+        $this->loginAsAdmin();
         $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
         $module = $manager->getModule('ArchiveRepertory');
         $manager->uninstall($module);
-//        $this->rrmdir('tests/files');
     }
 
     public function getFileManager() {
@@ -346,51 +330,6 @@ class ArchiveRepertory_ManageFilesTest extends AbstractHttpControllerTestCase
 
 }
 
-
-class MockFileWriter {
-    protected $files = [];
-    public function moveUploadedFile($source,$destination) {
-        array_diff($this->files,[$source]);
-        $this->files[]=$destination;
-        return true;
-    }
-    public function is_dir($path) {
-        return true;
-    }
-
-    public function addFile($path) {
-        $this->files[]=$path;
-    }
-
-    public function fileExists($path) {
-        if (in_array($path,$this->files))
-            return true;
-        return false;
-    }
-
-    public function is_writable($path) {
-        return true;
-    }
-    public function chmod($path, $permission) {
-        return true;
-    }
-
-    public function rename($path, $destination) {
-        array_diff($this->files,[$path]);
-        $this->files[]=$destination;
-        return true;
-    }
-
-    public function mkdir($directory_name, $permissions='0777') {
-        echo $directory_name;
-        return true;
-    }
-
-    public function glob($pattern, $flag=0) {
-        $file=str_replace('{.*,.,\,,}','.png',$pattern);
-        return $this->fileExists($file);
-    }
-}
 
 
 class MockFileInput extends \Zend\InputFilter\FileInput {
