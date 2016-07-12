@@ -319,7 +319,7 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
         $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','1');
         $storageFilepath = 'Item_1/photo.png';
         $this->filewriter->addFile(dirname(__DIR__).'/files/original/photo.png');
-        $this->filewriter->addFile(direname(__DIR__).'/files/original/photo.1.png');
+        $this->filewriter->addFile(dirname(__DIR__).'/files/original/photo.1.png');
         $this->assertEquals('./photo.2.png',$this->module->checkExistingFile('photo.png'));
     }
 
