@@ -29,7 +29,7 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
 
     public function setConfig() {
         $config = include __DIR__ . '/../config/module.config.php';
-        $config['local_dir']=dirname(__DIR__).'/files';
+        $config['local_dir']=OMEKA_PATH.'/files';
         $this->_storagePath=$config['local_dir'];
         \ArchiveRepertory\Module::setConfig($config);
         $this->filewriter = new MockFileWriter();
@@ -50,9 +50,8 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
         }
 
         $this->setConfig();
-        if ($module->getState() !== \Omeka\Module\Manager::STATE_ACTIVE) {
-            $manager->install($module);
-        }
+
+        $manager->install($module);
         $this->mockFileManager= MockFileManager::class;
         \ArchiveRepertory\File\OmekaRenameUpload::setFileWriter($this->filewriter);
         \ArchiveRepertory\Service\FileArchiveManagerFactory::setFileManager($this->mockFileManager);
