@@ -40,9 +40,12 @@ use ArchiveRepertory\Service\FileArchiveManagerFactory;
 use Zend\EventManager\SharedEventManagerInterface;
 use Omeka\Event\Event;
 use Zend\Math\Rand;
+use Zend\Mvc\MvcEvent;
+use Omeka\Mvc\Application;
 
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'ArchiveRepertoryFunctions.php';
 
+require __DIR__.'/vendor/autoload.php';
 
 class Module extends AbstractModule
 {
@@ -92,6 +95,12 @@ class Module extends AbstractModule
      * @var array
      */
     private $_derivativeExtensionsByType = [];
+
+    public function onBootstrap(MvcEvent $event)
+    {
+
+        parent::onBootstrap($event);
+    }
 
 
     public function install(ServiceLocatorInterface $serviceLocator) {

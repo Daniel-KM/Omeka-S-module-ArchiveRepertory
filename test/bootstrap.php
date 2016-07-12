@@ -9,3 +9,4 @@ include_once __DIR__ . '/../src/Service/FileArchiveManagerFactory.php';
 
 
 Bootstrap::loginAsAdmin();
+Bootstrap::enableModule('ArchiveRepertory');

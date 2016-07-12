@@ -45,8 +45,14 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
 
         $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
         $module = $manager->getModule('ArchiveRepertory');
+        if ($module->getState() == \Omeka\Module\Manager::STATE_ACTIVE) {
+            $manager->uninstall($module);
+        }
+
         $this->setConfig();
-        $manager->install($module);
+        if ($module->getState() !== \Omeka\Module\Manager::STATE_ACTIVE) {
+            $manager->install($module);
+        }
         $this->mockFileManager= MockFileManager::class;
         \ArchiveRepertory\File\OmekaRenameUpload::setFileWriter($this->filewriter);
         \ArchiveRepertory\Service\FileArchiveManagerFactory::setFileManager($this->mockFileManager);
