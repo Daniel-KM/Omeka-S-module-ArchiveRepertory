@@ -29,7 +29,7 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
 
     public function setConfig() {
         $config = include __DIR__ . '/../config/module.config.php';
-        $config['local_dir']=__DIR__;
+        $config['local_dir']=dirname(__DIR__).'/files';
         $this->_storagePath=$config['local_dir'];
         \ArchiveRepertory\Module::setConfig($config);
         $this->filewriter = new MockFileWriter();
@@ -73,9 +73,6 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
 
     public function tearDown() {
         $this->loginAsAdmin();
-        $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
-        $module = $manager->getModule('ArchiveRepertory');
-        $manager->uninstall($module);
     }
 
     public function getFileManager() {
@@ -321,8 +318,8 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
         $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_file_keep_original_name','1');
         $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','1');
         $storageFilepath = 'Item_1/photo.png';
-        $this->filewriter->addFile(dirname(dirname(__FILE__)).'/test/original/photo.png');
-        $this->filewriter->addFile(dirname(dirname(__FILE__)).'/test/original/photo.1.png');
+        $this->filewriter->addFile(dirname(__DIR__).'/files/original/photo.png');
+        $this->filewriter->addFile(direname(__DIR__).'/files/original/photo.1.png');
         $this->assertEquals('./photo.2.png',$this->module->checkExistingFile('photo.png'));
     }
 
