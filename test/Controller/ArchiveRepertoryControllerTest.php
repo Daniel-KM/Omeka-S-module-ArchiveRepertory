@@ -19,8 +19,9 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
         $module = $manager->getModule('ArchiveRepertory');
 
-
-        $manager->install($module);
+        if ($module->getState() !== \Omeka\Module\Manager::STATE_ACTIVE) {
+            $manager->install($module);
+        }
         $this->setDefaultSettings();
         $this->mockFileManager= MockFileManager::class;
         $this->filewriter = new MockFileWriter();
@@ -35,10 +36,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
     }
 
     public function tearDown() {
-        $this->loginAsAdmin();
-        $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
-        $module = $manager->getModule('ArchiveRepertory');
-        $manager->uninstall($module);
+
     }
 
 

@@ -227,25 +227,41 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
                                       ],$upload);
 
     }
+    protected function createUrlItem($title) {
+        $api = $this->getApplicationServiceLocator()->get('Omeka\ApiManager');
+        $media_url = 'http://farm8.staticflickr.com/7495/28077970085_4d976b3c96_z_d.jpg';
 
-
-    /** @test */
-    public function testStorageBasePathWithSpecificField() {
-
-        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder',1);
-        $upload = $this->getUpload('image_test.png',$this->_fileUrl);
-
-        $item = $this->createMediaItem('My_title?',$upload);
-        $file = new File($this->_fileUrl);
-        $file->setSourceName('image_test.png');
-        $storageFilepath = 'My_title/image_test.1.png';
-
-
-        $fileManager = $this->getApplicationServiceLocator()->get('Omeka\File\Manager');
-        xdebug_break();
-        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
+        return $api->create('items', [
+                                      'dcterms:identifier' => [
+                                                               [
+                                                                'type' => 'literal',
+                                                                'property_id' => '10',
+                                                                '@value' => 'item1',
+                                                               ],
+                                      ],
+                                      'dcterms:title' => [
+                                                          [
+                                                           'type' => 'literal',
+                                                           'property_id' => '1',
+                                                           '@value' => $title,
+                                                          ],
+                                      ],
+                                      'o:media' => [
+                                                    [
+                                                     'o:ingester' => 'url',
+                                                     'ingest_url' => $media_url,
+                                                     'dcterms:identifier' => [
+                                                                              [
+                                                                               'type' => 'literal',
+                                                                               'property_id' => 10,
+                                                                               '@value' => 'media1',
+                        ],
+                    ],
+                ],
+                                      ]]);
 
     }
+
 
 
     /** @test */
