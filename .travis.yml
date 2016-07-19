@@ -12,7 +12,7 @@ cache:
 
 install:
   - cd ../..
-  - git clone --depth 1 https://github.com/biblibre/omeka-s.git
+  - git clone --depth 1 https://github.com/omeka/omeka-s.git
   - cp -a $(readlink -e $(cd -)) omeka-s/modules/ArchiveRepertory
   - cd omeka-s
   - ant init
