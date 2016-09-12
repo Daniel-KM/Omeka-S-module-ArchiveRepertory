@@ -21,23 +21,20 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
                                'thumbnail' => 'medium',
                                'square_thumbnail' => 'square',
     ];
-
-
+    protected $fileStorageId;
+    protected $fileExtension;
     protected $_fileUrl;
+    protected $_storagePath;
     protected $module;
 
-
     public function setConfig() {
-        $config = include __DIR__ . '/../config/module.config.php';
+        $config = include __DIR__ . '/../../config/module.config.php';
         $config['local_dir']=OMEKA_PATH.'/files';
         $this->_storagePath=$config['local_dir'];
         \ArchiveRepertory\Module::setConfig($config);
         $this->filewriter = new MockFileWriter();
         \ArchiveRepertory\Module::setFileWriter($this->filewriter);
     }
-
-
-    protected $_storagePath;
 
     public function setUp() {
 
@@ -65,8 +62,9 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
         $this->persistAndSave($this->item);
         $this->loginAsAdmin();
 
-        $this->_fileUrl = dirname(dirname(__FILE__)).'/test/_files/image_test.png';
-
+        $this->fileStorageId = __DIR__ . '/_files/image_test';
+        $this->fileExtension = 'png';
+        $this->_fileUrl = $this->fileStorageId . '.' . $this->fileExtension;
     }
 
 
@@ -79,7 +77,8 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
         $fileManager = $this->getApplicationServiceLocator()->get('Omeka\File\Manager');
 
         $media = new Media;
-        $media->setFilename($this->_fileUrl);
+        $media->setStorageId($this->fileStorageId);
+        $media->setExtension($this->fileExtension);
         $media->setItem($this->item);
         $fileManager->setMedia($media);
         return $fileManager;
@@ -97,17 +96,18 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
 
     /** @test */
     public function testWithOptionNoKeepOriginalFileName() {
-        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_file_keep_original_name','false');
+        $settings = $this->getServiceLocator()->get('Omeka\Settings');
+        $settings->set('archive_repertory_file_keep_original_name', '0');
         $file = new File($this->_fileUrl);
         $this->assertNotEquals('originalname.png', $this->getFileManager()->getStorageName($file));
-
     }
 
 
 
     /** @test */
     public function testStorageBasePathWithItemId() {
-        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','id');
+        $settings = $this->getServiceLocator()->get('Omeka\Settings');
+        $settings->set('archive_repertory_item_folder', 'id');
         $file = new File($this->_fileUrl);
         $file->setSourceName('image_test.png');
         $storageFilepath = $this->item->getId()
@@ -115,17 +115,17 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
             . pathinfo($this->_fileUrl, PATHINFO_BASENAME);
         $fileManager=$this->getFileManager();
         $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
-
     }
 
 
 
     /** @test */
     public function testStorageBasePathWithItemNone() {
-        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','');
+        $settings = $this->getServiceLocator()->get('Omeka\Settings');
+        $settings->set('archive_repertory_item_folder', '');
         $file = new File($this->_fileUrl);
         $file->setSourceName('image_test.png');
-        $storageFilepath = DIRECTORY_SEPARATOR.pathinfo($this->_fileUrl, PATHINFO_BASENAME);
+        $storageFilepath = DIRECTORY_SEPARATOR . pathinfo($this->_fileUrl, PATHINFO_BASENAME);
         $fileManager=$this->getFileManager();
 
         $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
@@ -262,19 +262,17 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
 
     /** @test */
     public function testStorageBasePathWithIdDirectory() {
-
-        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','id');
-        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_file_keep_original_name','1');
-        $upload = $this->getUpload('image_uploaded.png',$this->_fileUrl);
+        $settings = $this->getServiceLocator()->get('Omeka\Settings');
+        $settings->set('archive_repertory_item_folder', 'id');
+        $settings->set('archive_repertory_file_keep_original_name', '1');
+        $upload = $this->getUpload('image_uploaded.png', $this->_fileUrl);
 
         $item = $this->createMediaItem('My_title?',$upload);
         $file = new File($this->_fileUrl);
         $file->setSourceName('image_uploaded.png');
         $storageFilepath = $item->getContent()->id().DIRECTORY_SEPARATOR.'image_uploaded.png';
-        $fileManager = $this->getApplicationServiceLocator()->get('Omeka\File\Manager');
-        xdebug_break();
+        $fileManager = $this->getServiceLocator()->get('Omeka\File\Manager');
         $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
-
     }
 
 
@@ -314,8 +312,9 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
      */
     public function testInsertDuplicateFile()
     {
-        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_file_keep_original_name','1');
-        $this->module->setOption($this->getApplicationServiceLocator(), 'archive_repertory_item_folder','1');
+        $settings = $this->getServiceLocator()->get('Omeka\Settings');
+        $settings->set('archive_repertory_file_keep_original_name', '1');
+        $settings->set('archive_repertory_item_folder', '1');
         $storageFilepath = 'Item_1/photo.png';
         $this->filewriter->addFile($this->_storagePath.'/original/photo.png');
         $this->filewriter->addFile($this->_storagePath.'/original/photo.1.png');

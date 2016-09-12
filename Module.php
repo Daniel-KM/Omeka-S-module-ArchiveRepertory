@@ -30,22 +30,22 @@
  * knowledge of the CeCILL license and that you accept its terms.
  */
 namespace ArchiveRepertory;
+
 use Omeka\Module\AbstractModule;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\View\Renderer\PhpRenderer;
 use Zend\Mvc\Controller\AbstractController;
-use ArchiveRepertory\Form\ConfigArchiveRepertoryForm;
+use ArchiveRepertory\Form\ConfigForm;
 use Zend\View\Model\ViewModel;
 use ArchiveRepertory\Service\FileArchiveManagerFactory;
 use Zend\EventManager\SharedEventManagerInterface;
 use Omeka\Event\Event;
 use Zend\Math\Rand;
 use Zend\Mvc\MvcEvent;
-use Omeka\Mvc\Application;
 
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'ArchiveRepertoryFunctions.php';
 
-require __DIR__.'/vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
 class Module extends AbstractModule
 {
@@ -69,7 +69,7 @@ class Module extends AbstractModule
 //                           'archive_repertory_download_max_free_download' => 30000000,
                            'archive_repertory_legal_text' => 'I agree with terms of use.'
     ];
-    static public  $config;
+    static public $config;
     /**
      * Default folder paths for each default type of files/derivatives.
      *
@@ -98,7 +98,6 @@ class Module extends AbstractModule
 
     public function onBootstrap(MvcEvent $event)
     {
-
         parent::onBootstrap($event);
     }
 
@@ -132,13 +131,11 @@ class Module extends AbstractModule
 
     public function getConfigForm(PhpRenderer $renderer)
     {
-        $form = new ConfigArchiveRepertoryForm($this->getServiceLocator(),
-                                               $this->_getLocalStoragePath(),
-                                               $this->_checkUnicodeInstallation());
-        return $renderer->render( 'plugins/archive-repertory-config-form',
-                                 [
-                                  'form' => $form
-                                 ]);
+        $forms = $this->getServiceLocator()->get('FormElementManager');
+        $form = $forms->get(ConfigForm::class);
+        return $renderer->render('plugins/archive-repertory-config-form', [
+            'form' => $form,
+        ]);
     }
 
     /**
@@ -157,8 +154,15 @@ class Module extends AbstractModule
 
     }
     public function filenameMatchingSourceName($media) {
-        return
-            strstr($media->getSource(),'.',true) == basename_special(strstr($media->getFilename(),'.',true));
+        $source = $media->getSource();
+        $sourceBasename = pathinfo($source, PATHINFO_FILENAME);
+        $filename = $media->getFilename();
+        $filenameBasename = pathinfo($filename, PATHINFO_FILENAME);
+
+        $sourceBasename = preg_replace('/\.\d+$/', '', $sourceBasename);
+        $filenameBasename = preg_replace('/\.\d+$/', '', $filenameBasename);
+
+        return $sourceBasename == $filenameBasename;
     }
 
     /**
@@ -175,19 +179,22 @@ class Module extends AbstractModule
         $files = $item->getMedia();
 
         $filemanager = $serviceLocator->get('Omeka\File\Manager');
+        $keep_original_name = $this->getOption('archive_repertory_file_keep_original_name');
         foreach ($files as $file) {
             if ($file->getIngester() != 'upload')
                 continue;
+
             $filemanager->setMedia($file);
             $newFilename = $this->concatWithSeparator($archiveFolder,basename_special($file->getFilename()));
-            if (($this->getOption('archive_repertory_file_keep_original_name') === '1') &&
-                !$this->filenameMatchingSourceName($file)) {
-               $newFilename = $this->checkExistingFile($filemanager->getStoragePath('',$file->getSource())) ;
-            }
-            if (($this->getOption('archive_repertory_file_keep_original_name') !== '1') &&
-                $this->filenameMatchingSourceName($file)) {
-                $extension = pathinfo($file->getFilename(), PATHINFO_EXTENSION);
-                $newFilename= $this->concatWithSeparator($archiveFolder,bin2hex(Rand::getBytes(20))).'.'.$extension;
+            if ($keep_original_name === '1') {
+                if (!$this->filenameMatchingSourceName($file)) {
+                    $newFilename = $this->checkExistingFile($filemanager->getStoragePath('',$file->getSource())) ;
+                }
+            } else {
+                if ($this->filenameMatchingSourceName($file)) {
+                    $extension = pathinfo($file->getFilename(), PATHINFO_EXTENSION);
+                    $newFilename = $this->concatWithSeparator($archiveFolder,bin2hex(Rand::getBytes(20))).'.'.$extension;
+                }
             }
             if ($file->getFilename() != $newFilename) {
                 // Check if the original file exists, else this is an undetected
@@ -209,7 +216,9 @@ class Module extends AbstractModule
                 }
 
                 // Update file in Omeka database immediately for each file.
-                $file->setFilename($newFilename);
+                $pathParts = pathinfo($newFilename);
+                $file->setStorageId($pathParts['dirname'] . DIRECTORY_SEPARATOR . $pathParts['filename']);
+                $file->setExtension($pathParts['extension']);
                 // As it's not a file hook, the file is not automatically saved.
                 $em= $this->getServiceLocator()->get('Omeka\EntityManager');
                 $em->persist($file);
@@ -583,8 +592,8 @@ class Module extends AbstractModule
      */
     protected function _getDerivativeExtension($file)
     {
-        $filemanager = (new FileArchiveManagerFactory())->createService($this->getServiceLocator());
-        return $filemanager->_getDerivativeExtension($file);
+        $fileManager = $this->getServiceLocator()->get('Omeka\File\Manager');
+        return $fileManager->_getDerivativeExtension($file);
     }
 
     /**
@@ -835,7 +844,6 @@ class Module extends AbstractModule
      */
     public function checkExistingFile($filename)
     {
-
         // Get the partial path.
         $dirname = pathinfo($filename, PATHINFO_DIRNAME);
 
@@ -855,41 +863,6 @@ class Module extends AbstractModule
         return ($dirname ? $dirname . DIRECTORY_SEPARATOR : '')
             . $checkName
             . ($extension ? '.' . $extension : '');
-    }
-
-    /**
-     * Checks if all the system (server + php + web environment) allows to
-     * manage Unicode filename securely.
-     *
-     * @internal This function simply checks the true result of functions
-     * escapeshellarg() and touch with a non Ascii filename.
-     *
-     * @return array of issues.
-     */
-    protected function _checkUnicodeInstallation()
-    {
-        $result = [];
-
-        // First character check.
-        $filename = 'éfilé.jpg';
-        if (basename($filename) != $filename) {
-            $result['ascii'] = $this->translate('An error occurs when testing function "basename(\'%s\')".', $filename);
-        }
-
-        // Command line via web check (comparaison with a trivial function).
-        $filename = "File~1 -À-é-ï-ô-ů-ȳ-Ø-ß-ñ-Ч-Ł-'.Test.png";
-
-        if (escapeshellarg($filename) != escapeshellarg_special($filename)) {
-            $result['cli'] = $this->translate('An error occurs when testing function "escapeshellarg(\'%s\')".', $filename);
-        }
-
-        // File system check.
-        $filepath = $this->concatWithSeparator(sys_get_temp_dir(), $filename);
-        if (!(touch($filepath) && self::getFileWriter()->fileExists($filepath))) {
-            $result['fs'] = $this->translate('A file system error occurs when testing function "touch \'%s\'".', $filepath);
-        }
-
-        return $result;
     }
 
     public function setOption($serviceLocator,$name,$value) {
@@ -915,20 +888,7 @@ class Module extends AbstractModule
         return $serviceLocator->get('MvcTranslator')->translate($string,$options);
     }
 
-
-    public function hydrateMedia(Event $event) {
-        $serviceLocator = $this->getServiceLocator();
-
-        if ($file = $event->getParam('request')->getFileData() == [])
-            return '';
-
-    }
-
-
     public function attachListeners(SharedEventManagerInterface $sharedEventManager) {
-       $sharedEventManager->attach('Omeka\Api\Adapter\MediaAdapter',
-                                    'api.hydrate.pre', [ $this, 'hydrateMedia' ]);
-
         $sharedEventManager->attach('Omeka\Api\Adapter\ItemAdapter',
                                     'api.update.post', [ $this, 'afterSaveItem' ]);
 

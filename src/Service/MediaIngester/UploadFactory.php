@@ -1,9 +1,9 @@
 <?php
 namespace ArchiveRepertory\Service\MediaIngester;
 
+use Interop\Container\ContainerInterface;
+use Zend\ServiceManager\Factory\FactoryInterface;
 use ArchiveRepertory\Media\Ingester\UploadAnywhere;
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
 
 class UploadFactory implements FactoryInterface
 {
@@ -13,10 +13,9 @@ class UploadFactory implements FactoryInterface
      * @param ServiceLocatorInterface $mediaIngesterServiceLocator
      * @return Upload
      */
-    public function createService(ServiceLocatorInterface $mediaIngesterServiceLocator)
+    public function __invoke(ContainerInterface $services, $requestedName, array $options = null)
     {
-        $serviceLocator = $mediaIngesterServiceLocator->getServiceLocator();
-        $fileManager = $serviceLocator->get('Omeka\File\Manager');
+        $fileManager = $services->get('Omeka\File\Manager');
         return new UploadAnywhere($fileManager);
     }
 }

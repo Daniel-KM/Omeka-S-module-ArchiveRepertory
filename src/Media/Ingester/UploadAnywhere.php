@@ -60,7 +60,7 @@ class UploadAnywhere extends Upload
         $hasThumbnails = $fileManager->storeThumbnails($file);
 
         $fileManager->storeOriginal($file);
-        $media->setFilename($fileManager->getStoragePath('',$fileManager->getStorageName($file)));
+        $media->setStorageId($fileManager->getStoragePath('',$fileManager->getStorageName($file)));
         $media->setMediaType($file->getMediaType());
         $media->setHasThumbnails($hasThumbnails);
         $media->setHasOriginal(true);

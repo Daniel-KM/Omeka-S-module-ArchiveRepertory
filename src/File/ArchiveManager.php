@@ -31,7 +31,9 @@ class ArchiveManager extends Manager
 
 
     public function storeThumbnails(File $file) {
-        $file->setStorageBaseName(str_replace('.'.$this->getExtension($file),'',$this->getStorageName($file)));
+        $extension = $this->getExtension($file);
+        $storageName = $this->getStorageName($file);
+        $file->setStorageId(str_replace(".$extension", '', $storageName));
 
         return parent::storeThumbnails($file);
     }
@@ -76,7 +78,6 @@ class ArchiveManager extends Manager
 
     public function getStoragePath($prefix, $name, $extension = null)
     {
-        xdebug_break();
         if ($this->media) {
             $prefix=($prefix ? $prefix.'/' : ''). ($this->moduleObject->getItemFolderName($this->media->getItem()));
         }
@@ -98,7 +99,7 @@ class ArchiveManager extends Manager
 
         }
 
-        $this->storageName[$idfile] = sprintf('%s%s', $file->getStorageBaseName(),
+        $this->storageName[$idfile] = sprintf('%s%s', $file->getStorageId(),
             $extension ? ".$extension" : null);
 
         return $this->storageName[$idfile];

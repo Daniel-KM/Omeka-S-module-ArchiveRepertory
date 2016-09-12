@@ -2,8 +2,8 @@
 
 <phpunit bootstrap="./bootstrap.php" colors="true" backupGlobals="false">
     <testsuites>
-        <testsuite name="OmekaTest">
-            <directory>.</directory>
+        <testsuite name="ArchiveRepertoryTest">
+            <directory>./ArchiveRepertoryTest</directory>
         </testsuite>
     </testsuites>
 </phpunit>

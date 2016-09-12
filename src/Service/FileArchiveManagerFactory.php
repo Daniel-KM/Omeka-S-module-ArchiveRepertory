@@ -3,32 +3,32 @@
 namespace ArchiveRepertory\Service;
 use Omeka\Service;
 
+use Interop\Container\ContainerInterface;
+use Zend\ServiceManager\Factory\FactoryInterface;
 use ArchiveRepertory\File\ArchiveManager as FileManager;
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
 
 class FileArchiveManagerFactory implements FactoryInterface
 {
     static $fileManager;
 
     public static function setFileManager($fileManager) {
-        self::$fileManager=$fileManager;
+        self::$fileManager = $fileManager;
     }
 
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $services, $requestedName, array $options = null)
     {
-        $config = $serviceLocator->get('Config');
+        $config = $services->get('Config');
         if (!isset($config['file_manager'])) {
             throw new Exception\ConfigException('Missing file manager configuration');
         }
         $fileManager = $config['file_manager'];
         if (!isset($fileManager['store'])
-            || !$serviceLocator->has($fileManager['store'])
+            || !$services->has($fileManager['store'])
         ) {
             throw new \Exception\ConfigException('Missing file store service');
         }
         if (!isset($fileManager['thumbnailer'])
-            || !$serviceLocator->has($fileManager['thumbnailer'])
+            || !$services->has($fileManager['thumbnailer'])
         ) {
             throw new Exception\ConfigException('Missing thumbnailer service');
         }
@@ -78,8 +78,8 @@ class FileArchiveManagerFactory implements FactoryInterface
         $tempDir = $config['temp_dir'];
 
         if (self::$fileManager)
-            return new self::$fileManager($config['file_manager'], $tempDir, $serviceLocator);
+            return new self::$fileManager($config['file_manager'], $tempDir, $services);
 
-        return new FileManager($config['file_manager'], $tempDir, $serviceLocator);
+        return new FileManager($config['file_manager'], $tempDir, $services);
     }
 }

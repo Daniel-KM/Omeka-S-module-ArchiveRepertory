@@ -7,7 +7,7 @@ $form->prepare();
 <?php
 
     echo $this->translate('"Archive Repertory" plugin allows to save files in a hierarchical structure and to keep original name of files.') . '<br />';
-    echo $this->translate('See %s for more information.', '<a href="https://github.com/Daniel-KM/ArchiveRepertory">ReadMe</a>') . '<br />';
+    echo sprintf($this->translate('See %s for more information.'), '<a href="https://github.com/Daniel-KM/ArchiveRepertory">ReadMe</a>') . '<br />';
     echo '<br />';
     echo $this->translate('When all options are set, files will be saved in "files / original / item_identifier / original_filename.ext" instead of "files / original / hashed_filename.ext".') . '<br />';
     echo '<p><strong>' . $this->translate('Warning') . '</strong></p>';
@@ -16,8 +16,9 @@ $form->prepare();
     echo '<li>' . $this->translate('Nevertheless, when an item is updated, attached files will follow the current settings, so all files of a record will move and stay together inside the same folder.') . '</li>';
     echo '<li>' . $this->translate('Currently, no check is done on the name of folders, either for items. No files will be lost if two folders have the same name, but files attached to a record will be mixed in this folder.') . '</li>';
     echo '</ul>';
-    echo $this->translate('Omeka works fine with filenames with Unicode characters ("é", "ñ", "Å"...). In case of issues, see %s.', '<a href="https://github.com/Daniel-KM/ArchiveRepertory">ReadMe</a>');
+    echo sprintf($this->translate('Omeka works fine with filenames with Unicode characters ("é", "ñ", "Å"...). In case of issues, see %s.'), '<a href="https://github.com/Daniel-KM/ArchiveRepertory">ReadMe</a>');
     echo ' ' . $this->translate('If this is not the case, filenames should use only Ascii characters.') . '<br />';
+    $allow_unicode = checkUnicodeInstallation();
     if (empty($allow_unicode)) {
         echo '<p>' . $this->translate('This server is compatible with Unicode.') . '</p>';
     }

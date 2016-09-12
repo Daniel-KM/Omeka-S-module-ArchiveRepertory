@@ -1,12 +1,9 @@
 <?php
 return [
-    'forms' => [
-        'invokables' => [
-            'ArchiveRepertory\Form\ConfigArchiveRepertoryForm' => 'ArchiveRepertory\Form\ConfigArchiveRepertoryForm',
-        ],
-    ],
-    'controllers' => [
-        'invokables' => [
+    'form_elements' => [
+        'factories' => [
+            'ArchiveRepertory\Form\ConfigForm' => 'ArchiveRepertory\Service\Form\ConfigFormFactory',
+            'ArchiveRepertory\Form\Element\PropertySelect' => 'ArchiveRepertory\Service\Form\Element\PropertySelectFactory',
         ],
     ],
     'local_dir'=> OMEKA_PATH.'/files',

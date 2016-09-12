@@ -5,30 +5,34 @@ use Omeka\Form\Element\ResourceSelect;
 use Omeka\Form\Element\Ckeditor;
 use Zend\Form\Element;
 use Zend\Form\Form;
-use ArchiveRepertory\Form\Element\PropertySelect;
-use Zend\ServiceManager\ServiceLocatorAwareTrait;
-use Zend\ServiceManager\ServiceLocatorInterface;
-class ConfigArchiveRepertoryForm extends Form {
-    protected $local_storage='';
-    protected $allow_unicode=false;
-    protected $translator;
-    use ServiceLocatorAwareTrait;
+use Zend\I18n\Translator\TranslatorAwareInterface;
+use Zend\I18n\Translator\TranslatorAwareTrait;
+use Omeka\Form\Element\PropertySelect;
 
-    public function __construct(ServiceLocatorInterface $serviceLocator,
-                                $local_storage,$allow_unicode,
-                                $name = null, $options = []) {
-        $this->local_storage=$local_storage;
-        $this->allow_unicode=$allow_unicode;
-        $this->setServiceLocator($serviceLocator);
-        parent::__construct($name, array_merge($this->options, $options));
+class ConfigForm extends Form implements TranslatorAwareInterface
+{
+    use TranslatorAwareTrait;
 
-        $this->buildForm();
+    protected $local_storage = '';
+    protected $formElementManager;
+
+    public function setLocalStorage($local_storage)
+    {
+        $this->local_storage = $local_storage;
     }
 
-    public function buildForm() {
-        $this->setAttribute('id', 'config-form');
+    public function setFormElementManager($formElementManager)
+    {
+        $this->formElementManager = $formElementManager;
+    }
 
-        $name=$this->translate('How do you want to name your item folder, if any?');
+    public function setSettings($settings)
+    {
+        $this->settings = $settings;
+    }
+
+    public function init() {
+        $this->setAttribute('id', 'config-form');
 
         $this->add([
                     'name' => 'archive_repertory_item_prefix',
@@ -44,11 +48,16 @@ class ConfigArchiveRepertoryForm extends Form {
                     ]);
 
         $this->add($this->getRadioForConvertion('archive_repertory_item_convert',$this->translate('Convert item names')));
-        $this->add($this->addResourceSelect('archive_repertory_item_folder',$name,$this->getInfoForItemFolder()));
+
+        $this->addResourceSelect(
+            'archive_repertory_item_folder',
+            $this->translate('How do you want to name your item folder, if any?'),
+            $this->getInfoForItemFolder()
+        );
 
         $this->add([
                     'name' => 'archive_repertory_file_keep_original_name',
-                    'type' =>'CheckBox',
+                    'type' =>'Checkbox',
                     'options' => [
                                   'label' =>$this->translate('Keep original filenames'),
                                   'info' => $this->translate('If checked, Omeka will keep original filenames of uploaded files and will not hash it.')
@@ -61,7 +70,7 @@ class ConfigArchiveRepertoryForm extends Form {
         $this->add($this->getRadioForConvertion('archive_repertory_file_convert', $this->translate('Convert file names')));
         $this->add([
                     'name' => 'archive_repertory_file_base_original_name',
-                    'type' =>'CheckBox',
+                    'type' =>'Checkbox',
                     'options' => [
                                   'label' =>$this->translate('Keep only base of original filenames'),
                                   'info' => $this->translate('If checked, Omeka will keep original filenames of uploaded files and will not hash it.')
@@ -106,7 +115,7 @@ class ConfigArchiveRepertoryForm extends Form {
 */
         $this->add([
                     'name' => 'archive_repertory_legal_text',
-                    'type' => 'TextArea',
+                    'type' => 'Textarea',
                     'options' => [
                                   'label' => $this->translate('Legal agreement'),
                                   'info'=> $this->translate('This text will be shown beside the legal checkbox to download a file.').
@@ -128,19 +137,10 @@ class ConfigArchiveRepertoryForm extends Form {
 
 
     protected function getSetting($name) {
-        return $this->getServiceLocator()->get('Omeka\Settings')->get($name);
-    }
-
-    public function getTranslator()
-    {
-        if (!$this->translator instanceof TranslatorInterface) {
-            $this->translator = $this->getServiceLocator()->get('MvcTranslator');
-        }
-        return $this->translator;
+        return $this->settings->get($name);
     }
 
     protected function translate($args) {
-        $serviceLocator = $this->getServiceLocator();
         $translator = $this->getTranslator();
         return $translator->translate($args);
     }
@@ -160,14 +160,17 @@ class ConfigArchiveRepertoryForm extends Form {
     }
 
 
-    protected function getRadioForConvertion($name,$label) {
+    protected function getRadioForConvertion($name,$label)
+    {
+        $allow_unicode = checkUnicodeInstallation();
+
         $info = $this->translate('Depending on your server and your needs, to avoid some potential issues, you can choose or not to rename every folder to its Ascii equivalent (or only the first letter).').$this->translate('In all cases, names are sanitized: "/", "\", "|" and other special characters are removed.');
         $radio = new Element\Radio($name);
         $radio->setLabel($label);
         $radio->setOptions(['info' => $info]);
         $radio->setValue($this->getSetting($name));
 
-        $not_recommended=(isset($this->allow_unicode['ascii']) ? ' ' . $this->translate('(not recommended because your server is not fully compatible with Unicode)') : '');
+        $not_recommended=(isset($allow_unicode['ascii']) ? ' ' . $this->translate('(not recommended because your server is not fully compatible with Unicode)') : '');
 
         $recommended= (isset($allow_unicode['cli']) || isset($allow_unicode['fs'])) ? ' ' . $this->translate('(recommended because your server is not fully compatible with Unicode)') : '';
 //
@@ -183,36 +186,23 @@ class ConfigArchiveRepertoryForm extends Form {
     }
 
 
-    protected function addResourceSelect($name,$label,$info='') {
-
-        $serviceLocator = $this->getServiceLocator();
+    protected function addResourceSelect($name,$label,$info='')
+    {
         $translator = $this->getTranslator();
-        $classSelect = new PropertySelect($serviceLocator);
 
-        $classSelect
-            ->setName($name)
-            ->setAttribute('id', $name)
-            ->setValue($this->getServiceLocator()->get('Omeka\Settings')->get($name))
-            ->setLabel($label)
-            ->setEmptyOption($translator->translate('Don\'t add folder'))
-            ->setOption('info', $info)
-            ->setValue($this->getSetting($name))
-            ->setResourceValueOptions(
-                                      'resource_classes',
-                                      [
-                                      ],
-                                      function ($resourceClass, $serviceLocator) {
-                                          return [
-                                                  $resourceClass->vocabulary()->label(),
-                                                  $resourceClass->label()
-                                          ];
-                                      }
-            );
-        $options=$classSelect->getValueOptions();
-        $options['id']=$translator->translate('Internal item id');
-        asort($options);
-        $classSelect->setValueOptions($options);
-        return $classSelect;
+        $this->add([
+            'name' => $name,
+            'type' => 'ArchiveRepertory\Form\Element\PropertySelect',
+            'options' => [
+                'label' => $label,
+                'info' => $info,
+                'empty_option' => $translator->translate("Don't add folder"),
+            ],
+            'attributes' => [
+                'id' => $name,
+                'value' => $this->getSetting($name),
+            ],
+        ]);
     }
 
 
@@ -238,4 +228,14 @@ class ConfigArchiveRepertoryForm extends Form {
         return $info;
 
     }
+
+    /**
+     * Checks if all the system (server + php + web environment) allows to
+     * manage Unicode filename securely.
+     *
+     * @internal This function simply checks the true result of functions
+     * escapeshellarg() and touch with a non Ascii filename.
+     *
+     * @return array of issues.
+     */
 }

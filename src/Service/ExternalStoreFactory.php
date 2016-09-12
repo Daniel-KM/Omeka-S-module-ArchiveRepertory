@@ -2,9 +2,9 @@
 namespace ArchiveRepertory\Service;
 use Omeka\Service;
 
+use Interop\Container\ContainerInterface;
+use Zend\ServiceManager\Factory\FactoryInterface;
 use OmekaTestHelper\File\Store\LocalStore;
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Service factory for the Local file store.
@@ -17,17 +17,18 @@ class ExternalStoreFactory implements FactoryInterface
      * @param ServiceLocatorInterface $serviceLocator
      * @return Local
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $services, $requestedName, array $options = null)
     {
-        $logger = $serviceLocator->get('Omeka\Logger');
-        $viewHelpers = $serviceLocator->get('ViewHelperManager');
+        $logger = $services->get('Omeka\Logger');
+        $viewHelpers = $services->get('ViewHelperManager');
+        $config = $services->get('Config');
         $serverUrl = $viewHelpers->get('ServerUrl');
         $basePath = $viewHelpers->get('BasePath');
-        $config = $serviceLocator->get('Config');
         $localPath = $config['local_dir'];
 
         $webPath = $serverUrl($basePath(substr($localPath,strlen(OMEKA_PATH))));
         $fileStore = new LocalStore($localPath, $webPath, $logger);
+
         return $fileStore;
     }
 }
