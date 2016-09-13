@@ -42,6 +42,7 @@ use Zend\EventManager\SharedEventManagerInterface;
 use Omeka\Event\Event;
 use Zend\Math\Rand;
 use Zend\Mvc\MvcEvent;
+use Omeka\Mvc\Controller\Plugin\Messenger;
 
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'ArchiveRepertoryFunctions.php';
 
@@ -201,9 +202,10 @@ class Module extends AbstractModule
                 // error during the convert process.
                 $path = $this->_getFullArchivePath('original');
                 if (!self::getFileWriter()->fileExists($this->concatWithSeparator($path, $file->getFilename()))) {
-                    $msg = $this->translate('This file is not present in the original directory :'.$path.'/'.$file->getFilename());
+                    $msg = $this->translate('This file is not present in the original directory :'.$this->concatWithSeparator($path, $file->getFilename()));
                     $msg .= ' ' .$this->translate('There was an undetected error before storage, probably during the convert process.');
-                    throw new \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . $msg);
+                    $this->_addError($msg);
+                    continue;
                 }
 
                 $result = $this->_moveFilesInArchiveSubfolders(
@@ -212,7 +214,8 @@ class Module extends AbstractModule
                                                                $this->_getDerivativeExtension($file));
                 if (!$result) {
                     $msg = $this->translate('Cannot move files inside archive directory.');
-                    throw new  \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . $msg);
+                    $this->_addError($msg);
+                    continue;
                 }
 
                 // Update file in Omeka database immediately for each file.
@@ -227,6 +230,11 @@ class Module extends AbstractModule
         }
     }
 
+
+    public function _addError($msg) {
+        $messenger = new Messenger;
+        $messenger->addError($msg);
+    }
 
     /**
      * Gets identifiers of a record (with prefix if any, and only them).
@@ -619,7 +627,7 @@ class Module extends AbstractModule
         // A quick check to avoid some errors.
         if (trim($currentArchiveFilename) == '' || trim($newArchiveFilename) == '') {
             $msg = $this->translate('Cannot move file inside archive directory: no filename.');
-            throw new Omeka_Storage_Exception('[ArchiveRepertory] ' . $msg);
+            $this->_addError($msg);
         }
 
         // Move file only if it is not in the right place.
@@ -684,10 +692,13 @@ class Module extends AbstractModule
 
         $realSource = $this->concatWithSeparator($path, $source);
         $realDestination = $this->concatWithSeparator($path, $destination);
+        if (self::getFileWriter()->fileExists($realDestination))
+            return true;
         if (!self::getFileWriter()->fileExists($realSource)) {
-            $msg = $this->translate('Error during move of a file from "%s" to "%s" (local dir: "%s"): source does not exist.',
+            $msg = sprintf($this->translate('Error during move of a file from "%s" to "%s" (local dir: "%s"): source does not exist.'),
                                     $source, $destination, $path);
-            throw new Omeka_Storage_Exception('[ArchiveRepertory] ' . $msg);
+            $this->_addError($msg);
+
         }
         $serviceLocator = $this->getServiceLocator();
         $result = null;
@@ -695,9 +706,9 @@ class Module extends AbstractModule
             $result = self::getFileWriter()->rename($realSource, $realDestination);
 
         } catch (Omeka_Storage_Exception $e) {
-            $msg = $serviceLocator->get('MvcTranslator')->translate('Error during move of a file from "%s" to "%s" (local dir: "%s").',
+            $msg = sprintf($serviceLocator->get('MvcTranslator')->translate('Error during move of a file from "%s" to "%s" (local dir: "%s").'),
                                                                     $source, $destination, $path);
-            throw new Omeka_Storage_Exception($e->getMessage() . "\n" . '[ArchiveRepertory] ' . $msg);
+            $this->_addError($msg);
         }
 
         return $result;

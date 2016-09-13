@@ -8,6 +8,7 @@ use OmekaTestHelper\File\MockFileWriter;
 use OmekaTestHelper\File\Store\LocalStore;
 use OmekaTestHelper\Controller\OmekaControllerTestCase;
 use Omeka\Test\AbstractHttpControllerTestCase;
+use Omeka\Mvc\Controller\Plugin\Messenger;
 
 class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
 {
@@ -181,9 +182,15 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         foreach ($this->getApplicationServiceLocator()->get('Omeka\EntityManager')->find('Omeka\Entity\Item',$this->item->getId())->getMedia() as $media)
             { $result[]=$media->getFileName();}
         $this->assertEquals($result_expected,$result);
+        $this->_testSuccess();
 
     }
 
+    protected function _testSuccess() {
+        $messenger = new Messenger;
+        $this->assertEquals('Item successfully updated', $messenger->get()[1][0][0]);
+
+    }
 
     /** @test */
     public function differentNameShouldMoveFileWithAnotherName() {
