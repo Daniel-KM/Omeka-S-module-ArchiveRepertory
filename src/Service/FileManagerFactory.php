@@ -5,16 +5,10 @@ use Omeka\Service;
 
 use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\Factory\FactoryInterface;
-use ArchiveRepertory\File\ArchiveManager as FileManager;
+use ArchiveRepertory\File\Manager as FileManager;
 
-class FileArchiveManagerFactory implements FactoryInterface
+class FileManagerFactory implements FactoryInterface
 {
-    static $fileManager;
-
-    public static function setFileManager($fileManager) {
-        self::$fileManager = $fileManager;
-    }
-
     public function __invoke(ContainerInterface $services, $requestedName, array $options = null)
     {
         $config = $services->get('Config');
@@ -76,9 +70,6 @@ class FileArchiveManagerFactory implements FactoryInterface
             throw new Exception\ConfigException('Missing temporary directory configuration');
         }
         $tempDir = $config['temp_dir'];
-
-        if (self::$fileManager)
-            return new self::$fileManager($config['file_manager'], $tempDir, $services);
 
         return new FileManager($config['file_manager'], $tempDir, $services);
     }

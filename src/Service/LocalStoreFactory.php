@@ -4,12 +4,12 @@ use Omeka\Service;
 
 use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\Factory\FactoryInterface;
-use OmekaTestHelper\File\Store\LocalStore;
+use ArchiveRepertory\File\Store\LocalStore;
 
 /**
  * Service factory for the Local file store.
  */
-class ExternalStoreFactory implements FactoryInterface
+class LocalStoreFactory implements FactoryInterface
 {
     /**
      * Create and return the Local file store
@@ -22,12 +22,13 @@ class ExternalStoreFactory implements FactoryInterface
         $logger = $services->get('Omeka\Logger');
         $viewHelpers = $services->get('ViewHelperManager');
         $config = $services->get('Config');
+        $fileWriter = $services->get('ArchiveRepertory\FileWriter');
         $serverUrl = $viewHelpers->get('ServerUrl');
         $basePath = $viewHelpers->get('BasePath');
         $localPath = $config['local_dir'];
 
         $webPath = $serverUrl($basePath(substr($localPath,strlen(OMEKA_PATH))));
-        $fileStore = new LocalStore($localPath, $webPath, $logger);
+        $fileStore = new LocalStore($localPath, $webPath, $logger, $fileWriter);
 
         return $fileStore;
     }

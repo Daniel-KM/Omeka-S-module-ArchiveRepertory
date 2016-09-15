@@ -1,6 +1,5 @@
 <?php
 namespace ArchiveRepertory\File;
-use OmekaTestHelper\File\StaticFileWriterTrait;
 use Zend\Filter\File\RenameUpload;
 use Zend\Filter\AbstractFilter;
 use Zend\Filter\Exception;
@@ -8,14 +7,17 @@ use Zend\Stdlib\ErrorHandler;
 
 class OmekaRenameUpload extends RenameUpload
 {
+    protected $fileWriter;
 
-    use StaticFileWriterTrait;
+    public function setFileWriter($fileWriter)
+    {
+        $this->fileWriter = $fileWriter;
+    }
 
     protected function moveUploadedFile($sourceFile, $targetFile)
     {
-
         ErrorHandler::start();
-        $result = self::getFileWriter()->moveUploadedFile($sourceFile,$targetFile);
+        $result = $this->fileWriter->moveUploadedFile($sourceFile, $targetFile);
         $warningException = ErrorHandler::stop();
         if (!$result || null !== $warningException) {
             throw new Exception\RuntimeException(
@@ -27,7 +29,6 @@ class OmekaRenameUpload extends RenameUpload
 
         return $result;
     }
-
 
     protected function checkFileExists($targetFile)
     {
@@ -41,6 +42,4 @@ class OmekaRenameUpload extends RenameUpload
             }
         }
     }
-
-
 }

@@ -6,25 +6,27 @@ return [
             'ArchiveRepertory\Form\Element\PropertySelect' => 'ArchiveRepertory\Service\Form\Element\PropertySelectFactory',
         ],
     ],
-    'local_dir'=> OMEKA_PATH.'/files',
+    'local_dir' => OMEKA_PATH . '/files',
     'media_ingesters' => [
         'factories' => [
             'upload'  => 'ArchiveRepertory\Service\MediaIngester\UploadFactory',
         ]
     ],
-    'file_manager' => [
-        'store' => 'Omeka\File\ExternalStore',
-    ],
     'service_manager' => [
         'factories' => [
-            'Omeka\File\ExternalStore' => 'ArchiveRepertory\Service\ExternalStoreFactory',
-            'Omeka\File\Manager' => 'ArchiveRepertory\Service\FileArchiveManagerFactory',
+            'Omeka\File\LocalStore' => 'ArchiveRepertory\Service\LocalStoreFactory',
+            'Omeka\File\Manager' => 'ArchiveRepertory\Service\FileManagerFactory',
+            'ArchiveRepertory\FileWriter' => 'ArchiveRepertory\Service\FileWriterFactory',
         ],
     ],
     'view_manager' => [
         'template_path_stack' => [
-            __DIR__ . '/../view/admin/',
-
+            __DIR__ . '/../view',
+        ],
+    ],
+    'view_helpers' => [
+        'invokables' => [
+            'checkUnicodeInstallation' => 'ArchiveRepertory\View\Helper\CheckUnicodeInstallation',
         ],
     ],
     'translator' => [

@@ -1,11 +1,8 @@
-<?php
+<?php $this->headStyle()->appendStyle('.inputs label { display: block; }'); ?>
 
-$form->prepare();
- echo $this->form()->openTag($form);
- ?>
+<?php $form->prepare(); ?>
 
 <?php
-
     echo $this->translate('"Archive Repertory" plugin allows to save files in a hierarchical structure and to keep original name of files.') . '<br />';
     echo sprintf($this->translate('See %s for more information.'), '<a href="https://github.com/Daniel-KM/ArchiveRepertory">ReadMe</a>') . '<br />';
     echo '<br />';
@@ -18,7 +15,7 @@ $form->prepare();
     echo '</ul>';
     echo sprintf($this->translate('Omeka works fine with filenames with Unicode characters ("é", "ñ", "Å"...). In case of issues, see %s.'), '<a href="https://github.com/Daniel-KM/ArchiveRepertory">ReadMe</a>');
     echo ' ' . $this->translate('If this is not the case, filenames should use only Ascii characters.') . '<br />';
-    $allow_unicode = checkUnicodeInstallation();
+    $allow_unicode = $this->checkUnicodeInstallation();
     if (empty($allow_unicode)) {
         echo '<p>' . $this->translate('This server is compatible with Unicode.') . '</p>';
     }
@@ -43,62 +40,39 @@ $form->prepare();
     }
 ?>
 
-<fieldset id="fieldset-items"><legend><?php echo $this->translate('Items'); ?></legend>
-<?php echo $this->formRow($form->get('archive_repertory_item_folder')); ?>
+<fieldset id="fieldset-items">
+    <legend><?php echo $this->translate('Items'); ?></legend>
 
-<?php echo $this->formRow($form->get('archive_repertory_item_prefix')); ?>
-
-<?php echo $this->formRow($form->get('archive_repertory_item_convert')); ?>
-
-</fieldset>
-<fieldset id="fieldset-files"><legend><?php echo $this->translate('Files'); ?></legend>
-
-<?php echo $this->formRow($form->get('archive_repertory_file_keep_original_name'));
-      echo $this->formRow($form->get('archive_repertory_file_convert'));
-//      echo $this->formRow($form->get('archive_repertory_file_base_original_name'));
- ?>
-
-
+    <?php echo $this->formRow($form->get('archive_repertory_item_folder')); ?>
+    <div id="item-prefix-convert-wrapper">
+        <?php echo $this->formRow($form->get('archive_repertory_item_prefix')); ?>
+        <?php echo $this->formRow($form->get('archive_repertory_item_convert')); ?>
+    </div>
 </fieldset>
 
-<fieldset id="fieldset-max-download"><legend><?php echo $this->translate('Others'); ?></legend>
-<?php //echo $this->formRow($form->get('archive_repertory_download_max_free_download')); 
-?>
+<fieldset id="fieldset-files">
+    <legend><?php echo $this->translate('Files'); ?></legend>
 
-  <div class='input-block'>
-    <?php $this->ckEditor(); ?>
-    <?php  echo $this->formRow($form->get('archive_repertory_legal_text'));
-
-    ?>
-    <script type='text/javascript'>
-     $('#archive_repertory_legal_text').ckeditor();
-    </script>
-  </div>
+    <?php echo $this->formRow($form->get('archive_repertory_file_keep_original_name')); ?>
 </fieldset>
-<?php echo $this->form()->closeTag(); ?>
+
+<fieldset id="fieldset-derivative-folders">
+    <legend><?php echo $this->translate('Special derivative folders'); ?></legend>
+
+    <?php echo $this->formRow($form->get('archive_repertory_derivative_folders')); ?>
+</fieldset>
 
 <script type="text/javascript">
-
-    var dropItem = document.getElementById("archive_repertory_item_folder");
-    var fieldItemPrefix = document.getElementById("item-prefix");
-    var fieldItemAscii = document.getElementById("item-ascii");
-    dropItem.onclick = function() {
-        if (dropItem.value == "none" || dropItem.value == "id"){
-            fieldItemPrefix.style.display = "none";
-            fieldItemAscii.style.display = "none";
-        } else {
-            fieldItemPrefix.style.display = "block";
-            fieldItemAscii.style.display = "block";
-        }
-    }
-
+(function($) {
+    var itemPrefixConvertWrapper = $("#item-prefix-convert-wrapper");
     jQuery(document).ready(function () {
-        dropItem.onclick();
+        $('#archive_repertory_item_folder').on('click', function() {
+            if (this.value === '' || this.value === 'id') {
+                itemPrefixConvertWrapper.hide();
+            } else {
+                itemPrefixConvertWrapper.show();
+            }
+        }).trigger('click');
     });
-    jQuery(window).load(function () {
-      Omeka.wysiwyg({
-        mode: 'specific_textareas',
-        editor_selector: 'html-editor'
-      });
-    });
+})(jQuery);
 </script>

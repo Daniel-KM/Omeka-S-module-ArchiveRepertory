@@ -16,6 +16,11 @@ class UploadFactory implements FactoryInterface
     public function __invoke(ContainerInterface $services, $requestedName, array $options = null)
     {
         $fileManager = $services->get('Omeka\File\Manager');
-        return new UploadAnywhere($fileManager);
+        $fileWriter = $services->get('ArchiveRepertory\FileWriter');
+
+        $uploadAnywhere = new UploadAnywhere($fileManager);
+        $uploadAnywhere->setFileWriter($fileWriter);
+
+        return $uploadAnywhere;
     }
 }

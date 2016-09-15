@@ -12,8 +12,7 @@ use Zend\View\Renderer\PhpRenderer;
 
 class UploadAnywhere extends Upload
 {
-
-    public static $fileInput=false;
+    protected $fileWriter;
 
     /**
      * {@inheritDoc}
@@ -43,7 +42,7 @@ class UploadAnywhere extends Upload
         $fileManager = $this->fileManager;
         $file = $fileManager->getTempFile();
 
-        $fileInput=$this->getFileInput($file);
+        $fileInput = $this->getFileInput($file);
         $fileData = $fileData['file'][$index];
         $fileInput->setValue($fileData);
         if (!$fileInput->isValid()) {
@@ -61,7 +60,7 @@ class UploadAnywhere extends Upload
 
         $fileManager->storeOriginal($file);
         $media->setStorageId($fileManager->getStoragePath('',$fileManager->getStorageName($file)));
-        $media->setMediaType($file->getMediaType());
+        $media->setMediaType($this->getFileMediaType($file));
         $media->setHasThumbnails($hasThumbnails);
         $media->setHasOriginal(true);
 
@@ -70,19 +69,35 @@ class UploadAnywhere extends Upload
         }
     }
 
-    public static function setFileInput($fileInput) {
-        self::$fileInput=$fileInput;
+    public function setFileWriter($fileWriter)
+    {
+        $this->fileWriter = $fileWriter;
     }
 
-    protected function getFileInput($file) {
-        if (self::$fileInput)
-            return self::$fileInput;
+    public function getFileWriter()
+    {
+        return $this->fileWriter;
+    }
+
+    protected function getFileInput($file)
+    {
         $fileInput = new FileInput('file');
-        $fileInput->getFilterChain()->attach(new OmekaRenameUpload([
+        $renameUpload = new OmekaRenameUpload([
             'target' => $file->getTempPath(),
             'overwrite' => true
-        ]));
+        ]);
+        $renameUpload->setFileWriter($this->getFileWriter());
+        $filterChain = $fileInput->getFilterChain();
+        $filterChain->attach($renameUpload);
         return $fileInput;
+    }
+
+    /**
+     * Just to be easily overriden in tests.
+     */
+    protected function getFileMediaType($file)
+    {
+        return $file->getMediaType();
     }
 
     /**

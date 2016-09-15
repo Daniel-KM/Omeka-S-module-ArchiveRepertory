@@ -4,7 +4,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "OmekaTest\\": "test/"
+            "ArchiveRepertoryTest\\": "test/ArchiveRepertoryTest"
         }
     }
 

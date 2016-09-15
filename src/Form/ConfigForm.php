@@ -1,13 +1,15 @@
 <?php
 namespace ArchiveRepertory\Form;
 
-use Omeka\Form\Element\ResourceSelect;
-use Omeka\Form\Element\Ckeditor;
 use Zend\Form\Element;
+use Zend\Form\Fieldset;
 use Zend\Form\Form;
 use Zend\I18n\Translator\TranslatorAwareInterface;
 use Zend\I18n\Translator\TranslatorAwareTrait;
+use Omeka\Form\Element\Ckeditor;
 use Omeka\Form\Element\PropertySelect;
+use Omeka\Form\Element\ResourceSelect;
+use ArchiveRepertory\Helpers;
 
 class ConfigForm extends Form implements TranslatorAwareInterface
 {
@@ -31,8 +33,23 @@ class ConfigForm extends Form implements TranslatorAwareInterface
         $this->settings = $settings;
     }
 
-    public function init() {
+    public function init()
+    {
         $this->setAttribute('id', 'config-form');
+
+        $this->add([
+            'name' => 'archive_repertory_item_folder',
+            'type' => 'ArchiveRepertory\Form\Element\PropertySelect',
+            'options' => [
+                'label' => $this->translate('How do you want to name your item folder, if any?'),
+                'info' => $this->getInfoForItemFolder(),
+                'empty_option' => $this->translate("Don't add folder"),
+            ],
+            'attributes' => [
+                'id' => 'archive_repertory_item_folder',
+                'value' => $this->getSetting('archive_repertory_item_folder'),
+            ],
+        ]);
 
         $this->add([
                     'name' => 'archive_repertory_item_prefix',
@@ -47,12 +64,9 @@ class ConfigForm extends Form implements TranslatorAwareInterface
                     ],
                     ]);
 
-        $this->add($this->getRadioForConvertion('archive_repertory_item_convert',$this->translate('Convert item names')));
-
-        $this->addResourceSelect(
-            'archive_repertory_item_folder',
-            $this->translate('How do you want to name your item folder, if any?'),
-            $this->getInfoForItemFolder()
+        $this->add(
+            $this->getRadioForConvertion('archive_repertory_item_convert',
+            $this->translate('Convert item names'))
         );
 
         $this->add([
@@ -67,74 +81,19 @@ class ConfigForm extends Form implements TranslatorAwareInterface
                     ]
                     ]);
 
-        $this->add($this->getRadioForConvertion('archive_repertory_file_convert', $this->translate('Convert file names')));
         $this->add([
-                    'name' => 'archive_repertory_file_base_original_name',
-                    'type' =>'Checkbox',
-                    'options' => [
-                                  'label' =>$this->translate('Keep only base of original filenames'),
-                                  'info' => $this->translate('If checked, Omeka will keep original filenames of uploaded files and will not hash it.')
-                    ],
-                    'attributes'=> [
-                                    'value'=> $this->getSetting('archive_repertory_file_base_original_name')
-                    ]
-
-                    ]);
-
-
-        $this->add([
-                    'name' => 'archive_repertory_derivative_folders',
-                    'type' => 'Text',
-                    'options' => [
-                                  'label' => $this->translate('Other derivation folders'),
-                                  'info' =>$this->getDerivativeFolderInfo()
-                    ],
-                    'attributes' => [
-                                     'id' => 'archive_repertory_derivative_folders',
-                                     'value'=> $this->getSetting('archive_repertory_derivative_folders')
-                    ],
-                    ]);
-
-
-
-/*        $this->add([
-                    'name' => 'archive_repertory_download_max_free_download',
-                    'type' => 'Text',
-                    'options'=> [
-                                 'label'=> $this->translate('Maximum downloads by user'),
-                                 'info'=> $this->translate('Above this size, a captcha will be added to avoid too many downloads from a user.').
-                                 ' ' . $this->translate('Set a very high size to allow all files to be downloaded.').
-                                 ' ' . $this->translate('Note that the ".htaccess" and eventually "routes.ini" files should be updated too.')
-                    ],
-                    'attributes' => [
-                                     'id' => 'archive_repertory_download_max_free_download',
-                                     'value'=> $this->getSetting('archive_repertory_download_max_free_download')
-
-                    ],
-                    ]);
-*/
-        $this->add([
-                    'name' => 'archive_repertory_legal_text',
-                    'type' => 'Textarea',
-                    'options' => [
-                                  'label' => $this->translate('Legal agreement'),
-                                  'info'=> $this->translate('This text will be shown beside the legal checkbox to download a file.').
-                                  ' ' . $this->translate("Let empty if you don't want to use a legal agreement.")
-
-                    ],
-                    'attributes' => [
-                                     'id' => 'archive_repertory_legal_text',
-                                     'value'=> $this->getSetting('archive_repertory_legal_text'),
-                                     'rows'=> 5,
-                                     'cols'=> 60,
-                                     'class'=> 'media-html'
-                    ],
-                    ]);
-
-        $this->add($this->getRadioForProcess());
-
+            'name' => 'archive_repertory_derivative_folders',
+            'type' => 'Text',
+            'options' => [
+                'label' => $this->translate('Other derivation folders'),
+                'info' => $this->getDerivativeFolderInfo()
+            ],
+            'attributes' => [
+                'id' => 'archive_repertory_derivative_folders',
+                'value'=> $this->getSetting('archive_repertory_derivative_folders')
+            ],
+        ]);
     }
-
 
     protected function getSetting($name) {
         return $this->settings->get($name);
@@ -145,24 +104,9 @@ class ConfigForm extends Form implements TranslatorAwareInterface
         return $translator->translate($args);
     }
 
-    protected function getRadioForProcess() {
-        $radio = new Element\Radio('archive_repertory_move_process');
-        $radio->setLabel('Used process');
-        $radio->setOptions(['info'=> $this->translate('By default, the process uses the default internal functions of Omeka to process files.').
-                            $this->translate('If needed, the standard functions of PHP can be used.')]);
-
-        $radio->setValueOptions([
-                                 'internal' => $this->translate('Omeka internal'),
-                                 'direct'=> $this->translate('Php directly')
-                                 ]);
-        $radio->setValue($this->getSetting('archive_repertory_move_process'));
-        return $radio;
-    }
-
-
     protected function getRadioForConvertion($name,$label)
     {
-        $allow_unicode = checkUnicodeInstallation();
+        $allow_unicode = Helpers::checkUnicodeInstallation();
 
         $info = $this->translate('Depending on your server and your needs, to avoid some potential issues, you can choose or not to rename every folder to its Ascii equivalent (or only the first letter).').$this->translate('In all cases, names are sanitized: "/", "\", "|" and other special characters are removed.');
         $radio = new Element\Radio($name);
@@ -190,19 +134,6 @@ class ConfigForm extends Form implements TranslatorAwareInterface
     {
         $translator = $this->getTranslator();
 
-        $this->add([
-            'name' => $name,
-            'type' => 'ArchiveRepertory\Form\Element\PropertySelect',
-            'options' => [
-                'label' => $label,
-                'info' => $info,
-                'empty_option' => $translator->translate("Don't add folder"),
-            ],
-            'attributes' => [
-                'id' => $name,
-                'value' => $this->getSetting($name),
-            ],
-        ]);
     }
 
 

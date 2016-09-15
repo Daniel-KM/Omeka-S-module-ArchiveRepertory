@@ -1,5 +1,6 @@
 <?php
-namespace OmekaTest;
+namespace ArchiveRepertoryTest;
+
 use OmekaTestHelper\File\MockFileWriter;
 use OmekaTestHelper\Controller\OmekaControllerTestCase;
 use Omeka\Test\AbstractHttpControllerTestCase;
@@ -10,83 +11,74 @@ use Omeka\File\File;
 use Omeka\ArchiveRepertory\Module;
 use Omeka\Entity\Media;
 use Omeka\File\ArchiveManager as ArchiveManager;
+use ArchiveRepertory\Media\Ingester\UploadAnywhere;
 
-
-
-class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
+class ManageFilesTest extends OmekaControllerTestCase
 {
     protected $_pathsByType = [
-                               'original' => 'original',
-                               'fullsize' => 'large',
-                               'thumbnail' => 'medium',
-                               'square_thumbnail' => 'square',
+        'original' => 'original',
+        'fullsize' => 'large',
+        'thumbnail' => 'medium',
+        'square_thumbnail' => 'square',
     ];
+
     protected $fileStorageId;
     protected $fileExtension;
     protected $_fileUrl;
     protected $_storagePath;
-    protected $module;
+    protected $item;
 
-    public function setConfig() {
-        $config = include __DIR__ . '/../../config/module.config.php';
-        $config['local_dir']=OMEKA_PATH.'/files';
-        $this->_storagePath=$config['local_dir'];
-        \ArchiveRepertory\Module::setConfig($config);
-        $this->filewriter = new MockFileWriter();
-        \ArchiveRepertory\Module::setFileWriter($this->filewriter);
-    }
-
-    public function setUp() {
-
-        $this->loginAsAdmin();
-
-        $manager = $this->getApplicationServiceLocator()->get('Omeka\ModuleManager');
-        $module = $manager->getModule('ArchiveRepertory');
-        if ($module->getState() == \Omeka\Module\Manager::STATE_ACTIVE) {
-            $manager->uninstall($module);
-        }
-
-        $this->setConfig();
-
-        $manager->install($module);
-        $this->mockFileManager= MockFileManager::class;
-        \ArchiveRepertory\File\OmekaRenameUpload::setFileWriter($this->filewriter);
-        \ArchiveRepertory\Service\FileArchiveManagerFactory::setFileManager($this->mockFileManager);
-        \OmekaTestHelper\File\Store\LocalStore::setFileWriter($this->filewriter);
-        \ArchiveRepertory\Media\Ingester\UploadAnywhere::setFileInput(new MockFileInput());
+    public function setUp()
+    {
         parent::setUp();
 
-        $this->module= $this->getApplicationServiceLocator()->get('ModuleManager')->getModule('ArchiveRepertory');
+        $this->overrideConfig();
 
-        $this->item = new Item;
-        $this->persistAndSave($this->item);
         $this->loginAsAdmin();
+
+        $services = $this->getServiceLocator();
+        $api = $services->get('Omeka\ApiManager');
+        $config = $services->get('Config');
+
+        $this->item = $api->create('items', [])->getContent();
 
         $this->fileStorageId = __DIR__ . '/_files/image_test';
         $this->fileExtension = 'png';
         $this->_fileUrl = $this->fileStorageId . '.' . $this->fileExtension;
+        $this->_storagePath = $config['local_dir'];
     }
 
+    protected function overrideConfig()
+    {
+        $services = $this->getServiceLocator();
 
-    public function tearDown() {
-        $this->loginAsAdmin();
+        $services->setAllowOverride(true);
+        $services->setFactory('ArchiveRepertory\FileWriter', 'ArchiveRepertoryTest\MockFileWriterFactory');
+        $services->setFactory('Omeka\File\Manager', 'ArchiveRepertoryTest\MockFileManagerFactory');
+        $services->setAllowOverride(false);
+
+        $mediaIngesterManager = $services->get('Omeka\MediaIngesterManager');
+        $fileManager = $services->get('Omeka\File\Manager');
+        $fileWriter = $services->get('ArchiveRepertory\FileWriter');
+
+        $mediaIngesterManager->setAllowOverride(true);
+        $mockUpload = new MockUpload($fileManager);
+        $mockUpload->setFileWriter($fileWriter);
+        $mediaIngesterManager->setService('upload', $mockUpload);
+        $mediaIngesterManager->setAllowOverride(false);
     }
 
-    public function getFileManager() {
-        $fileData= file_get_contents($this->_fileUrl);
-        $fileManager = $this->getApplicationServiceLocator()->get('Omeka\File\Manager');
-
-        $media = new Media;
-        $media->setStorageId($this->fileStorageId);
-        $media->setExtension($this->fileExtension);
-        $media->setItem($this->item);
-        $fileManager->setMedia($media);
-        return $fileManager;
+    public function tearDown()
+    {
+        $this->api()->delete('items', $this->item->id());
     }
+
 
     /** @test **/
     public function testWithOptionKeepOriginalNameInsertFile()
     {
+        $settings = $this->getServiceLocator()->get('Omeka\Settings');
+        $settings->set('archive_repertory_file_keep_original_name', '1');
 
         $file = new File($this->_fileUrl);
         $file->setSourceName('originalname.png');
@@ -95,273 +87,188 @@ class ArchiveRepertory_ManageFilesTest extends  OmekaControllerTestCase
     }
 
     /** @test */
-    public function testWithOptionNoKeepOriginalFileName() {
+    public function testWithOptionNoKeepOriginalFileName()
+    {
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
         $settings->set('archive_repertory_file_keep_original_name', '0');
         $file = new File($this->_fileUrl);
         $this->assertNotEquals('originalname.png', $this->getFileManager()->getStorageName($file));
     }
 
-
-
     /** @test */
     public function testStorageBasePathWithItemId() {
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
+
+        $settings->set('archive_repertory_file_keep_original_name', '1');
         $settings->set('archive_repertory_item_folder', 'id');
+
         $file = new File($this->_fileUrl);
         $file->setSourceName('image_test.png');
-        $storageFilepath = $this->item->getId()
+        $storageFilepath = $this->item->id()
             . DIRECTORY_SEPARATOR
             . pathinfo($this->_fileUrl, PATHINFO_BASENAME);
         $fileManager=$this->getFileManager();
         $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
     }
 
-
-
     /** @test */
-    public function testStorageBasePathWithItemNone() {
+    public function testStorageBasePathWithItemNone()
+    {
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
         $settings->set('archive_repertory_item_folder', '');
+
         $file = new File($this->_fileUrl);
         $file->setSourceName('image_test.png');
+
         $storageFilepath = DIRECTORY_SEPARATOR . pathinfo($this->_fileUrl, PATHINFO_BASENAME);
-        $fileManager=$this->getFileManager();
+        $fileManager = $this->getFileManager();
 
         $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
 
     }
 
+    protected function createMediaItem($title, $upload, $file_index = 0)
+    {
+        $api = $this->getServiceLocator()->get('Omeka\ApiManager');
 
-
-    protected function getUpload($name, $url) {
-        $upload = new \Zend\Stdlib\Parameters([
-                                               'file' => [[
-                                                           'name' => $name,
-                                                           'type' => 'image/png',
-                                                           'tmp_name' => $url,
-
-                                                           'content' => file_get_contents($url),
-                                                           'error' => 0,
-                                                           'size' => 1999]
-
-                                               ]
-                                               ]);
-        $this->getRequest()->setFiles($upload);
-
-        return $upload;
-    }
-
-    protected function updateItem($id, $title,$upload,$file_index=0) {
-        $api = $this->getApplicationServiceLocator()->get('Omeka\ApiManager');
-        return $api->update('items', $id, [
-                                           'dcterms:identifier' => [
-                                                                    [
-                                                                     'type' => 'literal',
-                                                                     'property_id' => '10',
-                                                                     '@value' => 'item1',
-                                                                    ],
-                                           ],
-                                           'dcterms:title' => [
-                                                               [
-                                                                'type' => 'literal',
-                                                                'property_id' => '1',
-                                                                '@value' => $title,
-                                                               ],
-                                           ],
-
-                                           'o:media' => [
-                                                         [
-                                                          'o:ingester' => 'upload',
-                                                          'file_index' => $file_index,
-                                                          'dcterms:identifier' => [
-                                                                                   [
-                                                                                    'type' => 'literal',
-                                                                                    'property_id' => 10,
-                                                                                    '@value' => 'media1',
-                                                                                   ],
-                                                          ],
-                                                         ],
-                                           ]]
-                            ,$upload);
-
-
-    }
-
-
-    protected function createMediaItem($title,$upload,$file_index=0) {
-        $api = $this->getApplicationServiceLocator()->get('Omeka\ApiManager');
-        return $api->create('items', [
-                                      'dcterms:identifier' => [
-                                                               [
-                                                                'type' => 'literal',
-                                                                'property_id' => '10',
-                                                                '@value' => 'item1',
-                                                               ],
-                                      ],
-                                      'dcterms:title' => [
-                                                          [
-                                                           'type' => 'literal',
-                                                           'property_id' => '1',
-                                                           '@value' => $title,
-                                                          ],
-                                      ],
-
-                                      'o:media' => [
-                                                    [
-                                                     'o:ingester' => 'upload',
-                                                     'file_index' => $file_index,
-                                                     'dcterms:identifier' => [
-                                                                              [
-                                                                               'type' => 'literal',
-                                                                               'property_id' => 10,
-                                                                               '@value' => 'media1',
-                                                                              ],
-                                                     ],
-                                                    ],
-                                      ],
-                                      ],$upload);
-
-    }
-    protected function createUrlItem($title) {
-        $api = $this->getApplicationServiceLocator()->get('Omeka\ApiManager');
-        $media_url = 'http://farm8.staticflickr.com/7495/28077970085_4d976b3c96_z_d.jpg';
-
-        return $api->create('items', [
-                                      'dcterms:identifier' => [
-                                                               [
-                                                                'type' => 'literal',
-                                                                'property_id' => '10',
-                                                                '@value' => 'item1',
-                                                               ],
-                                      ],
-                                      'dcterms:title' => [
-                                                          [
-                                                           'type' => 'literal',
-                                                           'property_id' => '1',
-                                                           '@value' => $title,
-                                                          ],
-                                      ],
-                                      'o:media' => [
-                                                    [
-                                                     'o:ingester' => 'url',
-                                                     'ingest_url' => $media_url,
-                                                     'dcterms:identifier' => [
-                                                                              [
-                                                                               'type' => 'literal',
-                                                                               'property_id' => 10,
-                                                                               '@value' => 'media1',
+        $response = $api->create('items', [
+            'dcterms:identifier' => [
+                [
+                    'type' => 'literal',
+                    'property_id' => '10',
+                    '@value' => 'item1',
+                ],
+            ],
+            'dcterms:title' => [
+                [
+                    'type' => 'literal',
+                    'property_id' => '1',
+                    '@value' => $title,
+                ],
+            ],
+            'o:media' => [
+                [
+                    'o:ingester' => 'upload',
+                    'file_index' => $file_index,
+                    'dcterms:identifier' => [
+                        [
+                            'type' => 'literal',
+                            'property_id' => 10,
+                            '@value' => 'media1',
                         ],
                     ],
                 ],
-                                      ]]);
+            ],
+        ], $upload);
 
+        if ($response->isError()) {
+            error_log(var_export($response->getErrors(), true));
+        }
+
+        return $response->getContent();
     }
 
-
-
     /** @test */
-    public function testStorageBasePathWithIdDirectory() {
+    public function testStorageBasePathWithIdDirectory()
+    {
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
         $settings->set('archive_repertory_item_folder', 'id');
         $settings->set('archive_repertory_file_keep_original_name', '1');
-        $upload = $this->getUpload('image_uploaded.png', $this->_fileUrl);
 
-        $item = $this->createMediaItem('My_title?',$upload);
+        $upload = new \Zend\Stdlib\Parameters([
+            'file' => [
+                [
+                    'name' => 'image_uploaded.png',
+                    'type' => 'image/png',
+                    'tmp_name' => $this->_fileUrl,
+                    'content' => file_get_contents($this->_fileUrl),
+                    'error' => 0,
+                    'size' => 1999,
+                ],
+            ]
+        ]);
+        $this->getRequest()->setFiles($upload);
+
+        $this->postDispatch('/admin/item/add', [
+            'dcterms:identifier' => [
+                [
+                    'type' => 'literal',
+                    'property_id' => '10',
+                    '@value' => 'item1',
+                ],
+            ],
+            'dcterms:title' => [
+                [
+                    'type' => 'literal',
+                    'property_id' => '1',
+                    '@value' => 'My_title?',
+                ],
+            ],
+            'o:media' => [
+                [
+                    'o:ingester' => 'upload',
+                    'file_index' => 0,
+                    'dcterms:identifier' => [
+                        [
+                            'type' => 'literal',
+                            'property_id' => 10,
+                            '@value' => 'media1',
+                        ],
+                    ],
+                ],
+            ],
+            'csrf' => (new \Zend\Form\Element\Csrf('csrf'))->getValue(),
+        ]);
+        $this->assertResponseStatusCode(302);
+
+        $location = $this->getResponse()->getHeaders()->get('Location');
+        $path = $location->uri()->getPath();
+        $itemId = substr(strrchr($path, "/"), 1);
+
         $file = new File($this->_fileUrl);
         $file->setSourceName('image_uploaded.png');
-        $storageFilepath = $item->getContent()->id().DIRECTORY_SEPARATOR.'image_uploaded.png';
+        $storageFilepath = $itemId . DIRECTORY_SEPARATOR . 'image_uploaded.png';
         $fileManager = $this->getServiceLocator()->get('Omeka\File\Manager');
         $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
     }
-
-
-    protected function postItem($item) {
-        $this->postDispatch('/admin/item/'.$item->getContent()->id().'/edit', [
-                                                                               'dcterms:identifier' => [
-                                                                                                        [
-                                                                                                         'type' => 'literal',
-                                                                                                         'property_id' => '10',
-                                                                                                         '@value' => 'item1',
-                                                                                                        ],
-                                                                               ],
-                                                                               'dcterms:title' => [
-                                                                                                   [
-                                                                                                    'type' => 'literal',
-                                                                                                    'property_id' => '1',
-                                                                                                    '@value' => 'Itemee 1',
-                                                                                                   ],
-                                                                               ],
-                                                                               'file' =>                 file_get_contents($this->_fileUrl),
-                                                                               'csrf' => (new \Zend\Form\Element\Csrf('csrf'))->getValue(),
-                                                                               'o:media'=> [[
-                                                                                             'o:ingester' => 'upload',
-                                                                                             'o:is_public'=>'1',
-                                                                                             'file_index'=> 1,
-                                                                                   ]]
-
-                                                                               ]);
-
-
-
-    }
-
 
     /**
      * @test
      */
     public function testInsertDuplicateFile()
     {
-        $settings = $this->getServiceLocator()->get('Omeka\Settings');
+        $services = $this->getServiceLocator();
+        $settings = $services->get('Omeka\Settings');
+        $fileManager = $services->get('Omeka\File\Manager');
+
         $settings->set('archive_repertory_file_keep_original_name', '1');
         $settings->set('archive_repertory_item_folder', '1');
-        $storageFilepath = 'Item_1/photo.png';
-        $this->filewriter->addFile($this->_storagePath.'/original/photo.png');
-        $this->filewriter->addFile($this->_storagePath.'/original/photo.1.png');
-        $this->assertEquals('./photo.2.png',$this->module->checkExistingFile('photo.png'));
+
+        $this->getFileWriter()->addFile($this->_storagePath.'/original/photo.png');
+        $this->getFileWriter()->addFile($this->_storagePath.'/original/photo.1.png');
+        $this->assertEquals('./photo.2.png', $fileManager->checkExistingFile('photo.png'));
     }
 
-
-    /**
-     * Check simultaneous change of identifier and collection of the item.
-     */
-    protected function _testChangeIdentifierAndItem()
+    protected function getFileWriter()
     {
-
-        $files = $this->item->getFiles();
-        foreach ($files as $key => $file) {
-            $this->_checkFile($file);
-        }
+        return $this->getServiceLocator()->get('ArchiveRepertory\FileWriter');
     }
 
-    /**
-     * Check if file and derivatives exist really.
-     */
-    protected function _checkFile($file)
+    protected function getFileManager()
     {
-        foreach ($this->_pathsByType as $type => $path) {
-            $storageFilepath = $this->_storagePath . DIRECTORY_SEPARATOR.$path.DIRECTORY_SEPARATOR . $file->filename();
-            if ($type != 'original')
-                $storageFilepath=str_replace('.png','.jpg',$storageFilepath);
-            $this->assertTrue($this->filewriter->fileExists($storageFilepath));
-        }
+        $services = $this->getServiceLocator();
+        $entityManager = $services->get('Omeka\EntityManager');
+        $fileManager = $services->get('Omeka\File\Manager');
+
+        $media = new Media;
+        $media->setStorageId($this->fileStorageId);
+        $media->setExtension($this->fileExtension);
+
+        $item = $entityManager->find('Omeka\Entity\Item', $this->item->id());
+        $media->setItem($item);
+
+        $fileManager->setMedia($media);
+
+        return $fileManager;
     }
-
-}
-
-
-
-class MockFileInput extends \Zend\InputFilter\FileInput {
-    public function isValid($context=null) {
-        return true;
-    }
-}
-
-
-class MockFileManager extends \ArchiveRepertory\File\ArchiveManager {
-    public function storeThumbnails(File $file) {
-        return true;
-    }
-
-
 }
