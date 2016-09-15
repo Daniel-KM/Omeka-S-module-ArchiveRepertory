@@ -9,7 +9,7 @@ class Helpers
      *
      * @see http://www.php.net/manual/function.escapeshellarg.php#111919
      */
-    static public function escapeshellarg_special($string)
+    public static function escapeshellarg_special($string)
     {
         return "'" . str_replace("'", "'\\''", $string) . "'";
     }
@@ -21,12 +21,12 @@ class Helpers
      *
      * @return string
      */
-    static public function basename_special($path)
+    public static function basename_special($path)
     {
-        return preg_replace( '/^.+[\\\\\\/]/', '', $path);
+        return preg_replace('/^.+[\\\\\\/]/', '', $path);
     }
 
-    static public function checkUnicodeInstallation()
+    public static function checkUnicodeInstallation()
     {
         $result = [];
 

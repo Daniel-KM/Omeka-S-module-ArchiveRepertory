@@ -1,7 +1,7 @@
 <?php
 namespace ArchiveRepertory\Media\Ingester;
-use Omeka\Media\Ingester\Upload;
 
+use Omeka\Media\Ingester\Upload;
 use Omeka\Api\Request;
 use Omeka\Entity\Media;
 use Omeka\Stdlib\ErrorStore;
@@ -59,7 +59,7 @@ class UploadAnywhere extends Upload
         $hasThumbnails = $fileManager->storeThumbnails($file);
 
         $fileManager->storeOriginal($file);
-        $media->setStorageId($fileManager->getStoragePath('',$fileManager->getStorageName($file)));
+        $media->setStorageId($fileManager->getStoragePath('', $fileManager->getStorageName($file)));
         $media->setMediaType($this->getFileMediaType($file));
         $media->setHasThumbnails($hasThumbnails);
         $media->setHasOriginal(true);

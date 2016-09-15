@@ -1,6 +1,5 @@
 <?php
 namespace ArchiveRepertory\Service;
-use Omeka\Service;
 
 use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\Factory\FactoryInterface;
@@ -27,7 +26,7 @@ class LocalStoreFactory implements FactoryInterface
         $basePath = $viewHelpers->get('BasePath');
         $localPath = $config['local_dir'];
 
-        $webPath = $serverUrl($basePath(substr($localPath,strlen(OMEKA_PATH))));
+        $webPath = $serverUrl($basePath(substr($localPath, strlen(OMEKA_PATH))));
         $fileStore = new LocalStore($localPath, $webPath, $logger, $fileWriter);
 
         return $fileStore;

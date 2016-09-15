@@ -1,7 +1,7 @@
 <?php
 namespace ArchiveRepertory\File;
+
 use Zend\Filter\File\RenameUpload;
-use Zend\Filter\AbstractFilter;
 use Zend\Filter\Exception;
 use Zend\Stdlib\ErrorHandler;
 

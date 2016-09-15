@@ -1,17 +1,11 @@
 <?php
 namespace ArchiveRepertoryTest;
 
-use OmekaTestHelper\File\MockFileWriter;
 use OmekaTestHelper\Controller\OmekaControllerTestCase;
-use Omeka\Test\AbstractHttpControllerTestCase;
 use Omeka\Entity\Item;
 use Omeka\Entity\Value;
-use Omeka\Entity\Property;
 use Omeka\File\File;
-use Omeka\ArchiveRepertory\Module;
 use Omeka\Entity\Media;
-use Omeka\File\ArchiveManager as ArchiveManager;
-use ArchiveRepertory\Media\Ingester\UploadAnywhere;
 
 class ManageFilesTest extends OmekaControllerTestCase
 {
@@ -108,7 +102,7 @@ class ManageFilesTest extends OmekaControllerTestCase
             . DIRECTORY_SEPARATOR
             . pathinfo($this->_fileUrl, PATHINFO_BASENAME);
         $fileManager=$this->getFileManager();
-        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
+        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('', $fileManager->getStorageName($file)));
     }
 
     /** @test */
@@ -123,7 +117,7 @@ class ManageFilesTest extends OmekaControllerTestCase
         $storageFilepath = DIRECTORY_SEPARATOR . pathinfo($this->_fileUrl, PATHINFO_BASENAME);
         $fileManager = $this->getFileManager();
 
-        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
+        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('', $fileManager->getStorageName($file)));
 
     }
 
@@ -229,7 +223,7 @@ class ManageFilesTest extends OmekaControllerTestCase
         $file->setSourceName('image_uploaded.png');
         $storageFilepath = $itemId . DIRECTORY_SEPARATOR . 'image_uploaded.png';
         $fileManager = $this->getServiceLocator()->get('Omeka\File\Manager');
-        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('',$fileManager->getStorageName($file)));
+        $this->assertEquals($storageFilepath, $fileManager->getStoragePath('', $fileManager->getStorageName($file)));
     }
 
     /**

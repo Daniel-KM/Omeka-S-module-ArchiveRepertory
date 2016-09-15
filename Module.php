@@ -32,18 +32,14 @@
 namespace ArchiveRepertory;
 
 use Zend\EventManager\SharedEventManagerInterface;
+use Zend\EventManager\Event;
 use Zend\Math\Rand;
 use Zend\Mvc\Controller\AbstractController;
-use Zend\Mvc\MvcEvent;
 use Zend\ServiceManager\ServiceLocatorInterface;
-use Zend\View\Model\ViewModel;
 use Zend\View\Renderer\PhpRenderer;
-use Omeka\Event\Event;
 use Omeka\Module\AbstractModule;
 use Omeka\Mvc\Controller\Plugin\Messenger;
 use ArchiveRepertory\Form\ConfigForm;
-use ArchiveRepertory\Helpers;
-use ArchiveRepertory\Service\FileArchiveManagerFactory;
 
 class Module extends AbstractModule
 {
@@ -94,7 +90,6 @@ class Module extends AbstractModule
     {
         $sharedEventManager->attach('Omeka\Api\Adapter\ItemAdapter',
                                     'api.update.post', [ $this, 'afterSaveItem' ]);
-
     }
 
     public function getConfigForm(PhpRenderer $renderer)
@@ -121,13 +116,12 @@ class Module extends AbstractModule
                 $settings->set($optionKey, $post[$optionKey]);
             }
         }
-
     }
 
     /**
      * Manages folders for attached files of items.
      */
-    public function afterSaveItem(\Zend\EventManager\Event $event)
+    public function afterSaveItem(Event $event)
     {
         $services = $this->getServiceLocator();
         $fileManager = $services->get('Omeka\File\Manager');

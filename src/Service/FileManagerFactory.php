@@ -1,7 +1,6 @@
 <?php
 
 namespace ArchiveRepertory\Service;
-use Omeka\Service;
 
 use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\Factory\FactoryInterface;

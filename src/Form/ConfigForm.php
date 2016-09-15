@@ -2,13 +2,9 @@
 namespace ArchiveRepertory\Form;
 
 use Zend\Form\Element;
-use Zend\Form\Fieldset;
 use Zend\Form\Form;
 use Zend\I18n\Translator\TranslatorAwareInterface;
 use Zend\I18n\Translator\TranslatorAwareTrait;
-use Omeka\Form\Element\Ckeditor;
-use Omeka\Form\Element\PropertySelect;
-use Omeka\Form\Element\ResourceSelect;
 use ArchiveRepertory\Helpers;
 
 class ConfigForm extends Form implements TranslatorAwareInterface
@@ -104,7 +100,7 @@ class ConfigForm extends Form implements TranslatorAwareInterface
         return $translator->translate($args);
     }
 
-    protected function getRadioForConvertion($name,$label)
+    protected function getRadioForConvertion($name, $label)
     {
         $allow_unicode = Helpers::checkUnicodeInstallation();
 
@@ -124,13 +120,13 @@ class ConfigForm extends Form implements TranslatorAwareInterface
                                  'First letter' => $this->translate('Convert first letter only'),
                                  'First and spaces' => $this->translate('Convert first letter and spaces'),
                                  'Full' => $this->translate('Full conversion to Ascii.').$recommended
-                                 ] );
+                                 ]);
 
         return $radio;
     }
 
 
-    protected function addResourceSelect($name,$label,$info='')
+    protected function addResourceSelect($name, $label, $info='')
     {
         $translator = $this->getTranslator();
 
@@ -138,7 +134,7 @@ class ConfigForm extends Form implements TranslatorAwareInterface
 
 
 
-    protected function getInfoForItemFolder () {
+    protected function getInfoForItemFolder() {
         $info=$this->translate('If you choose to add a folder, Omeka will add subfolders for each item in "files" folders, for example "files/original/unique_identifier/');
         $info .= $this->translate('New files will be stored inside them. Old files will be moved when item will be updated.'). '<br />';;
 
@@ -149,7 +145,7 @@ class ConfigForm extends Form implements TranslatorAwareInterface
     }
 
 
-    protected function getDerivativeFolderInfo()  {
+    protected function getDerivativeFolderInfo() {
         $info = $this->translate('By default, Omeka support three derivative folders: "fullsize", "thumbnails" and "square_thumbnails".');
         $info .= ' ' . $this->translate('You can add other ones if needed (comma-separated values, like "special_thumbnails, circles").');
         $info .= ' ' . $this->translate('Folder names should be relative to the files dir ').'"'.$this->local_storage.'"';
@@ -160,7 +156,7 @@ class ConfigForm extends Form implements TranslatorAwareInterface
 
     }
 
-    /**
+    /*
      * Checks if all the system (server + php + web environment) allows to
      * manage Unicode filename securely.
      *

@@ -2,7 +2,6 @@
 namespace ArchiveRepertory\File;
 
 use Omeka\File\File;
-use Zend\ServiceManager\ServiceLocatorInterface;
 
 class Manager extends \Omeka\File\Manager
 {
@@ -12,7 +11,7 @@ class Manager extends \Omeka\File\Manager
      * @see application/models/File::_pathsByType()
      * @var array
      */
-    static protected $_pathsByType = [
+    protected static $_pathsByType = [
         'original' => 'original',
         'fullsize' => 'large',
         'thumbnail' => 'medium',
@@ -52,7 +51,7 @@ class Manager extends \Omeka\File\Manager
 
     public function getBasename($name)
     {
-        return substr($name,0,strrpos($name, '.')) ? substr($name,0,strrpos($name, '.')): $name;
+        return substr($name, 0, strrpos($name, '.')) ? substr($name, 0, strrpos($name, '.')): $name;
     }
 
     public function getStoragePath($prefix, $name, $extension = null)
@@ -73,7 +72,7 @@ class Manager extends \Omeka\File\Manager
         $extension = $this->getExtension($file);
 
         if ($this->getSetting('archive_repertory_file_keep_original_name') === '1')  {
-                $path = $this->checkExistingFile($this->getStoragePath('',$file->getSourceName())) ;
+                $path = $this->checkExistingFile($this->getStoragePath('', $file->getSourceName())) ;
                 return $this->storageName[$idfile]=pathinfo($path, PATHINFO_FILENAME).($extension ? ".$extension": '');
 
         }
@@ -127,11 +126,11 @@ class Manager extends \Omeka\File\Manager
             return $second_dir;
         if (!$second_dir || $second_dir=='')
             return $first_dir;
-        if (substr($first_dir,-1)==DIRECTORY_SEPARATOR)
-            $first_dir = substr($first_dir,0,-1);
+        if (substr($first_dir, -1)==DIRECTORY_SEPARATOR)
+            $first_dir = substr($first_dir, 0, -1);
 
         if ($second_dir[0]==DIRECTORY_SEPARATOR)
-            $second_dir = substr($second_dir,1);
+            $second_dir = substr($second_dir, 1);
 
         return $first_dir.DIRECTORY_SEPARATOR.$second_dir;
     }
@@ -212,7 +211,7 @@ class Manager extends \Omeka\File\Manager
      *   Extension of the derivative files to move, because it can be different
      *   from the new archive filename and it can't be determined here.
      *
-     * @return boolean
+     * @return bool
      *   true if files are moved, else throw Omeka_Storage_Exception.
      */
     public function moveFilesInArchiveSubfolders($currentArchiveFilename, $newArchiveFilename, $derivativeExtension = '')
@@ -226,7 +225,7 @@ class Manager extends \Omeka\File\Manager
         // Move file only if it is not in the right place.
         // If the main file is at the right place, this is always the case for
         // the derivatives.
-        $newArchiveFilename = str_replace('//','/',$newArchiveFilename);
+        $newArchiveFilename = str_replace('//', '/', $newArchiveFilename);
         if ($currentArchiveFilename == $newArchiveFilename) {
             return true;
         }
@@ -300,7 +299,7 @@ class Manager extends \Omeka\File\Manager
      * @param Record $record A collection or an item.
      * @param string $folder Optional. Allow to select a specific folder instead
      * of the default one.
-     * @param boolean $first Optional. Allow to return only the first value.
+     * @param bool $first Optional. Allow to return only the first value.
      *
      * @return string|array.
      */
@@ -330,7 +329,7 @@ class Manager extends \Omeka\File\Manager
                     if ($value->getProperty()->getId() != $folder)
                         continue;
                     if ($prefix) {
-                        preg_match('/^'.$prefix.'(.*)/',$value->getValue(),$matches);
+                        preg_match('/^'.$prefix.'(.*)/', $value->getValue(), $matches);
                         if (isset($matches[1])) return trim($matches[1]);
                         continue;
                     }
@@ -440,8 +439,8 @@ class Manager extends \Omeka\File\Manager
      * @see http://www.php.net/manual/en/function.mb-substr.php#107698
      *
      * @param string $string
-     * @param integer $start
-     * @param integer $length (optional)
+     * @param int $start
+     * @param int $length (optional)
      *
      * @return string
      */
@@ -554,7 +553,7 @@ class Manager extends \Omeka\File\Manager
      *   (Optional) Name of folder where to create archive folder. If not set,
      *   the archive folder will be created in all derivative paths.
      *
-     * @return boolean
+     * @return bool
      *   True if each path is created, Exception if an error occurs.
      */
     protected function _createArchiveFolders($archiveFolder, $pathFolder = '')
@@ -578,7 +577,7 @@ class Manager extends \Omeka\File\Manager
      *
      * @param string $path Full path of the folder to create.
      *
-     * @return boolean True if the path is created, Exception if an error occurs.
+     * @return bool True if the path is created, Exception if an error occurs.
      */
     protected function _createFolder($path)
     {
@@ -611,7 +610,7 @@ class Manager extends \Omeka\File\Manager
      *
      * @param string $archiveFolder Name of folder to delete, without files dir.
      *
-     * @return boolean True if the path is created, Exception if an error occurs.
+     * @return bool True if the path is created, Exception if an error occurs.
      */
     protected function _removeArchiveFolders($archiveFolder)
     {
@@ -637,10 +636,8 @@ class Manager extends \Omeka\File\Manager
      * @note Currently, Omeka API doesn't provide a function to remove a folder.
      *
      * @param string $path Full path of the folder to remove.
-     * @param boolean $evenNonEmpty Remove non empty folder
+     * @param bool $evenNonEmpty Remove non empty folder
      *   This parameter can be used with non standard folders.
-     *
-     * @return void.
      */
     protected function _removeFolder($path, $evenNonEmpty = false)
     {
@@ -661,7 +658,7 @@ class Manager extends \Omeka\File\Manager
      *
      * @param string $dirPath Directory name.
      *
-     * @return boolean
+     * @return bool
      */
     protected function _rrmdir($dirPath)
     {
@@ -681,7 +678,7 @@ class Manager extends \Omeka\File\Manager
     /**
      * Process the move operation according to admin choice.
      *
-     * @return boolean True if success, else throw Omeka_Storage_Exception.
+     * @return bool True if success, else throw Omeka_Storage_Exception.
      */
     protected function _moveFile($source, $destination, $path)
     {

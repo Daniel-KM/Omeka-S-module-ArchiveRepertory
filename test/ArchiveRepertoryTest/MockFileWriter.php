@@ -6,7 +6,7 @@ class MockFileWriter
 {
     protected $files = [];
 
-    public function moveUploadedFile($source,$destination) {
+    public function moveUploadedFile($source, $destination) {
         $this->files = array_diff($this->files, [$source]);
         $this->files[]=$destination;
         return true;

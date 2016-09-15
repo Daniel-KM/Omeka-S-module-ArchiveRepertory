@@ -4,7 +4,6 @@ namespace OmekaTest\Controller;
 
 use OmekaTestHelper\Controller\OmekaControllerTestCase;
 use Omeka\Mvc\Controller\Plugin\Messenger;
-use ArchiveRepertory\Media\Ingester\UploadAnywhere;
 use ArchiveRepertoryTest\MockUpload;
 
 class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
@@ -83,7 +82,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
      * @test
      * @dataProvider datas
      */
-    public function postConfigurationShouldBeSaved($name,$value) {
+    public function postConfigurationShouldBeSaved($name, $value) {
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
         $this->postDispatch('/admin/module/configure?id=ArchiveRepertory', [$name => $value]);
         $this->assertEquals($value, $settings->get($name));
@@ -173,7 +172,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $settings->set('archive_repertory_file_keep_original_name', '1');
         $settings->set('archive_repertory_item_prefix', '');
 
-        $this->postDipatchFiles('My modified title','photo.png', 'photo.png');
+        $this->postDipatchFiles('My modified title', 'photo.png', 'photo.png');
         $result_expected = ['My_modified_title/photo.png', 'My_modified_title/photo.1.png'];
         $result = [];
         $item = $api->read('items', $this->item->id())->getContent();
@@ -202,7 +201,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $settings->set('archive_repertory_file_keep_original_name', '1');
         $settings->set('archive_repertory_item_prefix', 'nonexisting');
 
-        $this->postDipatchFiles('My modified title','photo.png', 'another_file.png');
+        $this->postDipatchFiles('My modified title', 'photo.png', 'another_file.png');
         $result_expected = [
             $this->item->id() . '/photo.png',
             $this->item->id() . '/another_file.png',
@@ -227,7 +226,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $settings->set('archive_repertory_file_keep_original_name', '0');
         $settings->set('archive_repertory_item_prefix', '');
 
-        $this->postDipatchFiles('Previous title','photo.1.png', 'another_file.png');
+        $this->postDipatchFiles('Previous title', 'photo.1.png', 'another_file.png');
         $settings->set('archive_repertory_file_keep_original_name', '1');
 
         $existing_medias = [];
@@ -269,7 +268,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $settings->set('archive_repertory_file_keep_original_name', '1');
         $settings->set('archive_repertory_item_prefix', '');
 
-        $this->postDipatchFiles('Previous title','photo.1.png', 'another_file.png');
+        $this->postDipatchFiles('Previous title', 'photo.1.png', 'another_file.png');
         $settings->set('archive_repertory_file_keep_original_name', '0');
         $existing_medias = [];
         $item = $api->read('items', $this->item->id())->getContent();
