@@ -187,7 +187,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
     {
         $messenger = new Messenger;
         $messages = $messenger->get();
-        return $messages[Messenger::SUCCESS][0][0];
+        return $messages[Messenger::SUCCESS][0];
     }
 
     /** @test */
