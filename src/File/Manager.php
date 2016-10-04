@@ -18,9 +18,6 @@ class Manager extends \Omeka\File\Manager
         'square_thumbnails' => 'square',
     ];
 
-    protected $media;
-    protected $storageName = [];
-
     /**
      * Derivative extension for each type of files/derivatives, used when a
      * plugin doesn't use the Omeka standard ones. These lasts are used by
@@ -34,53 +31,33 @@ class Manager extends \Omeka\File\Manager
      */
     protected $_derivativeExtensionsByType = [];
 
-    public function setMedia($media)
-    {
-        $this->media = $media;
-        return $this;
-    }
-
-    public function storeThumbnails(File $file)
-    {
-        $extension = $this->getExtension($file);
-        $storageName = $this->getStorageName($file);
-        $file->setStorageId(str_replace(".$extension", '', $storageName));
-
-        return parent::storeThumbnails($file);
-    }
-
     public function getBasename($name)
     {
         return substr($name, 0, strrpos($name, '.')) ? substr($name, 0, strrpos($name, '.')): $name;
     }
 
-    public function getStoragePath($prefix, $name, $extension = null)
+    public function getStorageId(File $file, $media)
     {
-        if ($this->media) {
-            $prefix=($prefix ? $prefix.'/' : ''). ($this->getItemFolderName($this->media->getItem()));
-        }
-        return sprintf('%s/%s%s', $prefix, $name, $extension ? ".$extension" : null);
-    }
-
-    public function getStorageName(File $file)
-    {
-        $idfile = spl_object_hash($file);
-        if (isset($this->storageName[$idfile])) {
-            return $this->storageName[$idfile];
-        }
-
-        $extension = $this->getExtension($file);
+        $folderName = $this->getItemFolderName($media->getItem());
 
         if ($this->getSetting('archive_repertory_file_keep_original_name') === '1')  {
-                $path = $this->checkExistingFile($this->getStoragePath('', $file->getSourceName())) ;
-                return $this->storageName[$idfile]=pathinfo($path, PATHINFO_FILENAME).($extension ? ".$extension": '');
-
+            $storageName = pathinfo($file->getSourceName(), PATHINFO_BASENAME);
+            if ($folderName) {
+                $storageName = "$folderName/$storageName";
+            }
+            $storageName = $this->checkExistingFile($storageName);
+            $storageId = pathinfo($storageName, PATHINFO_FILENAME);
+            if ($folderName) {
+                $storageId = "$folderName/$storageId";
+            }
+        } else {
+            $storageId = $file->getStorageId();
+            if ($folderName) {
+                $storageId = "$folderName/$storageId";
+            }
         }
 
-        $this->storageName[$idfile] = sprintf('%s%s', $file->getStorageId(),
-            $extension ? ".$extension" : null);
-
-        return $this->storageName[$idfile];
+        return $storageId;
     }
 
     /**

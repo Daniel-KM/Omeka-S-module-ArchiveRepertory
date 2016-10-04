@@ -33,10 +33,11 @@ namespace ArchiveRepertory;
 
 use Zend\EventManager\SharedEventManagerInterface;
 use Zend\EventManager\Event;
-use Zend\Math\Rand;
 use Zend\Mvc\Controller\AbstractController;
 use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\Uri\Http as HttpUri;
 use Zend\View\Renderer\PhpRenderer;
+use Omeka\File\File;
 use Omeka\Module\AbstractModule;
 use Omeka\Mvc\Controller\Plugin\Messenger;
 use ArchiveRepertory\Form\ConfigForm;
@@ -132,36 +133,24 @@ class Module extends AbstractModule
         $itemId = $event->getParam('request')->getId();
         $item = $entityManager->find('Omeka\Entity\Item', $itemId);
 
-        $archiveFolder = $fileManager->getItemFolderName($item);
-
         // Check if files are already attached and if they are at the right place.
-        $files = $item->getMedia();
+        foreach ($item->getMedia() as $media) {
+            $ingester = $media->getIngester();
 
-        $keep_original_name = $settings->get('archive_repertory_file_keep_original_name');
-        foreach ($files as $file) {
-            if ($file->getIngester() != 'upload')
+            if ($ingester != 'upload' && $ingester != 'url') {
                 continue;
-
-            $fileManager->setMedia($file);
-            $newFilename = $fileManager->concatWithSeparator($archiveFolder, Helpers::basename_special($file->getFilename()));
-            if ($keep_original_name === '1') {
-                if (!$this->filenameMatchingSourceName($file)) {
-                    $source = $file->getSource();
-                    $storagePath = $fileManager->getStoragePath('', $source);
-                    $newFilename = $fileManager->checkExistingFile($storagePath);
-                }
-            } else {
-                if ($this->filenameMatchingSourceName($file)) {
-                    $extension = pathinfo($file->getFilename(), PATHINFO_EXTENSION);
-                    $storageId = bin2hex(Rand::getBytes(20)) . '.' . $extension;
-                    $newFilename = $fileManager->concatWithSeparator($archiveFolder, $storageId);
-                }
             }
-            if ($file->getFilename() != $newFilename) {
+
+            if ($this->fileShouldBeMoved($media)) {
+                $file = new File('');
+                $file->setSourceName($this->getMediaSourceName($media));
+                $storageId = $fileManager->getStorageId($file, $media);
+                $newFilename = $storageId . '.' . $media->getExtension();
+
                 // Check if the original file exists, else this is an undetected
                 // error during the convert process.
                 $path = $fileManager->getFullArchivePath('original');
-                $filepath = $fileManager->concatWithSeparator($path, $file->getFilename());
+                $filepath = $fileManager->concatWithSeparator($path, $media->getFilename());
                 if (!$fileWriter->fileExists($filepath)) {
                     $msg = $this->translate('This file is not present in the original directory : ' . $filepath);
                     $msg .= ' ' . $this->translate('There was an undetected error before storage, probably during the convert process.');
@@ -170,9 +159,9 @@ class Module extends AbstractModule
                 }
 
                 $result = $fileManager->moveFilesInArchiveSubfolders(
-                    $file->getFilename(),
+                    $media->getFilename(),
                     $newFilename,
-                    $fileManager->getDerivativeExtension($file)
+                    $fileManager->getDerivativeExtension($media)
                 );
 
                 if (!$result) {
@@ -182,20 +171,13 @@ class Module extends AbstractModule
                 }
 
                 // Update file in Omeka database immediately for each file.
-                $pathParts = pathinfo($newFilename);
-                $file->setStorageId($pathParts['dirname'] . DIRECTORY_SEPARATOR . $pathParts['filename']);
-                $file->setExtension($pathParts['extension']);
+                $media->setStorageId($storageId);
+
                 // As it's not a file hook, the file is not automatically saved.
-                $entityManager->persist($file);
+                $entityManager->persist($media);
                 $entityManager->flush();
             }
         }
-    }
-
-    protected function getOption($key)
-    {
-        $services = $this->getServiceLocator();
-        return $services->get('Omeka\Settings')->get($key);
     }
 
     protected function _addError($msg)
@@ -204,9 +186,31 @@ class Module extends AbstractModule
         $messenger->addError($msg);
     }
 
+    protected function fileShouldBeMoved($media)
+    {
+        $services = $this->getServiceLocator();
+        $fileManager = $services->get('Omeka\File\Manager');
+        $settings = $services->get('Omeka\Settings');
+
+        $keep_original_name = $settings->get('archive_repertory_file_keep_original_name');
+
+        if ($keep_original_name && !$this->filenameMatchingSourceName($media)) {
+            return true;
+        }
+
+        if (!$keep_original_name && $this->filenameMatchingSourceName($media)) {
+            return true;
+        }
+
+        $archiveFolder = $fileManager->getItemFolderName($media->getItem());
+        $newFilename = $fileManager->concatWithSeparator($archiveFolder, Helpers::basename_special($media->getFilename()));
+
+        return $media->getFilename() != $newFilename;
+    }
+
     protected function filenameMatchingSourceName($media)
     {
-        $source = $media->getSource();
+        $source = $this->getMediaSourceName($media);
         $sourceBasename = pathinfo($source, PATHINFO_FILENAME);
         $filename = $media->getFilename();
         $filenameBasename = pathinfo($filename, PATHINFO_FILENAME);
@@ -215,6 +219,18 @@ class Module extends AbstractModule
         $filenameBasename = preg_replace('/\.\d+$/', '', $filenameBasename);
 
         return $sourceBasename == $filenameBasename;
+    }
+
+    protected function getMediaSourceName($media)
+    {
+        if ($media->getIngester() == 'url') {
+            $uri = new HttpUri($media->getSource());
+            $sourceName = $uri->getPath();
+        } else {
+            $sourceName = $media->getSource();
+        }
+
+        return $sourceName;
     }
 
     protected function translate($string)

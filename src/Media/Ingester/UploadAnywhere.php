@@ -8,7 +8,6 @@ use Omeka\Stdlib\ErrorStore;
 use ArchiveRepertory\File\OmekaRenameUpload;
 use Zend\Form\Element\File;
 use Zend\InputFilter\FileInput;
-use Zend\View\Renderer\PhpRenderer;
 
 class UploadAnywhere extends Upload
 {
@@ -54,19 +53,20 @@ class UploadAnywhere extends Upload
 
         // Actually process and move the upload
         $fileInput->getValue();
-        $fileManager->setMedia($media);
         $file->setSourceName($fileData['name']);
-        $hasThumbnails = $fileManager->storeThumbnails($file);
 
-        $fileManager->storeOriginal($file);
-        $media->setStorageId($fileManager->getStoragePath('', $fileManager->getStorageName($file)));
+        $file->setStorageId($fileManager->getStorageId($file, $media));
+
+        $media->setStorageId($file->getStorageId());
+        $media->setExtension($fileManager->getExtension($file));
         $media->setMediaType($this->getFileMediaType($file));
-        $media->setHasThumbnails($hasThumbnails);
+        $media->setSha256($this->getFileSha256($file));
+        $media->setHasThumbnails($fileManager->storeThumbnails($file));
         $media->setHasOriginal(true);
-
         if (!array_key_exists('o:source', $data)) {
             $media->setSource($fileData['name']);
         }
+        $fileManager->storeOriginal($file);
     }
 
     public function setFileWriter($fileWriter)
@@ -100,20 +100,8 @@ class UploadAnywhere extends Upload
         return $file->getMediaType();
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function form(PhpRenderer $view, array $options = [])
+    protected function getFileSha256($file)
     {
-        $fileInput = new File('file[__index__]');
-        $fileInput->setOptions([
-            'label' => $view->translate('Upload File'),
-            'info' => $view->uploadLimit(),
-        ]);
-        $fileInput->setAttributes([
-            'id' => 'media-file-input-__index__',
-        ]);
-        $field = $view->formRow($fileInput);
-        return $field . '<input type="hidden" name="o:media[__index__][file_index]" value="__index__">';
+        $file->getSha256();
     }
 }

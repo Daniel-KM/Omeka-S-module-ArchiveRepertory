@@ -17,4 +17,9 @@ class MockUpload extends UploadAnywhere
     {
         return 'image/png';
     }
+
+    protected function getFileSha256($file)
+    {
+        return hash('sha256', '');
+    }
 }
