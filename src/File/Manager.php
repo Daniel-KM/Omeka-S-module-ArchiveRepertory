@@ -22,10 +22,19 @@ class Manager extends \Omeka\File\Manager
         return substr($name, 0, strrpos($name, '.')) ? substr($name, 0, strrpos($name, '.')) : $name;
     }
 
+    /**
+     * Get the full storage id of a media according to current settings.
+     *
+     * @internal The directory separator is always "/" to simplify management
+     * of files and checks.
+     *
+     * @param Media $media
+     * @return string
+     */
     public function getStorageId(Media $media)
     {
-        $folderName = $this->getItemFolderName($media->getItem());
         $storageId = $media->getStorageId();
+        $folderName = $this->getItemFolderName($media->getItem());
 
         if ($this->getSetting('archive_repertory_file_keep_original_name')) {
             $storageName = pathinfo($media->getSource(), PATHINFO_BASENAME);
@@ -42,83 +51,6 @@ class Manager extends \Omeka\File\Manager
         }
 
         return $storageId;
-    }
-
-    /**
-     * Checks if the file is a duplicate one. In that case, a suffix is added.
-     *
-     * Check is done on the basename, without extension, to avoid issues with
-     * derivatives.
-     *
-     * @internal No check via database, because the file can be unsaved yet.
-     *
-     * @param string $filename
-     * @return string The unique filename, that can be the same as input name.
-     */
-    public function checkExistingFile($filename)
-    {
-        // Get the partial path.
-        $dirname = pathinfo($filename, PATHINFO_DIRNAME);
-
-        // Get the real archive path.
-        $filepath = $this->concatWithSeparator($this->getFullArchivePath(self::ORIGINAL_PREFIX), $filename);
-        $folder = pathinfo($filepath, PATHINFO_DIRNAME);
-        $name = pathinfo($filepath, PATHINFO_FILENAME);
-        $extension = pathinfo($filepath, PATHINFO_EXTENSION);
-
-        // Check folder for file with any extension or without any extension.
-        $checkName = $name;
-        $i = 0;
-        $fileWriter = $this->getFileWriter();
-        while ($fileWriter->glob($folder . DIRECTORY_SEPARATOR . $checkName . '{.*,.,\,,}', GLOB_BRACE)) {
-            $checkName = $name . '.' . ++$i;
-        }
-
-        return ($dirname ? $dirname . DIRECTORY_SEPARATOR : '')
-            . $checkName
-            . ($extension ? '.' . $extension : '');
-    }
-
-    public function concatWithSeparator($firstDir, $secondDir)
-    {
-        if (empty($firstDir)) {
-            return $secondDir;
-        }
-        if (empty($secondDir)) {
-            return $firstDir;
-        }
-        $firstDir = rtrim($firstDir, DIRECTORY_SEPARATOR);
-        $secondDir = ltrim($secondDir, DIRECTORY_SEPARATOR);
-        return $firstDir . DIRECTORY_SEPARATOR . $secondDir;
-    }
-
-    /**
-     * Gets item folder name from an item and create folder if needed.
-     *
-     * @param Item $item
-     * @return string Unique sanitized name of the item.
-     */
-    public function getItemFolderName(Item $item)
-    {
-        $settings = $this->serviceLocator->get('Omeka\Settings');
-
-        $folder = $settings->get('archive_repertory_item_folder');
-        if (!$folder) {
-            return '';
-        }
-
-        switch ($folder) {
-            case 'id':
-                return (string) $item->getId();
-            case 'none':
-            case '':
-                return '';
-            default:
-                $name = $this->_getResourceFolderNameFromMetadata($item);
-        }
-
-        $item_convert = $settings->get('archive_repertory_item_convert');
-        return $this->_convertFilenameTo($name, $item_convert) ;
     }
 
     /**
@@ -147,12 +79,12 @@ class Manager extends \Omeka\File\Manager
      * archive folder if any (usually "collection/dc:identifier/").
      * @return bool True if files are moved, else set a message error.
      */
-    public function moveFilesInArchiveSubfolders($currentArchiveFilename, $newArchiveFilename)
+    public function moveFilesInArchiveFolders($currentArchiveFilename, $newArchiveFilename)
     {
         // A quick check to avoid some errors.
         if (trim($currentArchiveFilename) == '' || trim($newArchiveFilename) == '') {
             $msg = $this->translate('Cannot move file inside archive directory: no filename.');
-            $this->_addError($msg);
+            $this->addError($msg);
             return false;
         }
 
@@ -231,6 +163,136 @@ class Manager extends \Omeka\File\Manager
         }
     }
 
+    public function concatWithSeparator($firstDir, $secondDir)
+    {
+        if (empty($firstDir)) {
+            return $secondDir;
+        }
+        if (empty($secondDir)) {
+            return $firstDir;
+        }
+        $firstDir = rtrim($firstDir, DIRECTORY_SEPARATOR);
+        $secondDir = ltrim($secondDir, DIRECTORY_SEPARATOR);
+        return $firstDir . DIRECTORY_SEPARATOR . $secondDir;
+    }
+
+
+    /**
+     * Get all archive folders with full paths and extensions.
+     *
+     * @return array
+     */
+    protected function getDerivatives()
+    {
+        if (is_null($this->derivatives)) {
+            $this->derivatives = [];
+
+            // Prepare standard paths and extensions.
+            $derivatives = $this->getConfiguredTypes();
+            $settings = $this->serviceLocator->get('Omeka\Settings');
+            $storagePath = $this->getLocalStoragePath();
+
+            // Add specific paths and extensions
+            $ingesters = $this->getSetting('archive_repertory_ingesters');
+            foreach ($ingesters as $name => $params) {
+                // Bypass internal ingesters.
+                if ($params) {
+                    $params['path'] = $this->concatWithSeparator($storagePath, $params['path']);
+                    $derivatives[$name] = $params;
+                }
+            }
+            $this->derivatives = $derivatives;
+        }
+
+        return $this->derivatives;
+    }
+
+    /**
+     * Get the list of original and standard derivatives by type.
+     *
+     * @internal In Omeka S, the name and the path are the same.
+     *
+     * @return array
+     */
+    protected function getConfiguredTypes()
+    {
+        $types = $this->config['thumbnail_types'];
+        $storagePath = $this->getLocalStoragePath();
+        foreach ($types as $path => &$value) {
+            $value = [];
+            $value['path'] = $this->concatWithSeparator($storagePath, $path);
+            $value['extension'] = ['.' . self::THUMBNAIL_EXTENSION];
+        }
+        $types = ['original' => [
+            'path' => $this->concatWithSeparator($storagePath, self::ORIGINAL_PREFIX),
+            'extension' => [null],
+        ]] + $types;
+        return $types;
+    }
+
+    /**
+     * Check if a file is a duplicate and returns it with a suffix if needed.
+     *
+     * @internal The check is done on the basename, without extension, to avoid
+     * issues with derivatives.
+     * @internal No check via database, because the file can be unsaved yet.
+     *
+     * @param string $filename
+     * @return string The unique filename, that can be the same as input name.
+     */
+    protected function checkExistingFile($filename)
+    {
+        // Get the partial path.
+        $dirname = pathinfo($filename, PATHINFO_DIRNAME);
+
+        // Get the real archive path.
+        $filepath = $this->concatWithSeparator($this->getFullArchivePath(self::ORIGINAL_PREFIX), $filename);
+        $folder = pathinfo($filepath, PATHINFO_DIRNAME);
+        $name = pathinfo($filepath, PATHINFO_FILENAME);
+        $extension = pathinfo($filepath, PATHINFO_EXTENSION);
+
+        // Check folder for file with any extension or without any extension.
+        $checkName = $name;
+        $i = 0;
+        $fileWriter = $this->getFileWriter();
+        while ($fileWriter->glob($folder . DIRECTORY_SEPARATOR . $checkName . '{.*,.,\,,}', GLOB_BRACE)) {
+            $checkName = $name . '.' . ++$i;
+        }
+
+        return ($dirname ? $dirname . DIRECTORY_SEPARATOR : '')
+            . $checkName
+            . ($extension ? '.' . $extension : '');
+    }
+
+    /**
+     * Gets item folder name from an item and create folder if needed.
+     *
+     * @param Item $item
+     * @return string Unique sanitized name of the item.
+     */
+    protected function getItemFolderName(Item $item)
+    {
+        $settings = $this->serviceLocator->get('Omeka\Settings');
+
+        $folder = $settings->get('archive_repertory_item_folder');
+        if (!$folder) {
+            return '';
+        }
+
+        switch ($folder) {
+            case 'id':
+                return (string) $item->getId();
+            case 'none':
+            case '':
+                return '';
+            default:
+                $name = $this->getResourceFolderNameFromMetadata($item);
+        }
+
+        $item_convert = $settings->get('archive_repertory_item_convert');
+        return $this->convertFilenameTo($name, $item_convert) ;
+    }
+
     /**
      * Creates a unique name for a resource folder from first metadata.
      *
@@ -240,13 +302,13 @@ class Manager extends \Omeka\File\Manager
      * @param Resource $resource
      * @return string Unique sanitized name of the resource.
      */
-    protected function _getResourceFolderNameFromMetadata(Resource $resource)
+    protected function getResourceFolderNameFromMetadata(Resource $resource)
     {
-        $identifier = $this->_getResourceIdentifiers($resource, null, true);
+        $identifier = $this->getResourceIdentifiers($resource, null, true);
 
         return empty($identifier)
             ? (string) $resource->getId()
-            : $this->_sanitizeName($identifier);
+            : $this->sanitizeName($identifier);
     }
 
     /**
@@ -258,7 +320,7 @@ class Manager extends \Omeka\File\Manager
      * @param bool $first Optional. Allow to return only the first value.
      * @return string|array.
      */
-    protected function _getResourceIdentifiers(Resource $resource, $folder = null, $first = false)
+    protected function getResourceIdentifiers(Resource $resource, $folder = null, $first = false)
     {
         $api = $this->serviceLocator->get('Omeka\ApiManager');
         $settings = $this->serviceLocator->get('Omeka\Settings');
@@ -306,7 +368,7 @@ class Manager extends \Omeka\File\Manager
      * @param string $string The string to sanitize.
      * @return string The sanitized string.
      */
-    protected function _sanitizeName($string)
+    protected function sanitizeName($string)
     {
         $string = strip_tags($string);
         // The first character is a space and the last one is a no-break space.
@@ -324,13 +386,13 @@ class Manager extends \Omeka\File\Manager
      * The string should be a simple name, not a full path or url, because "/",
      * "\" and ":" are removed (so a path should be sanitized by part).
      *
-     * @see ArchiveRepertoryPlugin::_sanitizeName()
+     * @see ArchiveRepertoryPlugin::sanitizeName)
      *
      * @param string $string The string to sanitize.
      * @param string $format The format to convert to.
      * @return string The sanitized string.
      */
-    protected function _convertFilenameTo($string, $format)
+    protected function convertFilenameTo($string, $format)
     {
         switch ($format) {
             case 'Keep name':
@@ -338,10 +400,10 @@ class Manager extends \Omeka\File\Manager
             case 'First letter':
                 return $this->_convertFirstLetterToAscii($string);
             case 'Spaces':
-                return $this->_convertSpacesToUnderscore($string);
+                return $this->convertSpacesToUnderscore($string);
             case 'First and spaces':
-                $string = $this->_convertFilenameTo($string, 'First letter');
-                return $this->_convertSpacesToUnderscore($string);
+                $string = $this->convertFilenameTo($string, 'First letter');
+                return $this->convertSpacesToUnderscore($string);
             case 'Full':
             default:
                 return $this->_convertNameToAscii($string);
@@ -353,7 +415,7 @@ class Manager extends \Omeka\File\Manager
      *
      * @internal The string should be already sanitized.
      *
-     * @see ArchiveRepertoryPlugin::_convertFilenameTo()
+     * @see ArchiveRepertoryPlugin::convertFilenameTo()
      *
      * @param string $string The string to convert to ascii.
      * @return string The converted string to use as a folder or a file name.
@@ -373,7 +435,7 @@ class Manager extends \Omeka\File\Manager
      *
      * @internal The string should be already sanitized.
      *
-     * @see ArchiveRepertoryPlugin::_convertFilenameTo()
+     * @see ArchiveRepertoryPlugin::convertFilenameTo()
      *
      * @param string $string The string to sanitize.
      * @return string The sanitized string.
@@ -414,75 +476,20 @@ class Manager extends \Omeka\File\Manager
      *
      * @internal The string should be already sanitized.
      *
-     * @see ArchiveRepertoryPlugin::_convertFilenameTo()
-     *
      * @param string $string The string to sanitize.
      * @return string The sanitized string.
      */
-    protected function _convertSpacesToUnderscore($string)
+    protected function convertSpacesToUnderscore($string)
     {
         return preg_replace('/\s+/', '_', $string);
     }
 
     /**
-     * Get all archive folders with full paths and extensions.
+     * Get the local storage path.
      *
      * @return array
      */
-    protected function getDerivatives()
-    {
-        if (is_null($this->derivatives)) {
-            $this->derivatives = [];
-
-            // Prepare standard paths and extensions.
-            $derivatives = $this->getConfiguredTypes();
-            $settings = $this->serviceLocator->get('Omeka\Settings');
-            $storagePath = $this->_getLocalStoragePath();
-
-            // Add specific paths and extensions
-            $ingesters = $this->getSetting('archive_repertory_ingesters');
-            foreach ($ingesters as $name => $params) {
-                // Bypass internal ingesters.
-                if ($params) {
-                    $params['path'] = $this->concatWithSeparator($storagePath, $params['path']);
-                    $derivatives[$name] = $params;
-                }
-            }
-            $this->derivatives = $derivatives;
-        }
-
-        return $this->derivatives;
-    }
-
-    /**
-     * Get the list of original and standard derivatives by type.
-     *
-     * @internal In Omeka S, the name and the path are the same.
-     *
-     * @return array
-     */
-    protected function getConfiguredTypes()
-    {
-        $types = $this->config['thumbnail_types'];
-        $storagePath = $this->_getLocalStoragePath();
-        foreach ($types as $path => &$value) {
-            $value = [];
-            $value['path'] = $this->concatWithSeparator($storagePath, $path);
-            $value['extension'] = ['.' . self::THUMBNAIL_EXTENSION];
-        }
-        $types = ['original' => [
-            'path' => $this->concatWithSeparator($storagePath, self::ORIGINAL_PREFIX),
-            'extension' => [null],
-        ]] + $types;
-        return $types;
-    }
-
-    /**
-     * Get the local storage path (by default FILES_DIR).
-     *
-     * @return array
-     */
-    protected function _getLocalStoragePath()
+    protected function getLocalStoragePath()
     {
         $config = $this->serviceLocator->get('Config');
         if (!$this->getFileWriter()->is_dir($config['local_dir'])) {
@@ -503,7 +510,7 @@ class Manager extends \Omeka\File\Manager
      * @return bool
      *   True if each path is created, Exception if an error occurs.
      */
-    protected function _createArchiveFolders($archiveFolder, $pathFolder = '')
+    protected function createArchiveFolders($archiveFolder, $pathFolder = '')
     {
         if ($archiveFolder != '') {
             $folders = empty($pathFolder)
@@ -511,7 +518,7 @@ class Manager extends \Omeka\File\Manager
                 : [['path' => $pathFolder]];
             foreach ($folders as $derivative) {
                 $fullpath = $this->concatWithSeparator($derivative['path'], $archiveFolder);
-                $result = $this->_createFolder($fullpath);
+                $result = $this->createFolder($fullpath);
             }
         }
         return true;
@@ -526,7 +533,7 @@ class Manager extends \Omeka\File\Manager
      * @return bool True if the path is created
      * @throws Omeka\File\Exception\RuntimeException
      */
-    protected function _createFolder($path)
+    protected function createFolder($path)
     {
         if ($path == '') {
             return true;
@@ -578,12 +585,12 @@ class Manager extends \Omeka\File\Manager
                 $destination,
                 $path
             );
-            $this->_addError($msg);
+            $this->addError($msg);
             return false;
         }
 
         try {
-            $result = $this->_createFolder(dirname($realDestination));
+            $result = $this->createFolder(dirname($realDestination));
             $result = $fileWriter->rename($realSource, $realDestination);
         } catch (Exception $e) {
             $msg = sprintf(
@@ -592,7 +599,7 @@ class Manager extends \Omeka\File\Manager
                 $destination,
                 $path
             );
-            $this->_addError($msg);
+            $this->addError($msg);
             return false;
         }
 
@@ -618,7 +625,7 @@ class Manager extends \Omeka\File\Manager
         return $this->serviceLocator->get('Omeka\Settings')->get($name);
     }
 
-    protected function _addError($msg)
+    protected function addError($msg)
     {
         $messenger = new Messenger();
         $messenger->addError($msg);

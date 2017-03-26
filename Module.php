@@ -75,10 +75,10 @@ class Module extends AbstractModule
 
     public function install(ServiceLocatorInterface $serviceLocator)
     {
-        $this->_installSettings($serviceLocator->get('Omeka\Settings'));
+        $this->installSettings($serviceLocator->get('Omeka\Settings'));
     }
 
-    protected function _installSettings($settings)
+    protected function installSettings($settings)
     {
         foreach ($this->settings as $key => $value) {
             $settings->set($key, $value);
@@ -87,10 +87,10 @@ class Module extends AbstractModule
 
     public function uninstall(ServiceLocatorInterface $serviceLocator)
     {
-        $this->_uninstallSettings($serviceLocator->get('Omeka\Settings'));
+        $this->uninstallSettings($serviceLocator->get('Omeka\Settings'));
     }
 
-    protected function _uninstallSettings($settings)
+    protected function uninstallSettings($settings)
     {
         foreach ($this->settings as $key => $value) {
             $settings->delete($key);
@@ -197,18 +197,18 @@ class Module extends AbstractModule
             if (!$fileWriter->fileExists($filepath)) {
                 $msg = $this->translate('This file is not present in the original directory : ' . $filepath);
                 $msg .= ' ' . $this->translate('There was an undetected error before storage, probably during the convert process.');
-                $this->_addError($msg);
+                $this->addError($msg);
                 continue;
             }
 
-            $result = $fileManager->moveFilesInArchiveSubfolders(
+            $result = $fileManager->moveFilesInArchiveFolders(
                 $media->getFilename(),
                 $newFilename
             );
 
             if (!$result) {
                 $msg = $this->translate('Cannot move files inside archive directory.');
-                $this->_addError($msg);
+                $this->addError($msg);
                 continue;
             }
 
@@ -254,7 +254,7 @@ class Module extends AbstractModule
         }
     }
 
-    protected function _addError($msg)
+    protected function addError($msg)
     {
         $messenger = new Messenger;
         $messenger->addError($msg);
