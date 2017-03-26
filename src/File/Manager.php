@@ -589,59 +589,15 @@ class Manager extends \Omeka\File\Manager
             && ($archiveFolder != DIRECTORY_SEPARATOR)
             && ($archiveFolder != '')
         ) {
+            $fileWriter = $this->getFileWriter();
             foreach ($this->_getFullArchivePaths() as $path) {
                 $folderPath = $this->concatWithSeparator($path, $archiveFolder);
                 if (realpath($path) != realpath($folderPath)) {
-                    $this->_removeFolder($folderPath);
+                    $fileWriter->removeDir($folderPath, true);
                 }
             }
         }
         return true;
-    }
-
-    /**
-     * Checks and removes an empty folder.
-     *
-     * @note Currently, Omeka API doesn't provide a function to remove a folder.
-     *
-     * @param string $path Full path of the folder to remove.
-     * @param bool $evenNonEmpty Remove non empty folder
-     *   This parameter can be used with non standard folders.
-     */
-    protected function _removeFolder($path, $evenNonEmpty = false)
-    {
-        $path = realpath($path);
-        if (strlen($path)
-            && $path != '/'
-            && file_exists($path)
-            && is_dir($path)
-            && is_readable($path)
-            && ((count(@scandir($path)) == 2) // Only '.' and '..'.
-                || $evenNonEmpty)
-            && is_writable($path)
-        ) {
-            $this->_rrmdir($path);
-        }
-    }
-
-    /**
-     * Removes directories recursively.
-     *
-     * @param string $dirPath Directory name.
-     * @return bool
-     */
-    protected function _rrmdir($dirPath)
-    {
-        $files = array_diff(scandir($dirPath), array('.', '..'));
-        foreach ($files as $file) {
-            $path = $dirPath . DIRECTORY_SEPARATOR . $file;
-            if (is_dir($path)) {
-                $this->_rrmDir($path);
-            } else {
-                unlink($path);
-            }
-        }
-        return rmdir($dirPath);
     }
 
     /**
@@ -687,7 +643,11 @@ class Manager extends \Omeka\File\Manager
 
     protected function getFileWriter()
     {
-        return $this->serviceLocator->get('ArchiveRepertory\FileWriter');
+        static $fileWriter;
+        if (is_null($fileWriter)) {
+            $fileWriter = $this->serviceLocator->get('ArchiveRepertory\FileWriter');
+        }
+        return $fileWriter;
     }
 
     protected function translate($string)

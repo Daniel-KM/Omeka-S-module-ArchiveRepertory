@@ -23,7 +23,7 @@ class FileWriter
         return is_writable($path);
     }
 
-    public function mkdir($directory_name, $permissions = '0777')
+    public function mkdir($directory_name, $permissions = 0777)
     {
         return mkdir($directory_name, $permissions, true);
     }
@@ -51,5 +51,48 @@ class FileWriter
     public function glob($pattern, $flags = 0)
     {
         return glob($pattern, $flags);
+    }
+
+    /**
+     * Checks and removes a folder recursively.
+     *
+     * @param string $path Full path of the folder to remove.
+     * @param bool $evenNonEmpty Remove non empty folder. This parameter can be
+     * used with non standard folders.
+     * @return bool
+     */
+    public function removeDir($path, $evenNonEmpty = false)
+    {
+        $path = realpath($path);
+        if (strlen($path)
+            && $path != DIRECTORY_SEPARATOR
+            && file_exists($path)
+            && is_dir($path)
+            && is_readable($path)
+            && is_writable($path)
+            && ($evenNonEmpty || count(array_diff(@scandir($path), ['.', '..'])) == 0)
+        ) {
+            return $this->recursiveRemoveDir($path);
+        }
+    }
+
+    /**
+     * Removes directories recursively.
+     *
+     * @param string $dirPath Directory name.
+     * @return bool
+     */
+    protected function recursiveRemoveDir($dirPath)
+    {
+        $files = array_diff(scandir($dirPath), ['.', '..']);
+        foreach ($files as $file) {
+            $path = $dirPath . DIRECTORY_SEPARATOR . $file;
+            if (is_dir($path)) {
+                $this->recursiveRemoveDir($path);
+            } else {
+                unlink($path);
+            }
+        }
+        return rmdir($dirPath);
     }
 }
