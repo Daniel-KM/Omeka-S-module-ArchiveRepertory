@@ -2,24 +2,40 @@
 
 namespace ArchiveRepertoryTest;
 
+use Omeka\Api\Request;
+use Omeka\Entity\Media;
+use Omeka\File\File;
+use Omeka\Stdlib\ErrorStore;
 use Omeka\Media\Ingester\Upload;
 
 class MockUpload extends Upload
 {
-    protected function getFileInput($file)
-    {
-        $fileInput = parent::getFileInput($file);
-        $fileInput->setAutoPrependUploadValidator(false);
-        return $fileInput;
-    }
+    public function ingest(Media $media, Request $request,
+        ErrorStore $errorStore
+    ) {
+        $data = $request->getContent();
+        $fileData = $request->getFileData();
 
-    protected function getFileMediaType($file)
-    {
-        return 'image/png';
-    }
+        $index = $data['file_index'];
 
-    protected function getFileSha256($file)
-    {
-        return hash('sha256', '');
+        $fileManager = $this->fileManager;
+
+        $fileData = $fileData['file'][$index];
+
+        $file = new File($fileData['tmp_name']);
+        $file->setSourceName($fileData['name']);
+
+        $media->setStorageId($file->getStorageId());
+        $media->setExtension($file->getExtension($fileManager));
+        $media->setMediaType($file->getMediaType());
+        $media->setSha256($file->getSha256());
+        $media->setHasThumbnails($fileManager->storeThumbnails($file));
+        $media->setHasOriginal(true);
+        if (!array_key_exists('o:source', $data)) {
+            $media->setSource($fileData['name']);
+        }
+        $fileManager->storeOriginal($file);
+
+        $file->delete();
     }
 }

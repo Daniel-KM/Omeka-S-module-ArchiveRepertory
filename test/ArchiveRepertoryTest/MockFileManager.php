@@ -12,14 +12,6 @@ class MockFileManager extends FileManager
         return $this->getSingleFilename($filename);
     }
 
-    public function storeThumbnails(File $file)
-    {
-        $extension = $this->getExtension($file);
-        $storageId = str_replace(".$extension", '', $this->getStorageName($file));
-        $file->setStorageId($storageId);
-        return true;
-    }
-
     public function getExtension(File $file)
     {
         return pathinfo($file->getSourceName(), PATHINFO_EXTENSION);
