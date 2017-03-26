@@ -41,7 +41,7 @@ class Manager extends \Omeka\File\Manager
             if ($folderName) {
                 $storageName = "$folderName/$storageName";
             }
-            $storageName = $this->checkExistingFile($storageName);
+            $storageName = $this->getSingleFilename($storageName);
             $storageId = pathinfo($storageName, PATHINFO_FILENAME);
             if ($folderName) {
                 $storageId = "$folderName/$storageId";
@@ -240,7 +240,7 @@ class Manager extends \Omeka\File\Manager
      * @param string $filename
      * @return string The unique filename, that can be the same as input name.
      */
-    protected function checkExistingFile($filename)
+    protected function getSingleFilename($filename)
     {
         // Get the partial path.
         $dirname = pathinfo($filename, PATHINFO_DIRNAME);
@@ -259,9 +259,10 @@ class Manager extends \Omeka\File\Manager
             $checkName = $name . '.' . ++$i;
         }
 
-        return ($dirname ? $dirname . DIRECTORY_SEPARATOR : '')
+        $result = ($dirname ? $dirname . DIRECTORY_SEPARATOR : '')
             . $checkName
             . ($extension ? '.' . $extension : '');
+        return $result;
     }
 
     /**
