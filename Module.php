@@ -93,6 +93,11 @@ class Module extends AbstractModule
     {
         $sharedEventManager->attach(
             'Omeka\Api\Adapter\ItemAdapter',
+            'api.create.post',
+            [$this, 'afterSaveItem']
+        );
+        $sharedEventManager->attach(
+            'Omeka\Api\Adapter\ItemAdapter',
             'api.update.post',
             [$this, 'afterSaveItem']
         );
@@ -135,8 +140,7 @@ class Module extends AbstractModule
         $settings = $services->get('Omeka\Settings');
         $fileWriter = $services->get('ArchiveRepertory\FileWriter');
 
-        $itemId = $event->getParam('request')->getId();
-        $item = $entityManager->find('Omeka\Entity\Item', $itemId);
+        $item = $event->getParam('response')->getContent();
 
         // Check if files are already attached and if they are at the right place.
         foreach ($item->getMedia() as $media) {
