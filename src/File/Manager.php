@@ -57,6 +57,15 @@ class Manager extends \Omeka\File\Manager
             $storageId = $folderName . $storageId;
         }
 
+        if (strlen($storageId) > 190) {
+            $msg = sprintf(
+                $this->translate('Cannot move file "%s" inside archive directory: filename too long.'),
+                pathinfo($media->getSource(), PATHINFO_BASENAME)
+            );
+            $this->addError($msg);
+            return $media->getStorageId();
+        }
+
         return $storageId;
     }
 
@@ -356,7 +365,7 @@ class Manager extends \Omeka\File\Manager
         $string = preg_replace('/[\(\{]/', '[', $string);
         $string = preg_replace('/[\)\}]/', ']', $string);
         $string = preg_replace('/[[:cntrl:]\/\\\?<>:\*\%\|\"\'`\&\;#+\^\$\s]/', ' ', $string);
-        return substr(preg_replace('/\s+/', ' ', $string), -250);
+        return substr(preg_replace('/\s+/', ' ', $string), -190);
     }
 
     /**
