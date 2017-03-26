@@ -6,19 +6,6 @@ use Omeka\File\File;
 class Manager extends \Omeka\File\Manager
 {
     /**
-     * Default folder paths for each default type of files/derivatives.
-     *
-     * @see application/models/File::_pathsByType()
-     * @var array
-     */
-    protected static $_pathsByType = [
-        'original' => 'original',
-        'fullsize' => 'large',
-        'thumbnail' => 'medium',
-        'square_thumbnails' => 'square',
-    ];
-
-    /**
      * Derivative extension for each type of files/derivatives, used when a
      * plugin doesn't use the Omeka standard ones. These lasts are used by
      * default. The dot before the extension should be specified if needed.
@@ -453,8 +440,11 @@ class Manager extends \Omeka\File\Manager
         static $archivePaths = [];
 
         if (empty($archivePaths)) {
+            $pathByTypes = $this->getPathsByType();
+            $settings = $this->serviceLocator->get('Omeka\Settings');
+
             $storagePath = $this->_getLocalStoragePath();
-            foreach (self::$_pathsByType as $name => $path) {
+            foreach ($pathByTypes as $name => $path) {
                 $archivePaths[$name] = $this->concatWithSeparator($storagePath, $path);
             }
 
@@ -475,7 +465,6 @@ class Manager extends \Omeka\File\Manager
                     $archivePaths[$name] = $path;
                 } else {
                     unset($derivatives[$key]);
-                    $settings = $this->serviceLocator->get('Omeka\Settings');
                     $settings->set('archive_repertory_derivative_folders', implode(', ', $derivatives));
                 }
             }
@@ -485,7 +474,23 @@ class Manager extends \Omeka\File\Manager
     }
 
     /**
+     * Get the list of paths by type (original and standard thumbnail types).
+     *
+     * @internal In Omeka S, the name and the path are the same.
+     *
+     * @return array
+     */
+    protected function getPathsByType()
+    {
+        $pathsByType = array_keys($this->config['thumbnail_types']);
+        array_unshift($pathsByType, 'original');
+        return array_combine($pathsByType, $pathsByType);
+    }
+
+    /**
      * Get the local storage path (by default FILES_DIR).
+     *
+     * @return array
      */
     protected function _getLocalStoragePath()
     {
