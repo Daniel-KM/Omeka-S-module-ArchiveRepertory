@@ -19,6 +19,7 @@ class FileManagerTest extends OmekaControllerTestCase
     protected $api;
     protected $entityManager;
     protected $fileManager;
+    protected $settings;
 
     /**
      * @var ItemSet
@@ -96,7 +97,7 @@ class FileManagerTest extends OmekaControllerTestCase
         $media->setExtension($file['extension']);
         $media->setHasOriginal(1);
         $media->setHasThumbnails(1);
-        $media->setStorageId($this->getFileStorageId());
+        $media->setStorageId($this->hashStorageName($media));
         $this->media = $media;
     }
 
@@ -155,7 +156,7 @@ class FileManagerTest extends OmekaControllerTestCase
     {
         $this->settings->set('archive_repertory_item_set_folder', '');
         $this->settings->set('archive_repertory_item_folder', '');
-        $this->settings->set('archive_repertory_file_keep_original_name', false);
+        $this->settings->set('archive_repertory_media_convert', 'hash');
 
         $this->assertNotEquals('image_test', $this->fileManager->getStorageId($this->media));
     }
@@ -164,7 +165,7 @@ class FileManagerTest extends OmekaControllerTestCase
     {
         $this->settings->set('archive_repertory_item_set_folder', '');
         $this->settings->set('archive_repertory_item_folder', '');
-        $this->settings->set('archive_repertory_file_keep_original_name', true);
+        $this->settings->set('archive_repertory_media_convert', 'keep');
 
         $this->assertEquals(
             pathinfo($this->file['filename'], PATHINFO_FILENAME),
@@ -175,7 +176,7 @@ class FileManagerTest extends OmekaControllerTestCase
     {
         $this->settings->set('archive_repertory_item_set_folder', '');
         $this->settings->set('archive_repertory_item_folder', 'id');
-        $this->settings->set('archive_repertory_file_keep_original_name', false);
+        $this->settings->set('archive_repertory_media_convert', 'hash');
 
         $this->assertEquals(
             $this->item->getId() . '/' . $this->media->getStorageId(),
@@ -186,7 +187,7 @@ class FileManagerTest extends OmekaControllerTestCase
     {
         $this->settings->set('archive_repertory_item_set_folder', '');
         $this->settings->set('archive_repertory_item_folder', 'id');
-        $this->settings->set('archive_repertory_file_keep_original_name', true);
+        $this->settings->set('archive_repertory_media_convert', 'keep');
 
         $this->assertEquals(
             $this->item->getId() . '/' . pathinfo($this->file['filename'], PATHINFO_FILENAME),
@@ -197,7 +198,7 @@ class FileManagerTest extends OmekaControllerTestCase
     {
         $this->settings->set('archive_repertory_item_set_folder', 'id');
         $this->settings->set('archive_repertory_item_folder', 'id');
-        $this->settings->set('archive_repertory_file_keep_original_name', true);
+        $this->settings->set('archive_repertory_media_convert', 'keep');
 
         $this->assertEquals(
             $this->itemSet->getId() . '/' . $this->item->getId() . '/' . pathinfo($this->file['filename'], PATHINFO_FILENAME),
@@ -207,7 +208,7 @@ class FileManagerTest extends OmekaControllerTestCase
     public function testStorageBasePathWithIdDirectory()
     {
         $this->settings->set('archive_repertory_item_folder', 'id');
-        $this->settings->set('archive_repertory_file_keep_original_name', true);
+        $this->settings->set('archive_repertory_media_convert', 'keep');
 
         $tempname = $this->workspace
             . DIRECTORY_SEPARATOR . 'tmp'
@@ -275,7 +276,7 @@ class FileManagerTest extends OmekaControllerTestCase
 
     public function testInsertDuplicateFile()
     {
-        $this->settings->set('archive_repertory_file_keep_original_name', true);
+        $this->settings->set('archive_repertory_media_convert', 'keep');
 
         $originalPath = $this->workspace
             . DIRECTORY_SEPARATOR . 'files'
@@ -294,14 +295,16 @@ class FileManagerTest extends OmekaControllerTestCase
     }
 
     /**
-     * Get a random storage id.
+     * Hash a stable single storage name for a specific media.
      *
-     * @uses Omeka\File\File::getStorageId()
+     * @see ArchiveRepertory\File::hashStorageName()
+     *
+     * @param Media $media
      * @return string
      */
-    protected function getFileStorageId()
+    protected function hashStorageName(Media $media)
     {
-        $file = new File('');
-        return $file->getStorageId();
+        $storageName = substr(hash('sha256', $media->getId() . '/' . $media->getSource()), 0, 40);
+        return $storageName;
     }
 }

@@ -97,17 +97,12 @@ class ConfigForm extends Form implements TranslatorAwareInterface
                 $this->translate('Convert item names'))
         );
 
-        $this->add([
-            'name' => 'archive_repertory_file_keep_original_name',
-            'type' => 'Checkbox',
-            'options' => [
-                'label' => $this->translate('Keep original filenames'),
-                'info' => $this->translate('If checked, Omeka will keep original filenames of uploaded files and will not hash it.'),
-            ],
-            'attributes' => [
-                'value' => $this->getSetting('archive_repertory_file_keep_original_name'),
-            ],
-        ]);
+        $radios = $this->getRadioForConversion('archive_repertory_media_convert',
+            $this->translate('Convert file names'));
+        $valueOptions = $radios->getValueOptions();
+        $valueOptions['hash'] = $this->translate('Hash filename (default Omeka)');
+        $radios->setValueOptions($valueOptions);
+        $this->add($radios);
     }
 
     protected function getSetting($name)
@@ -136,7 +131,7 @@ class ConfigForm extends Form implements TranslatorAwareInterface
         $recommended = (isset($allow_unicode['cli']) || isset($allow_unicode['fs'])) ? ' ' . $this->translate('(recommended because your server is not fully compatible with Unicode)') : '';
 
         $radio->setValueOptions([
-            'keep name' => $this->translate('Keep name as it') . $not_recommended,
+            'keep' => $this->translate('Keep name as it') . $not_recommended,
             'spaces' => $this->translate('Convert spaces to underscores'),
             'first letter' => $this->translate('Convert first letter only'),
             'first and spaces' => $this->translate('Convert first letter and spaces'),

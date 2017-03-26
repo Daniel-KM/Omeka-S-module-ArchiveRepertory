@@ -20,7 +20,8 @@ class Manager extends \Omeka\File\Manager
 
     public function getBasename($name)
     {
-        return substr($name, 0, strrpos($name, '.')) ? substr($name, 0, strrpos($name, '.')) : $name;
+        $positionExtension = strrpos($name, '.');
+        return $positionExtension ? substr($name, 0, $positionExtension) : $name;
     }
 
     /**
@@ -43,30 +44,41 @@ class Manager extends \Omeka\File\Manager
         $folderName = ($itemSetFolderName ? $itemSetFolderName . '/' : '')
             . ($itemFolderName ? $itemFolderName . '/' : '');
 
-        if ($this->getSetting('archive_repertory_file_keep_original_name')) {
-            $storageName = pathinfo($media->getSource(), PATHINFO_BASENAME);
-            if ($folderName) {
-                $storageName = $folderName . $storageName;
+        $mediaConvert = $this->getSetting('archive_repertory_media_convert');
+        if ($mediaConvert == 'hash') {
+            $storageName = $this->hashStorageName($media);
+            $storageId = $storageName;
+        } else {
+            $extension = $media->getExtension();
+            $storageName = \ArchiveRepertory\Helpers::pathinfo($media->getSource(), PATHINFO_BASENAME);
+            $storageName = $this->sanitizeName($storageName);
+            $storageName = \ArchiveRepertory\Helpers::pathinfo($storageName, PATHINFO_FILENAME);
+            $storageName = $this->convertFilenameTo($storageName, $mediaConvert);
+            if ($extension) {
+                $storageName = $storageName . '.' . $extension;
             }
-            $storageName = $this->getSingleFilename($storageName);
-            $storageId = pathinfo($storageName, PATHINFO_FILENAME);
-            if ($folderName) {
-                $storageId = $folderName . $storageId;
-            }
-        } elseif ($folderName) {
-            $storageId = $folderName . $storageId;
         }
 
-        if (strlen($storageId) > 190) {
+        // Process the check of the storage name to get the storage id.
+        if ($folderName) {
+            $storageName = $folderName . $storageName;
+        }
+        $storageName = $this->getSingleFilename($storageName);
+        $newStorageId = pathinfo($storageName, PATHINFO_FILENAME);
+        if ($folderName) {
+            $newStorageId= $folderName . $newStorageId;
+        }
+
+        if (strlen($newStorageId) > 190) {
             $msg = sprintf(
                 $this->translate('Cannot move file "%s" inside archive directory: filename too long.'),
                 pathinfo($media->getSource(), PATHINFO_BASENAME)
             );
             $this->addError($msg);
-            return $media->getStorageId();
+            return $storageId;
         }
 
-        return $storageId;
+        return $newStorageId;
     }
 
     /**
@@ -141,7 +153,7 @@ class Manager extends \Omeka\File\Manager
                 if (!$fileWriter->fileExists($checkpath)) {
                     continue;
                 }
-                $this->_moveFile($currentDerivativeFilename, $newDerivativeFilename, $derivative['path']);
+                $this->moveFile($currentDerivativeFilename, $newDerivativeFilename, $derivative['path']);
             }
         }
 
@@ -349,6 +361,21 @@ class Manager extends \Omeka\File\Manager
     }
 
     /**
+     * Hash a stable single storage name for a specific media.
+     *
+     * @internal We cannot use a random name.
+     * @see Omeka\File\File::getStorageId()
+     *
+     * @param Media $media
+     * @return string
+     */
+    protected function hashStorageName(Media $media)
+    {
+        $storageName = substr(hash('sha256', $media->getId() . '/' . $media->getSource()), 0, 40);
+        return $storageName;
+    }
+
+    /**
      * Returns a sanitized string for folder or file path.
      *
      * The string should be a simple name, not a full path or url, because "/",
@@ -384,10 +411,10 @@ class Manager extends \Omeka\File\Manager
     protected function convertFilenameTo($string, $format)
     {
         switch ($format) {
-            case 'keep name':
+            case 'keep':
                 return $string;
             case 'first letter':
-                return $this->_convertFirstLetterToAscii($string);
+                return $this->convertFirstLetterToAscii($string);
             case 'spaces':
                 return $this->convertSpacesToUnderscore($string);
             case 'first and spaces':
@@ -395,7 +422,7 @@ class Manager extends \Omeka\File\Manager
                 return $this->convertSpacesToUnderscore($string);
             case 'full':
             default:
-                return $this->_convertNameToAscii($string);
+                return $this->convertNameToAscii($string);
         }
     }
 
@@ -409,7 +436,7 @@ class Manager extends \Omeka\File\Manager
      * @param string $string The string to convert to ascii.
      * @return string The converted string to use as a folder or a file name.
      */
-    protected function _convertNameToAscii($string)
+    protected function convertNameToAscii($string)
     {
         $string = htmlentities($string, ENT_NOQUOTES, 'utf-8');
         $string = preg_replace('#\&([A-Za-z])(?:acute|cedil|circ|grave|lig|orn|ring|slash|th|tilde|uml)\;#', '\1', $string);
@@ -429,13 +456,13 @@ class Manager extends \Omeka\File\Manager
      * @param string $string The string to sanitize.
      * @return string The sanitized string.
      */
-    protected function _convertFirstLetterToAscii($string)
+    protected function convertFirstLetterToAscii($string)
     {
-        $first = $this->_convertNameToAscii($string);
+        $first = $this->convertNameToAscii($string);
         if (empty($first)) {
             return '';
         }
-        return $first[0] . $this->_substr_unicode($string, 1);
+        return $first[0] . $this->substr_unicode($string, 1);
     }
 
     /**
@@ -448,7 +475,7 @@ class Manager extends \Omeka\File\Manager
      * @param int $length (optional)
      * @return string
      */
-    protected function _substr_unicode($string, $start, $length = null)
+    protected function substr_unicode($string, $start, $length = null)
     {
         return join(
             '',
@@ -559,7 +586,7 @@ class Manager extends \Omeka\File\Manager
      * @param string $path
      * @return bool True if success, else set a message error.
      */
-    protected function _moveFile($source, $destination, $path = '')
+    protected function moveFile($source, $destination, $path = '')
     {
         $fileWriter = $this->getFileWriter();
         $realSource = $this->concatWithSeparator($path, $source);

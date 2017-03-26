@@ -71,7 +71,7 @@ class Module extends AbstractModule
         'archive_repertory_item_convert' => 'full',
 
         // Files options.
-        'archive_repertory_file_keep_original_name' => true,
+        'archive_repertory_media_convert' => 'full',
     ];
 
     public function getConfig()
@@ -117,11 +117,17 @@ class Module extends AbstractModule
             $settings->set('archive_repertory_item_set_convert',
                 $this->settings['archive_repertory_item_set_convert']);
 
-            $settings->set('archive_repertory_item_convert',
-                strtolower($settings->get['archive_repertory_item_convert']));
+            $itemConvert = strtolower($settings->get['archive_repertory_item_convert']);
+            if ($itemConvert == 'keep name') {
+                $itemConvert = 'keep';
+            }
+            $settings->set('archive_repertory_item_convert', $itemConvert);
 
-            $settings->set('archive_repertory_file_keep_original_name',
-                (bool) $settings->get('archive_repertory_file_keep_original_name'));
+            $mediaConvert = $settings->get('archive_repertory_file_keep_original_name')
+                ? $this->settings['archive_repertory_media_convert']
+                : 'hash';
+            $settings->set('archive_repertory_media_convert', $mediaConvert);
+            $settings->delete('archive_repertory_file_keep_original_name');
 
             $settings->delete('archive_repertory_derivative_folders');
         }
@@ -146,9 +152,6 @@ class Module extends AbstractModule
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
 
         $post = $controller->getRequest()->getPost();
-        if (isset($post['archive_repertory_file_keep_original_name'])) {
-            $post['archive_repertory_file_keep_original_name'] = (boolean) $post['archive_repertory_file_keep_original_name'];
-        }
         foreach ($this->settings as $key => $value) {
             if (isset($post[$key])) {
                 $settings->set($key, $post[$key]);
@@ -206,7 +209,7 @@ class Module extends AbstractModule
             return;
         }
 
-        // Check if the file should be moved (so its storage id).
+        // Check if the file should be moved (so change its storage id).
         $currentStorageId = $media->getStorageId();
         $newStorageId = $fileManager->getStorageId($media);
         if ($currentStorageId == $newStorageId) {
