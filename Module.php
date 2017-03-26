@@ -65,7 +65,7 @@ class Module extends AbstractModule
         'archive_repertory_item_convert' => 'Full',
 
         // Files options.
-        'archive_repertory_file_keep_original_name' => '1',
+        'archive_repertory_file_keep_original_name' => true,
     ];
 
     public function getConfig()
@@ -104,27 +104,11 @@ class Module extends AbstractModule
             $settings->set('archive_repertory_ingesters',
                 $this->settings['archive_repertory_ingesters']);
 
+            $settings->set('archive_repertory_file_keep_original_name',
+                (bool) $settings->get('archive_repertory_file_keep_original_name'));
+
             $settings->delete('archive_repertory_derivative_folders');
         }
-    }
-
-    public function attachListeners(SharedEventManagerInterface $sharedEventManager)
-    {
-        $sharedEventManager->attach(
-            'Omeka\Api\Adapter\ItemAdapter',
-            'api.create.post',
-            [$this, 'afterSaveItem']
-        );
-        $sharedEventManager->attach(
-            'Omeka\Api\Adapter\ItemAdapter',
-            'api.update.post',
-            [$this, 'afterSaveItem']
-        );
-        $sharedEventManager->attach(
-            'Omeka\Api\Adapter\ItemAdapter',
-            'api.delete.post',
-            [$this, 'afterDeleteItem']
-        );
     }
 
     public function getConfigForm(PhpRenderer $renderer)
@@ -146,11 +130,33 @@ class Module extends AbstractModule
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
 
         $post = $controller->getRequest()->getPost();
+        if (isset($post['archive_repertory_file_keep_original_name'])) {
+            $post['archive_repertory_file_keep_original_name'] = (boolean) $post['archive_repertory_file_keep_original_name'];
+        }
         foreach ($this->settings as $key => $value) {
             if (isset($post[$key])) {
                 $settings->set($key, $post[$key]);
             }
         }
+    }
+
+    public function attachListeners(SharedEventManagerInterface $sharedEventManager)
+    {
+        $sharedEventManager->attach(
+            'Omeka\Api\Adapter\ItemAdapter',
+            'api.create.post',
+            [$this, 'afterSaveItem']
+            );
+        $sharedEventManager->attach(
+            'Omeka\Api\Adapter\ItemAdapter',
+            'api.update.post',
+            [$this, 'afterSaveItem']
+            );
+        $sharedEventManager->attach(
+            'Omeka\Api\Adapter\ItemAdapter',
+            'api.delete.post',
+            [$this, 'afterDeleteItem']
+            );
     }
 
     /**

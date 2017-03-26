@@ -27,7 +27,7 @@ class Manager extends \Omeka\File\Manager
         $folderName = $this->getItemFolderName($media->getItem());
         $storageId = $media->getStorageId();
 
-        if ($this->getSetting('archive_repertory_file_keep_original_name') === '1') {
+        if ($this->getSetting('archive_repertory_file_keep_original_name')) {
             $storageName = pathinfo($media->getSource(), PATHINFO_BASENAME);
             if ($folderName) {
                 $storageName = "$folderName/$storageName";
