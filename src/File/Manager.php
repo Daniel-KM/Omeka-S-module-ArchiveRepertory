@@ -199,10 +199,36 @@ class Manager extends \Omeka\File\Manager
 
         // Remove all old empty folders.
         if ($currentArchiveFolder != $newArchiveFolder) {
-            $this->_removeArchiveFolders($currentArchiveFolder);
+            $this->removeArchiveFolders($currentArchiveFolder);
         }
 
         return true;
+    }
+
+    /**
+     * Removes empty folders in the archive repertory.
+     *
+     * @param string $archiveFolder Name of folder to delete, without files dir.
+     */
+    public function removeArchiveFolders($archiveFolder)
+    {
+        if (in_array($archiveFolder, ['.', '..', '/', '\\', ''])) {
+            return;
+        }
+
+        $fileWriter = $this->getFileWriter();
+        foreach ($this->getDerivatives() as $derivative) {
+            $folderPath = $this->concatWithSeparator($derivative['path'], $archiveFolder);
+            // Of course, the main storage dir is not removed (in the case there
+            // is no item folder).
+            if (realpath($derivative['path']) != realpath($folderPath)) {
+                // Check if there is an empty directory and remove it only in
+                // that case. The directory may be not empty in multiple case,
+                // for example when the config change or when there is a
+                // duplicate name.
+                $fileWriter->removeDir($folderPath, false);
+            }
+        }
     }
 
     /**
@@ -526,30 +552,6 @@ class Manager extends \Omeka\File\Manager
         }
         @chmod($path, 0755);
 
-        return true;
-    }
-
-    /**
-     * Removes empty folders in the archive repertory.
-     *
-     * @param string $archiveFolder Name of folder to delete, without files dir.
-     * @return bool True if the path is created, Exception if an error occurs.
-     */
-    protected function _removeArchiveFolders($archiveFolder)
-    {
-        if (($archiveFolder != '.')
-            && ($archiveFolder != '..')
-            && ($archiveFolder != DIRECTORY_SEPARATOR)
-            && ($archiveFolder != '')
-        ) {
-            $fileWriter = $this->getFileWriter();
-            foreach ($this->getDerivatives() as $derivative) {
-                $folderPath = $this->concatWithSeparator($derivative['path'], $archiveFolder);
-                if (realpath($derivative['path']) != realpath($folderPath)) {
-                    $fileWriter->removeDir($folderPath, true);
-                }
-            }
-        }
         return true;
     }
 

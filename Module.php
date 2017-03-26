@@ -120,6 +120,11 @@ class Module extends AbstractModule
             'api.update.post',
             [$this, 'afterSaveItem']
         );
+        $sharedEventManager->attach(
+            'Omeka\Api\Adapter\ItemAdapter',
+            'api.delete.post',
+            [$this, 'afterDeleteItem']
+        );
     }
 
     public function getConfigForm(PhpRenderer $renderer)
@@ -207,6 +212,39 @@ class Module extends AbstractModule
             // As it's not a file hook, the file is not automatically saved.
             $entityManager->persist($media);
             $entityManager->flush();
+        }
+    }
+
+    /**
+     * Remove folders for attached files of items.
+     */
+    public function afterDeleteItem(Event $event)
+    {
+        $services = $this->getServiceLocator();
+        $fileManager = $services->get('Omeka\File\Manager');
+        $entityManager = $services->get('Omeka\EntityManager');
+        $settings = $services->get('Omeka\Settings');
+
+        $item = $event->getParam('response')->getContent();
+        $ingesters = $settings->get('archive_repertory_ingesters');
+
+        // Check if a folder was added without checking settings, because they
+        // could change.
+        foreach ($item->getMedia() as $media) {
+            $ingester = $media->getIngester();
+            if (!isset($ingesters[$ingester])) {
+                continue;
+            }
+
+            // Check if there is a directory to remove. Note: only the "/" is
+            // used during the saving.
+            $filename = $media->getFilename();
+            if (strpos($filename, '/') === false) {
+                continue;
+            }
+            $storageDir = dirname($filename);
+            $fileManager->removeArchiveFolders($storageDir);
+            // Whatever the result, continue the other medias.
         }
     }
 
