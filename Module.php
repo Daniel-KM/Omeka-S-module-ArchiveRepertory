@@ -67,9 +67,6 @@ class Module extends AbstractModule
 
         // Files options.
         'archive_repertory_file_keep_original_name' => '1',
-
-        // Other derivative folders.
-        'archive_repertory_derivative_folders' => '',
     ];
 
     public function getConfig()
@@ -107,6 +104,8 @@ class Module extends AbstractModule
             $settings = $serviceLocator->get('Omeka\Settings');
             $settings->set('archive_repertory_ingesters',
                 $this->settings['archive_repertory_ingesters']);
+
+            $settings->delete('archive_repertory_derivative_folders');
         }
     }
 

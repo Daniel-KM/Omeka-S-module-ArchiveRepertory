@@ -8,17 +8,11 @@ use Omeka\Mvc\Controller\Plugin\Messenger;
 class Manager extends \Omeka\File\Manager
 {
     /**
-     * Derivative extension for each type of files/derivatives, used when a
-     * plugin doesn't use the Omeka standard ones. These lasts are used by
-     * default. The dot before the extension should be specified if needed.
-     *
-     * This setting is used only when files are moved or deleted without use of
-     * the original plugin, because the original plugin knows to create and
-     * to delete them at the right place, of course.
+     * List of types (original, derivative and others), paths and extensions.
      *
      * @var array
      */
-    protected $_derivativeExtensionsByType = [];
+    protected $derivatives;
 
     /**
      * Default extension for derivative images (hard coded in Omeka S).
@@ -143,8 +137,8 @@ class Manager extends \Omeka\File\Manager
      */
     public function getFullArchivePath($type)
     {
-        $archivePaths = $this->_getFullArchivePaths();
-        return isset($archivePaths[$type]) ? $archivePaths[$type] : '';
+        $derivatives = $this->getDerivatives();
+        return isset($derivatives[$type]) ? $derivatives[$type]['path'] : '';
     }
 
     /**
@@ -179,34 +173,36 @@ class Manager extends \Omeka\File\Manager
         $currentArchiveFolder = dirname($currentArchiveFilename);
         $newArchiveFolder = dirname($newArchiveFilename);
 
-        // Move the original file.
-        $path = $this->getFullArchivePath('original');
-        $result = $this->_createArchiveFolders($newArchiveFolder, $path);
-        $this->_moveFile($currentArchiveFilename, $newArchiveFilename, $path);
-
         // If any, move derivative files using Omeka API.
-        foreach ($this->_getFullArchivePaths() as $derivativeType => $path) {
-            // Original is managed above.
-            if ($derivativeType == 'original') {
-                continue;
-            }
-
+        $fileWriter = $this->getFileWriter();
+        $derivatives = $this->getDerivatives();
+        foreach ($derivatives as $type => $derivative) {
             // We create a folder in any case, even if there isn't any file
-            // inside, in order to be fully compatible with any plugin that
+            // inside, in order to be fully compatible with any module that
             // manages base filename only.
-            $result = $this->_createArchiveFolders($newArchiveFolder, $path);
+            $result = $this->_createArchiveFolders($newArchiveFolder, $derivative['path']);
 
             // Determine the current and new derivative filename, standard
             // or not.
-            $currentDerivativeFilename = $this->_getDerivativeFilename($currentArchiveFilename, $derivativeType);
-            $newDerivativeFilename = $this->_getDerivativeFilename($newArchiveFilename, $derivativeType);
+            $currentBase = $this->getBasename($currentArchiveFilename);
+            $newBase = $this->getBasename($newArchiveFilename);
+            foreach ($derivative['extension'] as $extension) {
+                // Manage the original.
+                if (is_null($extension)) {
+                    $currentDerivativeFilename = $currentArchiveFilename;
+                    $newDerivativeFilename = $newArchiveFilename;
+                } else {
+                    $currentDerivativeFilename = $this->concatWithSeparator($currentBase, $extension);
+                    $newDerivativeFilename = $this->concatWithSeparator($newBase, $extension);
+                }
 
-            // Check if the derivative file exists or not to avoid some
-            // errors when moving something without derivatives: here, we
-            // don't know anything of the media.
-            $checkpath = $this->concatWithSeparator($path, $currentDerivativeFilename);
-            if ($this->getFileWriter()->fileExists($checkpath)) {
-                $this->_moveFile($currentDerivativeFilename, $newDerivativeFilename, $path);
+                // Check if the derivative file exists or not to avoid some
+                // errors when moving something without derivatives: here, we
+                // don't know anything of the media.
+                $checkpath = $this->concatWithSeparator($derivative['path'], $currentDerivativeFilename);
+                if ($fileWriter->fileExists($checkpath)) {
+                    $this->_moveFile($currentDerivativeFilename, $newDerivativeFilename, $derivative['path']);
+                }
             }
         }
 
@@ -412,61 +408,56 @@ class Manager extends \Omeka\File\Manager
     }
 
     /**
-     * Get all archive folders with full paths, eventually with other derivative
-     * folders. This function updates the derivative extensions too.
+     * Get all archive folders with full paths and extensions.
      *
-     * @return array of folders.
+     * @return array
      */
-    protected function _getFullArchivePaths()
+    protected function getDerivatives()
     {
-        static $archivePaths = [];
+        if (is_null($this->derivatives)) {
+            $this->derivatives = [];
 
-        if (empty($archivePaths)) {
-            $pathByTypes = $this->getPathsByType();
+            // Prepare standard paths and extensions.
+            $derivatives = $this->getConfiguredTypes();
             $settings = $this->serviceLocator->get('Omeka\Settings');
-
             $storagePath = $this->_getLocalStoragePath();
-            foreach ($pathByTypes as $name => $path) {
-                $archivePaths[$name] = $this->concatWithSeparator($storagePath, $path);
-            }
 
-            $derivatives = explode(',', $this->getSetting('archive_repertory_derivative_folders'));
-            foreach ($derivatives as $key => $value) {
-                if (strpos($value, '|') === false) {
-                    $name = trim($value);
-                } else {
-                    list($name, $extension) = explode('|', $value);
-                    $name = trim($name);
-                    $extension = trim($extension);
-                    if ($extension != '') {
-                        $this->_derivativeExtensionsByType[$name] = $extension;
-                    }
-                }
-                $path = realpath($this->concatWithSeparator($storagePath, $name));
-                if (!empty($name) && !empty($path) && $path != '/') {
-                    $archivePaths[$name] = $path;
-                } else {
-                    unset($derivatives[$key]);
-                    $settings->set('archive_repertory_derivative_folders', implode(', ', $derivatives));
+            // Add specific paths and extensions
+            $ingesters = $this->getSetting('archive_repertory_ingesters');
+            foreach ($ingesters as $name => $params) {
+                // Bypass internal ingesters.
+                if ($params) {
+                    $params['path'] = $this->concatWithSeparator($storagePath, $params['path']);
+                    $derivatives[$name] = $params;
                 }
             }
+            $this->derivatives = $derivatives;
         }
 
-        return $archivePaths;
+        return $this->derivatives;
     }
 
     /**
-     * Get the list of paths by type (original and standard thumbnail types).
+     * Get the list of original and standard derivatives by type.
      *
      * @internal In Omeka S, the name and the path are the same.
      *
      * @return array
      */
-    protected function getPathsByType()
+    protected function getConfiguredTypes()
     {
-        $pathsByType = array_keys($this->config['thumbnail_types']);
-        array_unshift($pathsByType, 'original');
-        return array_combine($pathsByType, $pathsByType);
+        $types = $this->config['thumbnail_types'];
+        $storagePath = $this->_getLocalStoragePath();
+        foreach ($types as $path => &$value) {
+            $value = [];
+            $value['path'] = $this->concatWithSeparator($storagePath, $path);
+            $value['extension'] = [$this->defaultExtension];
+        }
+        $types = ['original' => [
+            'path' => $this->concatWithSeparator($storagePath, 'original'),
+            'extension' => [null],
+        ]] + $types;
+        return $types;
     }
 
     /**
@@ -485,23 +476,6 @@ class Manager extends \Omeka\File\Manager
     }
 
     /**
-     * Get the derivative filename from a filename and an extension.
-     *
-     * @param string $filename
-     * @param string $derivativeType The derivative type allows to use a non
-     * standard extension.
-     * @return string Filename with the new extension.
-     */
-    protected function _getDerivativeFilename($filename, $derivativeType)
-    {
-        $base = $this->getBasename($filename);
-        $fullExtension = isset($this->_derivativeExtensionsByType[$derivativeType])
-            ? $this->_derivativeExtensionsByType[$derivativeType]
-            : $this->defaultExtension;
-        return $base . $fullExtension;
-    }
-
-    /**
      * Checks if the folders exist in the archive repertory, then creates them.
      *
      * @param string $archiveFolder
@@ -516,10 +490,10 @@ class Manager extends \Omeka\File\Manager
     {
         if ($archiveFolder != '') {
             $folders = empty($pathFolder)
-                ? $this->_getFullArchivePaths()
-                : [$pathFolder];
-            foreach ($folders as $path) {
-                $fullpath = $this->concatWithSeparator($path, $archiveFolder);
+                ? $this->getDerivatives()
+                : [['path' => $pathFolder]];
+            foreach ($folders as $derivative) {
+                $fullpath = $this->concatWithSeparator($derivative['path'], $archiveFolder);
                 $result = $this->_createFolder($fullpath);
             }
         }
@@ -578,9 +552,9 @@ class Manager extends \Omeka\File\Manager
             && ($archiveFolder != '')
         ) {
             $fileWriter = $this->getFileWriter();
-            foreach ($this->_getFullArchivePaths() as $path) {
-                $folderPath = $this->concatWithSeparator($path, $archiveFolder);
-                if (realpath($path) != realpath($folderPath)) {
+            foreach ($this->getDerivatives() as $derivative) {
+                $folderPath = $this->concatWithSeparator($derivative['path'], $archiveFolder);
+                if (realpath($derivative['path']) != realpath($folderPath)) {
                     $fileWriter->removeDir($folderPath, true);
                 }
             }

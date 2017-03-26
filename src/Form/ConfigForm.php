@@ -77,19 +77,6 @@ class ConfigForm extends Form implements TranslatorAwareInterface
                 'value' => $this->getSetting('archive_repertory_file_keep_original_name'),
             ],
         ]);
-
-        $this->add([
-            'name' => 'archive_repertory_derivative_folders',
-            'type' => 'Text',
-            'options' => [
-                'label' => $this->translate('Other derivation folders'),
-                'info' => $this->getDerivativeFolderInfo(),
-            ],
-            'attributes' => [
-                'id' => 'archive_repertory_derivative_folders',
-                'value' => $this->getSetting('archive_repertory_derivative_folders'),
-            ],
-        ]);
     }
 
     protected function getSetting($name)
