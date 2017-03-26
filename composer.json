@@ -1,11 +1,11 @@
 {
     "require-dev": {
-        "biblibre/omeka-s-test-helper": "dev-master"
+        "biblibre/omeka-s-test-helper": "dev-master",
+        "friendsofphp/php-cs-fixer": "^2.0"
     },
     "autoload-dev": {
         "psr-4": {
             "ArchiveRepertoryTest\\": "test/ArchiveRepertoryTest"
         }
     }
-
 }
