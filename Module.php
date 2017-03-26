@@ -41,6 +41,7 @@ use Omeka\File\File;
 use Omeka\Module\AbstractModule;
 use Omeka\Mvc\Controller\Plugin\Messenger;
 use ArchiveRepertory\Form\ConfigForm;
+use Omeka\Entity\Media;
 
 class Module extends AbstractModule
 {
@@ -146,17 +147,17 @@ class Module extends AbstractModule
             'Omeka\Api\Adapter\ItemAdapter',
             'api.create.post',
             [$this, 'afterSaveItem']
-            );
+        );
         $sharedEventManager->attach(
             'Omeka\Api\Adapter\ItemAdapter',
             'api.update.post',
             [$this, 'afterSaveItem']
-            );
+        );
         $sharedEventManager->attach(
             'Omeka\Api\Adapter\ItemAdapter',
             'api.delete.post',
             [$this, 'afterDeleteItem']
-            );
+        );
     }
 
     /**
@@ -164,61 +165,70 @@ class Module extends AbstractModule
      */
     public function afterSaveItem(Event $event)
     {
+        $item = $event->getParam('response')->getContent();
+        foreach ($item->getMedia() as $media) {
+            $this->afterSaveMedia($media);
+        }
+    }
+
+    /**
+     * Set medias at the right place.
+     *
+     * @param Media $media
+     */
+    protected function afterSaveMedia(Media $media)
+    {
         $services = $this->getServiceLocator();
         $fileManager = $services->get('Omeka\File\Manager');
         $entityManager = $services->get('Omeka\EntityManager');
         $settings = $services->get('Omeka\Settings');
         $fileWriter = $services->get('ArchiveRepertory\FileWriter');
 
-        $item = $event->getParam('response')->getContent();
         $ingesters = $settings->get('archive_repertory_ingesters');
 
-        // Check if files are already attached and if they are at the right place.
-        foreach ($item->getMedia() as $media) {
-            $ingester = $media->getIngester();
-            if (!isset($ingesters[$ingester])) {
-                continue;
-            }
-
-            // Check if the file should be moved (so its storage id).
-            $currentStorageId = $media->getStorageId();
-            $newStorageId = $fileManager->getStorageId($media);
-            if ($currentStorageId == $newStorageId) {
-                continue;
-            }
-
-            $extension = $media->getExtension();
-            $newFilename = $extension ? $newStorageId . '.' . $extension : $newStorageId;
-
-            // Check if the original file exists, else this is an undetected
-            // error during the convert process.
-            $path = $fileManager->getFullArchivePath($fileManager::ORIGINAL_PREFIX);
-            $filepath = $fileManager->concatWithSeparator($path, $media->getFilename());
-            if (!$fileWriter->fileExists($filepath)) {
-                $msg = $this->translate('This file is not present in the original directory : ' . $filepath);
-                $msg .= ' ' . $this->translate('There was an undetected error before storage, probably during the convert process.');
-                $this->addError($msg);
-                continue;
-            }
-
-            $result = $fileManager->moveFilesInArchiveFolders(
-                $media->getFilename(),
-                $newFilename
-            );
-
-            if (!$result) {
-                $msg = $this->translate('Cannot move files inside archive directory.');
-                $this->addError($msg);
-                continue;
-            }
-
-            // Update file in Omeka database immediately for each file.
-            $media->setStorageId($newStorageId);
-
-            // As it's not a file hook, the file is not automatically saved.
-            $entityManager->persist($media);
-            $entityManager->flush();
+        $ingester = $media->getIngester();
+        if (!isset($ingesters[$ingester])) {
+            return;
         }
+
+        // Check if the file should be moved (so its storage id).
+        $currentStorageId = $media->getStorageId();
+        $newStorageId = $fileManager->getStorageId($media);
+        if ($currentStorageId == $newStorageId) {
+            return;
+        }
+
+        $extension = $media->getExtension();
+        $newFilename = $extension ? $newStorageId . '.' . $extension : $newStorageId;
+
+        // Check if the original file exists, else this is an undetected
+        // error during the convert process.
+        $path = $fileManager->getFullArchivePath($fileManager::ORIGINAL_PREFIX);
+        $filepath = $fileManager->concatWithSeparator($path, $media->getFilename());
+        if (!$fileWriter->fileExists($filepath)) {
+            $msg = $this->translate('This file is not present in the original directory : ' . $filepath);
+            $msg .= ' ' . $this->translate('There was an undetected error before storage, probably during the convert process.');
+            $this->addError($msg);
+            return;
+        }
+
+        $result = $fileManager->moveFilesInArchiveFolders(
+            $media->getFilename(),
+            $newFilename
+        );
+
+        if (!$result) {
+            $msg = $this->translate('Cannot move files inside archive directory.');
+            $this->addError($msg);
+            return;
+        }
+
+        // Update file in Omeka database immediately for each file.
+        $media->setStorageId($newStorageId);
+
+        // As it's not a file hook, the file is not automatically saved.
+        $entityManager->persist($media);
+        $entityManager->flush();
     }
 
     /**
