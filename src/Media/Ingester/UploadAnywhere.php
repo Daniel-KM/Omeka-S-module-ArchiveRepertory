@@ -25,7 +25,6 @@ class UploadAnywhere extends Upload
     ) {
         $data = $request->getContent();
         $fileData = $request->getFileData();
-
         if (!isset($fileData['file'])) {
             $errorStore->addError('error', 'No files were uploaded');
             return;
