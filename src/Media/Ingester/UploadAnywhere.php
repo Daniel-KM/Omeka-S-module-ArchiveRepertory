@@ -1,16 +1,20 @@
 <?php
 namespace ArchiveRepertory\Media\Ingester;
 
+use ArchiveRepertory\File\FileWriter;
+use ArchiveRepertory\File\OmekaRenameUpload;
 use Omeka\Media\Ingester\Upload;
 use Omeka\Api\Request;
 use Omeka\Entity\Media;
 use Omeka\Stdlib\ErrorStore;
-use ArchiveRepertory\File\OmekaRenameUpload;
 use Zend\Form\Element\File;
 use Zend\InputFilter\FileInput;
 
 class UploadAnywhere extends Upload
 {
+    /**
+     * @var FileWriter
+     */
     protected $fileWriter;
 
     /**
@@ -60,9 +64,9 @@ class UploadAnywhere extends Upload
         $file->setStorageId($fileManager->getStorageId($file, $media));
 
         $media->setStorageId($file->getStorageId());
-        $media->setExtension($fileManager->getExtension($file));
-        $media->setMediaType($this->getFileMediaType($file));
-        $media->setSha256($this->getFileSha256($file));
+        $media->setExtension($file->getExtension($fileManager));
+        $media->setMediaType($file->getMediaType());
+        $media->setSha256($file->getSha256());
         $media->setHasThumbnails($fileManager->storeThumbnails($file));
         $media->setHasOriginal(true);
         if (!array_key_exists('o:source', $data)) {
@@ -74,7 +78,7 @@ class UploadAnywhere extends Upload
         }
     }
 
-    public function setFileWriter($fileWriter)
+    public function setFileWriter(FileWriter $fileWriter)
     {
         $this->fileWriter = $fileWriter;
     }
@@ -95,18 +99,5 @@ class UploadAnywhere extends Upload
         $filterChain = $fileInput->getFilterChain();
         $filterChain->attach($renameUpload);
         return $fileInput;
-    }
-
-    /**
-     * Just to be easily overriden in tests.
-     */
-    protected function getFileMediaType($file)
-    {
-        return $file->getMediaType();
-    }
-
-    protected function getFileSha256($file)
-    {
-        $file->getSha256();
     }
 }
