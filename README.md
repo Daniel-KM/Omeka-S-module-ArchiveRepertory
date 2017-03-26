@@ -42,8 +42,6 @@ Uncompress files and rename module folder "ArchiveRepertory".
 
 Then install it like any other Omeka module and follow the config instructions.
 
-See below to configure the protection of files.
-
 Tiles for big images created with the module [IIIF Server] are compatible with
 this module. To enable it, just open and submit the config page of the
 IIIF Server, the integration between the two modules will be registered
@@ -143,6 +141,7 @@ Copyright
 [Archive Repertory plugin]: https://github.com/Daniel-KM/ArchiveRepertory
 [module issues]: https://github.com/Daniel-KM/Omeka-S-module-ArchiveRepertory/issues
 [Clean Url]: https://github.com/biblibre/Omeka-S-module-CleanUrl
+[IIIF Server]: https://github.com/Daniel-KM/Omeka-S-module-IiifServer
 [CeCILL v2.1]: https://www.cecill.info/licences/Licence_CeCILL_V2.1-en.html
 [GNU/GPL]: https://www.gnu.org/licenses/gpl-3.0.html
 [FSF]: https://www.fsf.org
