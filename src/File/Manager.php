@@ -83,23 +83,17 @@ class Manager extends \Omeka\File\Manager
             . ($extension ? '.' . $extension : '');
     }
 
-    public function concatWithSeparator($first_dir, $second_dir)
+    public function concatWithSeparator($firstDir, $secondDir)
     {
-        if (!$first_dir || $first_dir == '') {
-            return $second_dir;
+        if (empty($firstDir)) {
+            return $secondDir;
         }
-        if (!$second_dir || $second_dir == '') {
-            return $first_dir;
+        if (empty($secondDir)) {
+            return $firstDir;
         }
-        if (substr($first_dir, -1) == DIRECTORY_SEPARATOR) {
-            $first_dir = substr($first_dir, 0, -1);
-        }
-
-        if ($second_dir[0] == DIRECTORY_SEPARATOR) {
-            $second_dir = substr($second_dir, 1);
-        }
-
-        return $first_dir . DIRECTORY_SEPARATOR . $second_dir;
+        $firstDir = rtrim($firstDir, DIRECTORY_SEPARATOR);
+        $secondDir = ltrim($secondDir, DIRECTORY_SEPARATOR);
+        return $firstDir . DIRECTORY_SEPARATOR . $secondDir;
     }
 
     /**
