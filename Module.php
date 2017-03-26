@@ -154,7 +154,8 @@ class Module extends AbstractModule
                 $file = new File('');
                 $file->setSourceName($this->getMediaSourceName($media));
                 $storageId = $fileManager->getStorageId($file, $media);
-                $newFilename = $storageId . '.' . $media->getExtension();
+                $extension = $media->getExtension();
+                $newFilename = $extension ? $storageId . '.' . $extension : $storageId;
 
                 // Check if the original file exists, else this is an undetected
                 // error during the convert process.
