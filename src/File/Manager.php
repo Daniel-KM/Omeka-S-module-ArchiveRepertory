@@ -337,11 +337,11 @@ class Manager extends \Omeka\File\Manager
         }
 
         switch ($folder) {
-            case '':
-            case 'None':
-                return [];
             case 'id':
                 return [(string) $resource->getId()];
+            case '':
+            case 'none':
+                return [];
             default:
                 foreach ($resource->getValues() as $value) {
                     if ($value->getProperty()->getId() != $folder) {
@@ -396,16 +396,16 @@ class Manager extends \Omeka\File\Manager
     protected function convertFilenameTo($string, $format)
     {
         switch ($format) {
-            case 'Keep name':
+            case 'keep name':
                 return $string;
-            case 'First letter':
+            case 'first letter':
                 return $this->_convertFirstLetterToAscii($string);
-            case 'Spaces':
+            case 'spaces':
                 return $this->convertSpacesToUnderscore($string);
-            case 'First and spaces':
-                $string = $this->convertFilenameTo($string, 'First letter');
+            case 'first and spaces':
+                $string = $this->convertFilenameTo($string, 'first letter');
                 return $this->convertSpacesToUnderscore($string);
-            case 'Full':
+            case 'full':
             default:
                 return $this->_convertNameToAscii($string);
         }

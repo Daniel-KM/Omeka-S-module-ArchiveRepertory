@@ -105,11 +105,11 @@ class ConfigForm extends Form implements TranslatorAwareInterface
         $recommended = (isset($allow_unicode['cli']) || isset($allow_unicode['fs'])) ? ' ' . $this->translate('(recommended because your server is not fully compatible with Unicode)') : '';
 
         $radio->setValueOptions([
-            'Keep name' => $this->translate('Keep name as it') . $not_recommended,
-            'Spaces' => $this->translate('Convert spaces to underscores'),
-            'First letter' => $this->translate('Convert first letter only'),
-            'First and spaces' => $this->translate('Convert first letter and spaces'),
-            'Full' => $this->translate('Full conversion to Ascii.') . $recommended,
+            'keep name' => $this->translate('Keep name as it') . $not_recommended,
+            'spaces' => $this->translate('Convert spaces to underscores'),
+            'first letter' => $this->translate('Convert first letter only'),
+            'first and spaces' => $this->translate('Convert first letter and spaces'),
+            'full' => $this->translate('Full conversion to Ascii.') . $recommended,
          ]);
 
         return $radio;

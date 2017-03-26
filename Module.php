@@ -63,7 +63,7 @@ class Module extends AbstractModule
         // Items options.
         'archive_repertory_item_folder' => 'id',
         'archive_repertory_item_prefix' => '',
-        'archive_repertory_item_convert' => 'Full',
+        'archive_repertory_item_convert' => 'full',
 
         // Files options.
         'archive_repertory_file_keep_original_name' => true,
@@ -104,6 +104,9 @@ class Module extends AbstractModule
             $settings = $serviceLocator->get('Omeka\Settings');
             $settings->set('archive_repertory_ingesters',
                 $this->settings['archive_repertory_ingesters']);
+
+            $settings->set('archive_repertory_item_convert',
+                strtolower($settings->get['archive_repertory_item_convert']));
 
             $settings->set('archive_repertory_file_keep_original_name',
                 (bool) $settings->get('archive_repertory_file_keep_original_name'));
