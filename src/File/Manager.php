@@ -392,7 +392,7 @@ class Manager extends \Omeka\File\Manager
         $string = preg_replace('/[\(\{]/', '[', $string);
         $string = preg_replace('/[\)\}]/', ']', $string);
         $string = preg_replace('/[[:cntrl:]\/\\\?<>:\*\%\|\"\'`\&\;#+\^\$\s]/', ' ', $string);
-        return substr(preg_replace('/\s+/', ' ', $string), -190);
+        return substr(preg_replace('/\s+/', ' ', $string), -180);
     }
 
     /**
@@ -443,7 +443,7 @@ class Manager extends \Omeka\File\Manager
         $string = preg_replace('#\&([A-Za-z]{2})(?:lig)\;#', '\1', $string);
         $string = preg_replace('#\&[^;]+\;#', '_', $string);
         $string = preg_replace('/[^[:alnum:]\[\]_\-\.#~@+:]/', '_', $string);
-        return substr(preg_replace('/_+/', '_', $string), -250);
+        return substr(preg_replace('/_+/', '_', $string), -180);
     }
 
     /**
