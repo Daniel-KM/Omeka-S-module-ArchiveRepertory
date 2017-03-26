@@ -45,7 +45,7 @@ class MockFileWriter
         return true;
     }
 
-    public function mkdir($directory_name, $permissions = '0777')
+    public function mkdir($directory_name, $permissions = 0777)
     {
         return true;
     }

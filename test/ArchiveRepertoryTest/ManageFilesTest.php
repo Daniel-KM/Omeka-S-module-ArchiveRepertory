@@ -9,17 +9,10 @@ use Omeka\Entity\Media;
 
 class ManageFilesTest extends OmekaControllerTestCase
 {
-    protected $_pathsByType = [
-        'original' => 'original',
-        'fullsize' => 'large',
-        'thumbnail' => 'medium',
-        'square_thumbnail' => 'square',
-    ];
-
     protected $fileStorageId;
     protected $fileExtension;
-    protected $_fileUrl;
-    protected $_storagePath;
+    protected $fileUrl;
+    protected $storagePath;
     protected $item;
     protected $media;
 
@@ -38,10 +31,12 @@ class ManageFilesTest extends OmekaControllerTestCase
 
         $this->item = $api->create('items', [])->getContent();
 
-        $this->fileStorageId = __DIR__ . '/_files/image_test';
+        $this->fileStorageId = __DIR__
+            . DIRECTORY_SEPARATOR . '_files'
+            . DIRECTORY_SEPARATOR . 'image_test';
         $this->fileExtension = 'png';
-        $this->_fileUrl = $this->fileStorageId . '.' . $this->fileExtension;
-        $this->_storagePath = $config['local_dir'];
+        $this->fileUrl = $this->fileStorageId . '.' . $this->fileExtension;
+        $this->storagePath = $config['local_dir'];
 
         $this->media = $media = new Media;
         $media->setStorageId($this->fileStorageId);
@@ -62,11 +57,9 @@ class ManageFilesTest extends OmekaControllerTestCase
 
         $mediaIngesterManager = $services->get('Omeka\MediaIngesterManager');
         $fileManager = $services->get('Omeka\File\Manager');
-        $fileWriter = $services->get('ArchiveRepertory\FileWriter');
 
         $mediaIngesterManager->setAllowOverride(true);
         $mockUpload = new MockUpload($fileManager);
-        $mockUpload->setFileWriter($fileWriter);
         $mediaIngesterManager->setService('upload', $mockUpload);
         $mediaIngesterManager->setAllowOverride(false);
     }
@@ -76,58 +69,45 @@ class ManageFilesTest extends OmekaControllerTestCase
         $this->api()->delete('items', $this->item->id());
     }
 
-    /** @test **/
     public function testWithOptionKeepOriginalNameInsertFile()
     {
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
         $settings->set('archive_repertory_item_folder', '');
-        $settings->set('archive_repertory_file_keep_original_name', '1');
+        $settings->set('archive_repertory_file_keep_original_name', true);
 
-        $file = new File($this->_fileUrl);
-        $file->setSourceName('originalname.png');
-
-        $this->assertEquals('originalname', $this->getFileManager()->getStorageId($file, $this->media));
+        $this->assertEquals('originalname', $this->getFileManager()->getStorageId($this->media));
     }
 
-    /** @test */
     public function testWithOptionNoKeepOriginalFileName()
     {
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
-        $settings->set('archive_repertory_file_keep_original_name', '0');
-        $file = new File($this->_fileUrl);
-        $this->assertNotEquals('originalname', $this->getFileManager()->getStorageId($file, $this->media));
+        $settings->set('archive_repertory_file_keep_original_name', false);
+        $this->assertNotEquals('originalname', $this->getFileManager()->getStorageId($this->media));
     }
 
-    /** @test */
     public function testStorageBasePathWithItemId()
     {
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
 
-        $settings->set('archive_repertory_file_keep_original_name', '1');
+        $settings->set('archive_repertory_file_keep_original_name', true);
         $settings->set('archive_repertory_item_folder', 'id');
 
-        $file = new File($this->_fileUrl);
-        $file->setSourceName('image_test.png');
         $storageFilepath = $this->item->id()
             . DIRECTORY_SEPARATOR
-            . pathinfo($this->_fileUrl, PATHINFO_FILENAME);
+            . pathinfo($this->fileUrl, PATHINFO_FILENAME);
         $fileManager = $this->getFileManager();
-        $this->assertEquals($storageFilepath, $fileManager->getStorageId($file, $this->media));
+        $this->assertEquals($storageFilepath, $fileManager->getStorageId($this->media));
     }
 
-    /** @test */
     public function testStorageBasePathWithItemNone()
     {
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
         $settings->set('archive_repertory_item_folder', '');
 
-        $file = new File($this->_fileUrl);
-        $file->setSourceName('image_test.png');
-
-        $storageFilepath = pathinfo($this->_fileUrl, PATHINFO_FILENAME);
+        $storageFilepath = pathinfo($this->fileUrl, PATHINFO_FILENAME);
         $fileManager = $this->getFileManager();
 
-        $this->assertEquals($storageFilepath, $fileManager->getStorageId($file, $this->media));
+        $this->assertEquals($storageFilepath, $fileManager->getStorageId($this->media));
     }
 
     protected function createMediaItem($title, $upload, $file_index = 0)
@@ -171,7 +151,6 @@ class ManageFilesTest extends OmekaControllerTestCase
         return $response->getContent();
     }
 
-    /** @test */
     public function testStorageBasePathWithIdDirectory()
     {
         $services = $this->getServiceLocator();
@@ -179,15 +158,15 @@ class ManageFilesTest extends OmekaControllerTestCase
         $entityManager = $services->get('Omeka\EntityManager');
 
         $settings->set('archive_repertory_item_folder', 'id');
-        $settings->set('archive_repertory_file_keep_original_name', '1');
+        $settings->set('archive_repertory_file_keep_original_name', true);
 
         $upload = new \Zend\Stdlib\Parameters([
             'file' => [
                 [
                     'name' => 'image_uploaded.png',
                     'type' => 'image/png',
-                    'tmp_name' => $this->_fileUrl,
-                    'content' => file_get_contents($this->_fileUrl),
+                    'tmp_name' => $this->fileUrl,
+                    'content' => file_get_contents($this->fileUrl),
                     'error' => 0,
                     'size' => 1999,
                 ],
@@ -229,33 +208,30 @@ class ManageFilesTest extends OmekaControllerTestCase
 
         $location = $this->getResponse()->getHeaders()->get('Location');
         $path = $location->uri()->getPath();
-        $itemId = substr(strrchr($path, "/"), 1);
+        $itemId = substr(strrchr($path, '/'), 1);
         $item = $entityManager->find('Omeka\Entity\Item', $itemId);
         $media = new Media;
         $media->setItem($item);
 
-        $file = new File($this->_fileUrl);
-        $file->setSourceName('image_uploaded.png');
         $storageFilepath = $itemId . DIRECTORY_SEPARATOR . 'image_uploaded';
         $fileManager = $this->getServiceLocator()->get('Omeka\File\Manager');
-        $this->assertEquals($storageFilepath, $fileManager->getStorageId($file, $media));
+        $this->assertEquals($storageFilepath, $fileManager->getStorageId($media));
     }
 
-    /**
-     * @test
-     */
     public function testInsertDuplicateFile()
     {
         $services = $this->getServiceLocator();
         $settings = $services->get('Omeka\Settings');
         $fileManager = $services->get('Omeka\File\Manager');
 
-        $settings->set('archive_repertory_file_keep_original_name', '1');
+        $settings->set('archive_repertory_file_keep_original_name', true);
         $settings->set('archive_repertory_item_folder', '1');
 
-        $this->getFileWriter()->addFile($this->_storagePath.'/original/photo.png');
-        $this->getFileWriter()->addFile($this->_storagePath.'/original/photo.1.png');
-        $this->assertEquals('./photo.2.png', $fileManager->checkExistingFile('photo.png'));
+        $this->getFileWriter()->addFile($this->storagePath.'/original/photo.png');
+        $this->getFileWriter()->addFile($this->storagePath.'/original/photo.1.png');
+        $this->assertEquals(
+            './photo.2.png',
+            $fileManager->checkExistingFileBypassProtectedMethod('photo.png'));
     }
 
     protected function getFileWriter()

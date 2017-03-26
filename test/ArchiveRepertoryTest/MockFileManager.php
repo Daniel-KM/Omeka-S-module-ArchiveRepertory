@@ -7,6 +7,11 @@ use ArchiveRepertory\File\Manager as FileManager;
 
 class MockFileManager extends FileManager
 {
+    public function getSingleFilenameBypassProtectedMethod($filename)
+    {
+        return $this->getSingleFilename($filename);
+    }
+
     public function storeThumbnails(File $file)
     {
         $extension = $this->getExtension($file);

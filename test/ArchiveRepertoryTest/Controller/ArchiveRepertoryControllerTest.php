@@ -9,6 +9,7 @@ use ArchiveRepertoryTest\MockUpload;
 class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
 {
     protected $item;
+    protected $fileUrl;
 
     public function setUp()
     {
@@ -36,11 +37,9 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
 
         $mediaIngesterManager = $services->get('Omeka\MediaIngesterManager');
         $fileManager = $services->get('Omeka\File\Manager');
-        $fileWriter = $services->get('ArchiveRepertory\FileWriter');
 
         $mediaIngesterManager->setAllowOverride(true);
         $mockUpload = new MockUpload($fileManager);
-        $mockUpload->setFileWriter($fileWriter);
         $mediaIngesterManager->setService('upload', $mockUpload);
         $mediaIngesterManager->setAllowOverride(false);
     }
@@ -52,7 +51,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
 
         $this->item = $api->create('items', [])->getContent();
 
-        foreach ($this->datas() as $data) {
+        foreach ($this->settingsProvider() as $data) {
             $this->setSettings($data[0], $data[1]);
         }
     }
@@ -62,14 +61,14 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $this->api()->delete('items', $this->item->id());
     }
 
-    public function datas()
+    public function settingsProvider()
     {
         return [
+                ['archive_repertory_ingesters', ['upload' => []]],
                 ['archive_repertory_item_convert', 'false'],
                 ['archive_repertory_item_prefix', 'prefix'],
                 ['archive_repertory_item_folder', 'foldername'],
                 ['archive_repertory_file_keep_original_name', true],
-                ['archive_repertory_derivative_folders', 'derive'],
         ];
     }
 
@@ -80,39 +79,39 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
     }
 
     /**
-     * @test
-     * @dataProvider datas
+     * @dataProvider settingsProvider
      */
-    public function postConfigurationShouldBeSaved($name, $value)
+    public function testPostConfigurationShouldBeSaved($name, $value)
     {
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
         $this->postDispatch('/admin/module/configure?id=ArchiveRepertory', [$name => $value]);
         $this->assertEquals($value, $settings->get($name));
     }
 
-    /** @test */
-    public function postItemShouldMoveFileInAnotherDirectory()
+    public function testPostItemShouldMoveFileInAnotherDirectory()
     {
         $services = $this->getServiceLocator();
         $settings = $services->get('Omeka\Settings');
         $api = $services->get('Omeka\ApiManager');
 
+        // 1 is the Dublin Core Title.
         $settings->set('archive_repertory_item_folder', 1);
-        $settings->set('archive_repertory_file_keep_original_name', '1');
+        $settings->set('archive_repertory_file_keep_original_name', true);
         $settings->set('archive_repertory_item_prefix', 'prefix:');
 
-        $this->_fileUrl = dirname(dirname(__FILE__)) . '/_files/image_test.png';
+        $this->fileUrl = dirname(__DIR__)
+            . DIRECTORY_SEPARATOR . '_files'
+            . DIRECTORY_SEPARATOR . 'image_test.png';
 
         $files = new \Zend\Stdlib\Parameters([
             'file' => [
                 1 => [
-                    'size' => 1000000,
                     'name' => 'photo.png',
                     'type' => 'image/png',
-                    'tmp_name' => $this->_fileUrl,
-                    'size' => 1,
+                    'tmp_name' => $this->fileUrl,
+                    'size' => filesize($this->fileUrl),
                     'error' => 0,
-                    'content' => file_get_contents($this->_fileUrl),
+                    'content' => file_get_contents($this->fileUrl),
                 ],
             ],
         ]);
@@ -157,20 +156,19 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $this->assertResponseStatusCode(302);
 
         $item = $api->read('items', $this->item->id())->getContent();
-        $media = $item->media();
-        $this->assertCount(1, $media);
-        $this->assertEquals('Other_modified_title/photo.png', $media[0]->filename());
+        $medias = $item->media();
+        $this->assertCount(1, $medias);
+        $this->assertEquals('Other_modified_title/photo.png', $medias[0]->filename());
     }
 
-    /** @test */
-    public function duplicateNameShouldMoveFileWithAnotherName()
+    public function testDuplicateNameShouldMoveFileWithAnotherName()
     {
         $services = $this->getServiceLocator();
         $settings = $services->get('Omeka\Settings');
         $api = $services->get('Omeka\ApiManager');
 
         $settings->set('archive_repertory_item_folder', 1);
-        $settings->set('archive_repertory_file_keep_original_name', '1');
+        $settings->set('archive_repertory_file_keep_original_name', true);
         $settings->set('archive_repertory_item_prefix', '');
 
         $this->postDipatchFiles('My modified title', 'photo.png', 'photo.png');
@@ -191,15 +189,14 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         return $messages[Messenger::SUCCESS][0];
     }
 
-    /** @test */
-    public function differentNameShouldMoveFileWithAnotherName()
+    public function testDifferentNameShouldMoveFileWithAnotherName()
     {
         $services = $this->getServiceLocator();
         $settings = $services->get('Omeka\Settings');
         $api = $services->get('Omeka\ApiManager');
 
         $settings->set('archive_repertory_item_folder', 1);
-        $settings->set('archive_repertory_file_keep_original_name', '1');
+        $settings->set('archive_repertory_file_keep_original_name', true);
         $settings->set('archive_repertory_item_prefix', 'nonexisting');
 
         $this->postDipatchFiles('My modified title', 'photo.png', 'another_file.png');
@@ -215,19 +212,18 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $this->assertEquals($result_expected, $result);
     }
 
-    /** @test */
-    public function differentFileShouldMoveFileWithAnotherName()
+    public function testDifferentFileShouldMoveFileWithAnotherName()
     {
         $services = $this->getServiceLocator();
         $settings = $services->get('Omeka\Settings');
         $api = $services->get('Omeka\ApiManager');
 
         $settings->set('archive_repertory_item_folder', 1);
-        $settings->set('archive_repertory_file_keep_original_name', '0');
+        $settings->set('archive_repertory_file_keep_original_name', false);
         $settings->set('archive_repertory_item_prefix', '');
 
         $this->postDipatchFiles('Previous title', 'photo.1.png', 'another_file.png');
-        $settings->set('archive_repertory_file_keep_original_name', '1');
+        $settings->set('archive_repertory_file_keep_original_name', true);
 
         $existing_medias = [];
         $item = $api->read('items', $this->item->id())->getContent();
@@ -257,19 +253,18 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $this->assertEquals($result_expected, $result);
     }
 
-    /** @test */
-    public function differentFileShouldMoveFileWithIds()
+    public function testDifferentFileShouldMoveFileWithIds()
     {
         $services = $this->getServiceLocator();
         $settings = $services->get('Omeka\Settings');
         $api = $services->get('Omeka\ApiManager');
 
         $settings->set('archive_repertory_item_folder', 1);
-        $settings->set('archive_repertory_file_keep_original_name', '1');
+        $settings->set('archive_repertory_file_keep_original_name', true);
         $settings->set('archive_repertory_item_prefix', '');
 
         $this->postDipatchFiles('Previous title', 'photo.1.png', 'another_file.png');
-        $settings->set('archive_repertory_file_keep_original_name', '0');
+        $settings->set('archive_repertory_file_keep_original_name', false);
         $existing_medias = [];
         $item = $api->read('items', $this->item->id())->getContent();
         foreach ($item->media() as $media) {
@@ -296,27 +291,29 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
 
     protected function postDipatchFiles($title, $name_file1, $name_file2, $id1 = 0, $id2 = 1, $existing_ids = [])
     {
-        $this->_fileUrl = dirname(dirname(__FILE__)).'/_files/image_test.png';
-        $this->_fileUrl2 = dirname(dirname(__FILE__)).'/_files/image_test.save.png';
+        $this->fileUrl = dirname(__DIR__)
+            . DIRECTORY_SEPARATOR . '_files'
+            . DIRECTORY_SEPARATOR . 'image_test.png';
+        $this->fileUrl2 = dirname(__DIR__)
+            . DIRECTORY_SEPARATOR . '_files'
+            . DIRECTORY_SEPARATOR . 'image_test.save.png';
         $files = new \Zend\Stdlib\Parameters([
             'file' => [
                 $id1 => [
-                    'size' => 1000000,
                     'name' => $name_file1,
                     'type' => 'image/png',
-                    'tmp_name' => $this->_fileUrl,
-                    'size' => 1,
+                    'tmp_name' => $this->fileUrl,
+                    'size' => filesize($this->fileUrl),
                     'error' => 0,
-                    'content' => file_get_contents($this->_fileUrl),
+                    'content' => file_get_contents($this->fileUrl),
                 ],
                 $id2 => [
-                    'size' => 100000,
                     'name' => $name_file2,
                     'type' => 'image/png',
-                    'tmp_name' => $this->_fileUrl2,
+                    'tmp_name' => $this->fileUrl2,
                     'size' => 1,
                     'error' => 0,
-                    'content' => file_get_contents($this->_fileUrl),
+                    'content' => file_get_contents($this->fileUrl),
                 ],
             ],
         ]);

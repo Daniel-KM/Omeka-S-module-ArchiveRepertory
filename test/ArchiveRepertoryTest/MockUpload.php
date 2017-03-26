@@ -2,9 +2,9 @@
 
 namespace ArchiveRepertoryTest;
 
-use ArchiveRepertory\Media\Ingester\UploadAnywhere;
+use Omeka\Media\Ingester\Upload;
 
-class MockUpload extends UploadAnywhere
+class MockUpload extends Upload
 {
     protected function getFileInput($file)
     {
