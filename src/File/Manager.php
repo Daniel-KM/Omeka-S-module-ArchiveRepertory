@@ -2,6 +2,7 @@
 namespace ArchiveRepertory\File;
 
 use Omeka\File\File;
+use Omeka\File\Exception\RuntimeException;
 
 class Manager extends \Omeka\File\Manager
 {
@@ -17,6 +18,13 @@ class Manager extends \Omeka\File\Manager
      * @var array
      */
     protected $_derivativeExtensionsByType = [];
+
+    /**
+     * Default extension for derivative images (hard coded in Omeka S).
+     *
+     * @var string
+     */
+    protected $defaultExtension = '.jpg';
 
     public function getBasename($name)
     {
@@ -56,8 +64,7 @@ class Manager extends \Omeka\File\Manager
      * @internal No check via database, because the file can be unsaved yet.
      *
      * @param string $filename
-     * @return string
-     * The unique filename, that can be the same as input name.
+     * @return string The unique filename, that can be the same as input name.
      */
     public function checkExistingFile($filename)
     {
@@ -72,10 +79,10 @@ class Manager extends \Omeka\File\Manager
 
         // Check folder for file with any extension or without any extension.
         $checkName = $name;
-        $i = 1;
+        $i = 0;
         $fileWriter = $this->getFileWriter();
         while ($fileWriter->glob($folder . DIRECTORY_SEPARATOR . $checkName . '{.*,.,\,,}', GLOB_BRACE)) {
-            $checkName = $name . '.' . $i++;
+            $checkName = $name . '.' . ++$i;
         }
 
         return ($dirname ? $dirname . DIRECTORY_SEPARATOR : '')
@@ -126,32 +133,17 @@ class Manager extends \Omeka\File\Manager
     }
 
     /**
-     * Get the archive folder from a name path
+     * Get the archive folder from a type.
      *
-     * Example: 'original' can return '/var/www/omeka/files/original'.
+     * @example "original" returns "/var/www/omeka/files/original".
      *
-     * @param string $namePath the name of the path.
-     * @return string
-     *   Full archive path, or empty if none.
+     * @param string $type
+     * @return string Full archive path, or empty if none.
      */
-    public function getFullArchivePath($namePath)
+    public function getFullArchivePath($type)
     {
         $archivePaths = $this->_getFullArchivePaths();
-        return isset($archivePaths[$namePath])
-            ? $archivePaths[$namePath]
-            : '';
-    }
-
-    /**
-     * Get the derivative filename from a filename and an extension.
-     *
-     * @param object $file
-     * @return string
-     *   Extension used for derivative files (usually "jpg" for images).
-     */
-    public function getDerivativeExtension($file)
-    {
-        return 'jpg';
+        return isset($archivePaths[$type]) ? $archivePaths[$type] : '';
     }
 
     /**
@@ -160,23 +152,19 @@ class Manager extends \Omeka\File\Manager
      * New folders are created if needed. Old folders are removed if empty.
      * No update of the database is done.
      *
-     * @param string $currentArchiveFilename
-     *   Name of the current archive file to move.
-     * @param string $newArchiveFilename
-     *   Name of the new archive file, with archive folder if any (usually
-     *   "collection/dc:identifier/").
-     * @param optional string $derivativeExtension
-     *   Extension of the derivative files to move, because it can be different
-     *   from the new archive filename and it can't be determined here.
-     * @return bool
-     *   true if files are moved, else throw Omeka_Storage_Exception.
+     * @param string $currentArchiveFilename Name of the current archive file to
+     * move.
+     * @param string $newArchiveFilename Name of the new archive file, with
+     * archive folder if any (usually "collection/dc:identifier/").
+     * @return bool True if files are moved, else set a message error.
      */
-    public function moveFilesInArchiveSubfolders($currentArchiveFilename, $newArchiveFilename, $derivativeExtension = '')
+    public function moveFilesInArchiveSubfolders($currentArchiveFilename, $newArchiveFilename)
     {
         // A quick check to avoid some errors.
         if (trim($currentArchiveFilename) == '' || trim($newArchiveFilename) == '') {
             $msg = $this->translate('Cannot move file inside archive directory: no filename.');
             $this->_addError($msg);
+            return false;
         }
 
         // Move file only if it is not in the right place.
@@ -196,29 +184,28 @@ class Manager extends \Omeka\File\Manager
         $this->_moveFile($currentArchiveFilename, $newArchiveFilename, $path);
 
         // If any, move derivative files using Omeka API.
-        if ($derivativeExtension != '') {
-            foreach ($this->_getFullArchivePaths() as $derivativeType => $path) {
-                // Original is managed above.
-                if ($derivativeType == 'original') {
-                    continue;
-                }
+        foreach ($this->_getFullArchivePaths() as $derivativeType => $path) {
+            // Original is managed above.
+            if ($derivativeType == 'original') {
+                continue;
+            }
 
-                // We create a folder in any case, even if there isn't any file
-                // inside, in order to be fully compatible with any plugin that
-                // manages base filename only.
-                $result = $this->_createArchiveFolders($newArchiveFolder, $path);
+            // We create a folder in any case, even if there isn't any file
+            // inside, in order to be fully compatible with any plugin that
+            // manages base filename only.
+            $result = $this->_createArchiveFolders($newArchiveFolder, $path);
 
-                // Determine the current and new derivative filename, standard
-                // or not.
-                $currentDerivativeFilename = $this->_getDerivativeFilename($currentArchiveFilename, $derivativeExtension, $derivativeType);
-                $newDerivativeFilename = $this->_getDerivativeFilename($newArchiveFilename, $derivativeExtension, $derivativeType);
+            // Determine the current and new derivative filename, standard
+            // or not.
+            $currentDerivativeFilename = $this->_getDerivativeFilename($currentArchiveFilename, $derivativeType);
+            $newDerivativeFilename = $this->_getDerivativeFilename($newArchiveFilename, $derivativeType);
 
-                // Check if the derivative file exists or not to avoid some
-                // errors when moving.
-
-                if ($this->getFileWriter()->fileExists($this->concatWithSeparator($path, $currentDerivativeFilename))) {
-                    $this->_moveFile($currentDerivativeFilename, $newDerivativeFilename, $path);
-                }
+            // Check if the derivative file exists or not to avoid some
+            // errors when moving something without derivatives: here, we
+            // don't know anything of the media.
+            $checkpath = $this->concatWithSeparator($path, $currentDerivativeFilename);
+            if ($this->getFileWriter()->fileExists($checkpath)) {
+                $this->_moveFile($currentDerivativeFilename, $newDerivativeFilename, $path);
             }
         }
 
@@ -490,30 +477,26 @@ class Manager extends \Omeka\File\Manager
     {
         $config = $this->serviceLocator->get('Config');
         if (!$this->getFileWriter()->is_dir($config['local_dir'])) {
-            throw new  \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . 'local_dir is not configured properly in module.config.php, check if the repertory exists'.$config['local_dir']);
+            throw new RuntimeException('[ArchiveRepertory] ' . 'local_dir is not configured properly in module.config.php, check if the repertory exists' . $config['local_dir']);
         }
 
         return $config['local_dir'];
     }
 
     /**
-     * Get the derivative filename from a filename and an extension. A check can
-     * be done on the derivative type to allow use of a non standard extension,
-     * for example with a plugin that doesn't follow standard naming.
+     * Get the derivative filename from a filename and an extension.
      *
      * @param string $filename
-     * @param string $defaultExtension
-     * @param string $derivativeType
-     *   The derivative type allows to use a non standard extension.
-     * @return string
-     *   Filename with the new extension.
+     * @param string $derivativeType The derivative type allows to use a non
+     * standard extension.
+     * @return string Filename with the new extension.
      */
-    protected function _getDerivativeFilename($filename, $defaultExtension, $derivativeType = null)
+    protected function _getDerivativeFilename($filename, $derivativeType)
     {
-        $base = pathinfo($filename, PATHINFO_EXTENSION) ? substr($filename, 0, strrpos($filename, '.')) : $filename;
-        $fullExtension = !is_null($derivativeType) && isset($this->_derivativeExtensionsByType[$derivativeType])
+        $base = $this->getBasename($filename);
+        $fullExtension = isset($this->_derivativeExtensionsByType[$derivativeType])
             ? $this->_derivativeExtensionsByType[$derivativeType]
-            : '.' . $defaultExtension;
+            : $this->defaultExtension;
         return $base . $fullExtension;
     }
 
@@ -548,31 +531,35 @@ class Manager extends \Omeka\File\Manager
      * @note Currently, Omeka API doesn't provide a function to create a folder.
      *
      * @param string $path Full path of the folder to create.
-     * @return bool True if the path is created, Exception if an error occurs.
+     * @return bool True if the path is created
+     * @throws Omeka\File\Exception\RuntimeException
      */
     protected function _createFolder($path)
     {
-        if ($path != '') {
-            $fileWriter = $this->getFileWriter();
-            if ($fileWriter->fileExists($path)) {
-                if ($fileWriter->is_dir($path)) {
-                    @chmod($path, 0755);
-                    if ($fileWriter->is_writable($path)) {
-                        return true;
-                    }
-                    $msg = $this->translate('Error directory non writable: "%s".', $path);
-                    throw new \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . $msg);
-                }
-                $msg = $this->translate('Failed to create folder "%s": a file with the same name exists...', $path);
-                throw new \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . $msg);
-            }
-
-            if (!$this->getFileWriter()->mkdir($path, 0755, true)) {
-                $msg = sprintf($this->translate('Error making directory: "%s".'), $path);
-                throw new \Omeka\File\Exception\RuntimeException('[ArchiveRepertory] ' . $msg);
-            }
-            @chmod($path, 0755);
+        if ($path == '') {
+            return true;
         }
+
+        $fileWriter = $this->getFileWriter();
+        if ($fileWriter->fileExists($path)) {
+            if ($fileWriter->is_dir($path)) {
+                @chmod($path, 0755);
+                if ($fileWriter->is_writable($path)) {
+                    return true;
+                }
+                $msg = $this->translate('Error directory non writable: "%s".', $path);
+                throw new RuntimeException('[ArchiveRepertory] ' . $msg);
+            }
+            $msg = $this->translate('Failed to create folder "%s": a file with the same name exists...', $path);
+            throw new RuntimeException('[ArchiveRepertory] ' . $msg);
+        }
+
+        if (!$fileWriter->mkdir($path, 0755, true)) {
+            $msg = sprintf($this->translate('Error making directory: "%s".'), $path);
+            throw new RuntimeException('[ArchiveRepertory] ' . $msg);
+        }
+        @chmod($path, 0755);
+
         return true;
     }
 
@@ -606,16 +593,17 @@ class Manager extends \Omeka\File\Manager
      * @param string $source
      * @param string $destination
      * @param string $path
-     * @return bool True if success, else throw Omeka_Storage_Exception.
+     * @return bool True if success, else set a message error.
      */
     protected function _moveFile($source, $destination, $path = '')
     {
+        $fileWriter = $this->getFileWriter();
         $realSource = $this->concatWithSeparator($path, $source);
         $realDestination = $this->concatWithSeparator($path, $destination);
-        if ($this->getFileWriter()->fileExists($realDestination)) {
+        if ($fileWriter->fileExists($realDestination)) {
             return true;
         }
-        if (!$this->getFileWriter()->fileExists($realSource)) {
+        if (!$fileWriter->fileExists($realSource)) {
             $msg = sprintf(
                 $this->translate('Error during move of a file from "%s" to "%s" (local dir: "%s"): source does not exist.'),
                 $source,
@@ -623,12 +611,12 @@ class Manager extends \Omeka\File\Manager
                 $path
             );
             $this->_addError($msg);
+            return false;
         }
 
-        $result = null;
         try {
-            $result = $this->getFileWriter()->rename($realSource, $realDestination);
-        } catch (Omeka_Storage_Exception $e) {
+            $result = $fileWriter->rename($realSource, $realDestination);
+        } catch (Exception $e) {
             $msg = sprintf(
                 $this->translate('Error during move of a file from "%s" to "%s" (local dir: "%s").'),
                 $source,
@@ -636,6 +624,7 @@ class Manager extends \Omeka\File\Manager
                 $path
             );
             $this->_addError($msg);
+            return false;
         }
 
         return $result;

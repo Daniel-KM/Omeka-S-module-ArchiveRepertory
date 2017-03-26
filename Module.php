@@ -191,8 +191,7 @@ class Module extends AbstractModule
 
                 $result = $fileManager->moveFilesInArchiveSubfolders(
                     $media->getFilename(),
-                    $newFilename,
-                    $fileManager->getDerivativeExtension($media)
+                    $newFilename
                 );
 
                 if (!$result) {
