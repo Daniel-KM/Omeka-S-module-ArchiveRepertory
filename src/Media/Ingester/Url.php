@@ -33,11 +33,14 @@ class Url extends \Omeka\Media\Ingester\Url
         if (!$fileManager->downloadFile($uri, $file->getTempPath(), $errorStore)) {
             return;
         }
+        if (!$fileManager->validateFile($file, $errorStore)) {
+            return;
+        }
 
         $file->setStorageId($fileManager->getStorageId($file, $media));
 
         $media->setStorageId($file->getStorageId());
-        $media->setExtension($fileManager->getExtension($file));
+        $media->setExtension($file->getExtension($fileManager));
         $media->setMediaType($file->getMediaType());
         $media->setSha256($file->getSha256());
         $media->setHasThumbnails($fileManager->storeThumbnails($file));
@@ -47,6 +50,9 @@ class Url extends \Omeka\Media\Ingester\Url
         if (!isset($data['store_original']) || $data['store_original']) {
             $fileManager->storeOriginal($file);
             $media->setHasOriginal(true);
+        }
+        if (file_exists($file->getTempPath())) {
+            $file->delete();
         }
     }
 }

@@ -42,6 +42,7 @@ class UploadAnywhere extends Upload
         $file = $fileManager->getTempFile();
 
         $fileInput = $this->getFileInput($file);
+
         $fileData = $fileData['file'][$index];
         $fileInput->setValue($fileData);
         if (!$fileInput->isValid()) {
@@ -50,10 +51,11 @@ class UploadAnywhere extends Upload
             }
             return;
         }
-
-        // Actually process and move the upload
         $fileInput->getValue();
         $file->setSourceName($fileData['name']);
+        if (!$fileManager->validateFile($file, $errorStore)) {
+            return;
+        }
 
         $file->setStorageId($fileManager->getStorageId($file, $media));
 
@@ -67,6 +69,9 @@ class UploadAnywhere extends Upload
             $media->setSource($fileData['name']);
         }
         $fileManager->storeOriginal($file);
+        if (file_exists($file->getTempPath())) {
+            $file->delete();
+        }
     }
 
     public function setFileWriter($fileWriter)
