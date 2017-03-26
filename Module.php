@@ -45,9 +45,9 @@ use ArchiveRepertory\Form\ConfigForm;
 class Module extends AbstractModule
 {
     /**
-     * @var array This plugin's options.
+     * @var array This plugin's settings.
      */
-    protected $_options = [
+    protected $settings = [
         // Items options.
         'archive_repertory_item_folder' => 'id',
         'archive_repertory_item_prefix' => '',
@@ -67,24 +67,24 @@ class Module extends AbstractModule
 
     public function install(ServiceLocatorInterface $serviceLocator)
     {
-        $this->_installOptions($serviceLocator->get('Omeka\Settings'));
+        $this->_installSettings($serviceLocator->get('Omeka\Settings'));
     }
 
-    protected function _installOptions($settings)
+    protected function _installSettings($settings)
     {
-        foreach ($this->_options as $key => $value) {
+        foreach ($this->settings as $key => $value) {
             $settings->set($key, $value);
         }
     }
 
     public function uninstall(ServiceLocatorInterface $serviceLocator)
     {
-        $this->_uninstallOptions($serviceLocator->get('Omeka\Settings'));
+        $this->_uninstallSettings($serviceLocator->get('Omeka\Settings'));
     }
 
-    protected function _uninstallOptions($settings)
+    protected function _uninstallSettings($settings)
     {
-        foreach ($this->_options as $key => $value) {
+        foreach ($this->settings as $key => $value) {
             $settings->delete($key);
         }
     }
@@ -110,16 +110,16 @@ class Module extends AbstractModule
     /**
      * Saves plugin configuration page and creates folders if needed.
      *
-     * @param array Options set in the config form.
+     * @param array Settings set in the config form.
      */
     public function handleConfigForm(AbstractController $controller)
     {
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
 
         $post = $controller->getRequest()->getPost();
-        foreach ($this->_options as $optionKey => $optionValue) {
-            if (isset($post[$optionKey])) {
-                $settings->set($optionKey, $post[$optionKey]);
+        foreach ($this->settings as $key => $value) {
+            if (isset($post[$key])) {
+                $settings->set($key, $post[$key]);
             }
         }
     }
