@@ -34,11 +34,42 @@ class ConfigForm extends Form implements TranslatorAwareInterface
         $this->setAttribute('id', 'config-form');
 
         $this->add([
+            'name' => 'archive_repertory_item_set_folder',
+            'type' => 'ArchiveRepertory\Form\Element\PropertySelect',
+            'options' => [
+                'label' => $this->translate('Item set folder'),
+                'empty_option' => $this->translate('Don’t add folder'),
+            ],
+            'attributes' => [
+                'id' => 'archive_repertory_item_set_folder',
+                'value' => $this->getSetting('archive_repertory_item_set_folder'),
+            ],
+        ]);
+
+        $this->add([
+            'name' => 'archive_repertory_item_set_prefix',
+            'type' => 'Text',
+            'options' => [
+                'label' => $this->translate('Prefix for item sets'),
+                'info' => $this->translate('Choose a prefix, for example "item:", "record:" or "doc:", to select the appropriate metadata when they are multiple.')
+                    . ' ' . $this->translate('Let empty to use simply the first one.'),
+            ],
+            'attributes' => [
+                'id' => 'archive_repertory_item_set_prefix',
+                'value' => $this->getSetting('archive_repertory_item_set_prefix'),
+            ],
+        ]);
+
+        $this->add(
+            $this->getRadioForConversion('archive_repertory_item_set_convert',
+                $this->translate('Convert item set names'))
+        );
+
+        $this->add([
             'name' => 'archive_repertory_item_folder',
             'type' => 'ArchiveRepertory\Form\Element\PropertySelect',
             'options' => [
-                'label' => $this->translate('How do you want to name your item folder, if any?'),
-                'info' => $this->getInfoForItemFolder(),
+                'label' => $this->translate('Item folder'),
                 'empty_option' => $this->translate('Don’t add folder'),
             ],
             'attributes' => [
@@ -51,7 +82,7 @@ class ConfigForm extends Form implements TranslatorAwareInterface
             'name' => 'archive_repertory_item_prefix',
             'type' => 'Text',
             'options' => [
-                'label' => $this->translate('Prefix for Item.'),
+                'label' => $this->translate('Prefix for items'),
                 'info' => $this->translate('Choose a prefix, for example "item:", "record:" or "doc:", to select the appropriate metadata when they are multiple.')
                     . ' ' . $this->translate('Let empty to use simply the first one.'),
             ],
@@ -62,8 +93,8 @@ class ConfigForm extends Form implements TranslatorAwareInterface
         ]);
 
         $this->add(
-            $this->getRadioForConvertion('archive_repertory_item_convert',
-            $this->translate('Convert item names'))
+            $this->getRadioForConversion('archive_repertory_item_convert',
+                $this->translate('Convert item names'))
         );
 
         $this->add([
@@ -90,7 +121,7 @@ class ConfigForm extends Form implements TranslatorAwareInterface
         return $translator->translate($args);
     }
 
-    protected function getRadioForConvertion($name, $label)
+    protected function getRadioForConversion($name, $label)
     {
         $allow_unicode = Helpers::checkUnicodeInstallation();
 
@@ -119,36 +150,4 @@ class ConfigForm extends Form implements TranslatorAwareInterface
     {
         $translator = $this->getTranslator();
     }
-
-    protected function getInfoForItemFolder()
-    {
-        $info = $this->translate('If you choose to add a folder, Omeka will add subfolders for each item in "files" folders, for example "files/original/unique_identifier/".');
-        $info .= ' ' . $this->translate('New files will be stored inside them. Old files will be moved when item will be updated.');
-        $info .= '<br />';
-        $info .= $this->translate("Note that if you choose a non unique name, files will be mixed in the same folder, with higher risk of name collision.");
-        $info .= ' ' . $this->translate('So recommended ids are a specifc metadata, "Dublin Core Identifier", "Internal item id" and eventually "Dublin Core Title".');
-        $info .= $this->translate('If this identifier does not exists, the Omeka internal item id will be used.');
-        return $info;
-    }
-
-    protected function getDerivativeFolderInfo()
-    {
-        $info = $this->translate('By default, Omeka support three derivative folders: "large", "medium" and "square".');
-        $info .= ' ' . $this->translate('You can add other ones if needed (comma-separated values, like "circle, micro").');
-        $info .= ' ' . $this->translate('Folder names should be relative to the files dir ') . '"' . $this->local_storage . '"';
-        $info .= ' ' . $this->translate('If a plugin does not use a standard derivative extension (for example ".jpg" for images), you should specified it just after the folder name, separated with a pipe "|", for example "tile|_zdata, circle".');
-        $info .= ' ' . $this->translate('When this option is used, you should not change collection or item identifier and, at the same time, use a feature of the plugin that create derivative files.');
-        $info .= ' ' . $this->translate('In that case, divide your process and change collection or identifier, save item, then use your plugin.');
-        return $info;
-    }
-
-    /*
-     * Checks if all the system (server + php + web environment) allows to
-     * manage Unicode filename securely.
-     *
-     * @internal This function simply checks the true result of functions
-     * escapeshellarg() and touch with a non Ascii filename.
-     *
-     * @return array of issues.
-     */
 }

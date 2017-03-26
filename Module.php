@@ -60,6 +60,11 @@ class Module extends AbstractModule
             'url' => [],
         ],
 
+        // Item sets options.
+        'archive_repertory_item_set_folder' => '',
+        'archive_repertory_item_set_prefix' => '',
+        'archive_repertory_item_set_convert' => 'full',
+
         // Items options.
         'archive_repertory_item_folder' => 'id',
         'archive_repertory_item_prefix' => '',
@@ -104,6 +109,13 @@ class Module extends AbstractModule
             $settings = $serviceLocator->get('Omeka\Settings');
             $settings->set('archive_repertory_ingesters',
                 $this->settings['archive_repertory_ingesters']);
+
+            $settings->set('archive_repertory_item_set_folder',
+                $this->settings['archive_repertory_item_set_folder']);
+            $settings->set('archive_repertory_item_set_prefix',
+                $this->settings['archive_repertory_item_set_prefix']);
+            $settings->set('archive_repertory_item_set_convert',
+                $this->settings['archive_repertory_item_set_convert']);
 
             $settings->set('archive_repertory_item_convert',
                 strtolower($settings->get['archive_repertory_item_convert']));

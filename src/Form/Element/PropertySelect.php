@@ -8,7 +8,7 @@ class PropertySelect extends OmekaPropertySelect
     public function getValueOptions()
     {
         $valueOptions = array_merge([
-            'id' => 'Internal item ID',
+            'id' => 'Internal numeric id of the resource', // @translate
         ], parent::getValueOptions());
 
         return $valueOptions;

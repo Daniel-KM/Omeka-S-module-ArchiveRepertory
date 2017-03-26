@@ -2,6 +2,7 @@
 namespace ArchiveRepertoryTest;
 
 use Omeka\Entity\Item;
+use Omeka\Entity\ItemSet;
 use Omeka\Entity\Media;
 use Omeka\Entity\Value;
 use Omeka\File\File;
@@ -18,6 +19,11 @@ class FileManagerTest extends OmekaControllerTestCase
     protected $api;
     protected $entityManager;
     protected $fileManager;
+
+    /**
+     * @var ItemSet
+     */
+    protected $itemSet;
 
     /**
      * @var Item
@@ -76,7 +82,9 @@ class FileManagerTest extends OmekaControllerTestCase
         $file['filepath'] = $originalPath . DIRECTORY_SEPARATOR . $file['filename'];
         $this->file = $file;
 
-        $item = $api->create('items', [])->getContent();
+        $itemSet = $api->create('item_sets', [])->getContent();
+        $this->itemSet = $entityManager->find('Omeka\Entity\ItemSet', $itemSet->id());
+        $item = $api->create('items', ['o:item_set' => [$itemSet->id()]])->getContent();
         $this->item = $entityManager->find('Omeka\Entity\Item', $item->id());
 
         $media = new Media;
@@ -136,6 +144,7 @@ class FileManagerTest extends OmekaControllerTestCase
 
     public function tearDown()
     {
+        $this->api->delete('item_sets', $this->itemSet->getId());
         $this->api->delete('items', $this->item->getId());
 
         $this->filesystem->remove($this->workspace);
@@ -144,6 +153,7 @@ class FileManagerTest extends OmekaControllerTestCase
 
     public function testKeepOriginalFileName()
     {
+        $this->settings->set('archive_repertory_item_set_folder', '');
         $this->settings->set('archive_repertory_item_folder', '');
         $this->settings->set('archive_repertory_file_keep_original_name', false);
 
@@ -152,6 +162,7 @@ class FileManagerTest extends OmekaControllerTestCase
 
     public function testDontKeepOriginalName()
     {
+        $this->settings->set('archive_repertory_item_set_folder', '');
         $this->settings->set('archive_repertory_item_folder', '');
         $this->settings->set('archive_repertory_file_keep_original_name', true);
 
@@ -162,6 +173,7 @@ class FileManagerTest extends OmekaControllerTestCase
 
     public function testAddItemIdWithoutOriginalName()
     {
+        $this->settings->set('archive_repertory_item_set_folder', '');
         $this->settings->set('archive_repertory_item_folder', 'id');
         $this->settings->set('archive_repertory_file_keep_original_name', false);
 
@@ -172,11 +184,23 @@ class FileManagerTest extends OmekaControllerTestCase
 
     public function testAddItemIdAndOriginalName()
     {
+        $this->settings->set('archive_repertory_item_set_folder', '');
         $this->settings->set('archive_repertory_item_folder', 'id');
         $this->settings->set('archive_repertory_file_keep_original_name', true);
 
         $this->assertEquals(
             $this->item->getId() . '/' . pathinfo($this->file['filename'], PATHINFO_FILENAME),
+            $this->fileManager->getStorageId($this->media));
+    }
+
+    public function testAddItemSetIdAndItemIdAndOriginalName()
+    {
+        $this->settings->set('archive_repertory_item_set_folder', 'id');
+        $this->settings->set('archive_repertory_item_folder', 'id');
+        $this->settings->set('archive_repertory_file_keep_original_name', true);
+
+        $this->assertEquals(
+            $this->itemSet->getId() . '/' . $this->item->getId() . '/' . pathinfo($this->file['filename'], PATHINFO_FILENAME),
             $this->fileManager->getStorageId($this->media));
     }
 

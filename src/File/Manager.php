@@ -2,6 +2,7 @@
 namespace ArchiveRepertory\File;
 
 use Omeka\Entity\Item;
+use Omeka\Entity\ItemSet;
 use Omeka\Entity\Media;
 use Omeka\Entity\Resource;
 use Omeka\File\File;
@@ -34,20 +35,26 @@ class Manager extends \Omeka\File\Manager
     public function getStorageId(Media $media)
     {
         $storageId = $media->getStorageId();
-        $folderName = $this->getItemFolderName($media->getItem());
+
+        $item = $media->getItem();
+        $itemFolderName = $this->getResourceFolderName($item);
+        $itemSet = $item->getItemSets()->first();
+        $itemSetFolderName = $itemSet ? $this->getResourceFolderName($itemSet) : '';
+        $folderName = ($itemSetFolderName ? $itemSetFolderName . '/' : '')
+            . ($itemFolderName ? $itemFolderName . '/' : '');
 
         if ($this->getSetting('archive_repertory_file_keep_original_name')) {
             $storageName = pathinfo($media->getSource(), PATHINFO_BASENAME);
             if ($folderName) {
-                $storageName = "$folderName/$storageName";
+                $storageName = $folderName . $storageName;
             }
             $storageName = $this->getSingleFilename($storageName);
             $storageId = pathinfo($storageName, PATHINFO_FILENAME);
             if ($folderName) {
-                $storageId = "$folderName/$storageId";
+                $storageId = $folderName . $storageId;
             }
         } elseif ($folderName) {
-            $storageId = "$folderName/$storageId";
+            $storageId = $folderName . $storageId;
         }
 
         return $storageId;
@@ -189,7 +196,6 @@ class Manager extends \Omeka\File\Manager
 
             // Prepare standard paths and extensions.
             $derivatives = $this->getConfiguredTypes();
-            $settings = $this->serviceLocator->get('Omeka\Settings');
             $storagePath = $this->getLocalStoragePath();
 
             // Add specific paths and extensions
@@ -266,98 +272,71 @@ class Manager extends \Omeka\File\Manager
     }
 
     /**
-     * Gets item folder name from an item and create folder if needed.
-     *
-     * @param Item $item
-     * @return string Unique sanitized name of the item.
-     */
-    protected function getItemFolderName(Item $item)
-    {
-        $settings = $this->serviceLocator->get('Omeka\Settings');
-
-        $folder = $settings->get('archive_repertory_item_folder');
-        if (!$folder) {
-            return '';
-        }
-
-        switch ($folder) {
-            case 'id':
-                return (string) $item->getId();
-            case 'none':
-            case '':
-                return '';
-            default:
-                $name = $this->getResourceFolderNameFromMetadata($item);
-        }
-
-        $item_convert = $settings->get('archive_repertory_item_convert');
-        return $this->convertFilenameTo($name, $item_convert) ;
-    }
-
-    /**
-     * Creates a unique name for a resource folder from first metadata.
-     *
-     * If there isn't any identifier with the prefix, the resource id will be used.
-     * The name is sanitized and the possible prefix is removed.
+     * Gets resource folder name from a resource and create folder if needed.
      *
      * @param Resource $resource
      * @return string Unique sanitized name of the resource.
      */
-    protected function getResourceFolderNameFromMetadata(Resource $resource)
+    protected function getResourceFolderName(Resource $resource)
     {
-        $identifier = $this->getResourceIdentifiers($resource, null, true);
-
-        return empty($identifier)
-            ? (string) $resource->getId()
-            : $this->sanitizeName($identifier);
-    }
-
-    /**
-     * Gets identifiers of a resource (with prefix if any, and only them).
-     *
-     * @param Resource $resource An item set or an item.
-     * @param string $folder Optional. Allow to select a specific folder instead
-     * of the default one.
-     * @param bool $first Optional. Allow to return only the first value.
-     * @return string|array.
-     */
-    protected function getResourceIdentifiers(Resource $resource, $folder = null, $first = false)
-    {
-        $api = $this->serviceLocator->get('Omeka\ApiManager');
-        $settings = $this->serviceLocator->get('Omeka\Settings');
-
         $resourceType = get_class($resource);
         switch ($resourceType) {
-            case 'Omeka\Entity\Item':
-                $folder = is_null($folder) ? $settings->get('archive_repertory_item_folder') : $folder;
-                $prefix = $settings->get('archive_repertory_item_prefix');
+            case ItemSet::class:
+                $folder = $this->getSetting('archive_repertory_item_set_folder');
+                $prefix = $this->getSetting('archive_repertory_item_set_prefix');
+                $convert = $this->getSetting('archive_repertory_item_set_convert');
+                break;
+            case Item::class:
+                $folder = $this->getSetting('archive_repertory_item_folder');
+                $prefix = $this->getSetting('archive_repertory_item_prefix');
+                $convert = $this->getSetting('archive_repertory_item_convert');
                 break;
             default:
-                return [];
+                throw new RuntimeException('[ArchiveRepertory] ' . sprintf('Unallowed resource type "%s".', $resourceType));
+        }
+
+        if (empty($folder)) {
+            return '';
         }
 
         switch ($folder) {
-            case 'id':
-                return [(string) $resource->getId()];
             case '':
-            case 'none':
-                return [];
-            default:
-                foreach ($resource->getValues() as $value) {
-                    if ($value->getProperty()->getId() != $folder) {
-                        continue;
-                    }
-                    if ($prefix) {
-                        preg_match('/^' . $prefix . '(.*)/', $value->getValue(), $matches);
-                        if (isset($matches[1])) {
-                            return trim($matches[1]);
-                        }
-                        continue;
-                    }
-                    return $value->getValue();
-                }
                 return '';
+            case 'id':
+                return (string) $resource->getId();
+            default:
+                $identifier = $this->getResourceIdentifier($resource, $folder, $prefix);
+                $name = $this->sanitizeName($identifier);
+                return empty($name)
+                    ? (string) $resource->getId()
+                    : $this->convertFilenameTo($name, $convert) ;
         }
+    }
+
+    /**
+     * Gets first identifier of a resource (with prefix if any).
+     *
+     * @param Resource $resource An item set or an item.
+     * @param string $termId
+     * @param string $prefix
+     * @return string
+     */
+    protected function getResourceIdentifier(Resource $resource, $termId, $prefix)
+    {
+        foreach ($resource->getValues() as $value) {
+            if ($value->getProperty()->getId() != $termId) {
+                continue;
+            }
+            if ($prefix) {
+                preg_match('/^' . $prefix . '(.*)/', $value->getValue(), $matches);
+                if (isset($matches[1])) {
+                    return trim($matches[1]);
+                }
+                continue;
+            }
+            return $value->getValue();
+        }
+        return '';
     }
 
     /**
@@ -607,6 +586,11 @@ class Manager extends \Omeka\File\Manager
         return $result;
     }
 
+    protected function translate($string)
+    {
+        return $this->serviceLocator->get('MvcTranslator')->translate($string);
+    }
+
     protected function getFileWriter()
     {
         static $fileWriter;
@@ -616,13 +600,9 @@ class Manager extends \Omeka\File\Manager
         return $fileWriter;
     }
 
-    protected function translate($string)
-    {
-        return $this->serviceLocator->get('MvcTranslator')->translate($string);
-    }
-
     protected function getSetting($name)
     {
+        // Tests doesn't pass with a static settings.
         return $this->serviceLocator->get('Omeka\Settings')->get($name);
     }
 

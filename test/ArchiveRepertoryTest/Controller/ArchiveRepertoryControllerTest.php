@@ -155,6 +155,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $api = $services->get('Omeka\ApiManager');
 
         // 1 is the Dublin Core Title.
+        $settings->set('archive_repertory_item_set_folder', '');
         $settings->set('archive_repertory_item_folder', 1);
         $settings->set('archive_repertory_item_prefix', 'prefix:');
         $settings->set('archive_repertory_file_keep_original_name', true);
@@ -224,6 +225,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $api = $services->get('Omeka\ApiManager');
 
         // 1 is the Dublin Core Title.
+        $settings->set('archive_repertory_item_set_folder', '');
         $settings->set('archive_repertory_item_folder', 1);
         $settings->set('archive_repertory_item_prefix', '');
         $settings->set('archive_repertory_file_keep_original_name', true);
@@ -257,6 +259,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $api = $services->get('Omeka\ApiManager');
 
         // 1 is the Dublin Core Title.
+        $settings->set('archive_repertory_item_set_folder', '');
         $settings->set('archive_repertory_item_folder', 1);
         $settings->set('archive_repertory_item_prefix', 'nonexisting');
         $settings->set('archive_repertory_file_keep_original_name', true);
@@ -281,6 +284,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $api = $services->get('Omeka\ApiManager');
 
         // 1 is the Dublin Core Title.
+        $settings->set('archive_repertory_item_set_folder', '');
         $settings->set('archive_repertory_item_folder', 1);
         $settings->set('archive_repertory_item_prefix', '');
         $settings->set('archive_repertory_file_keep_original_name', false);
@@ -322,6 +326,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $settings = $services->get('Omeka\Settings');
         $api = $services->get('Omeka\ApiManager');
 
+        $settings->set('archive_repertory_item_set_folder', '');
         $settings->set('archive_repertory_item_folder', 1);
         $settings->set('archive_repertory_item_prefix', '');
         $settings->set('archive_repertory_file_keep_original_name', true);
