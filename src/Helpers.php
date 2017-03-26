@@ -34,7 +34,7 @@ class Helpers
      * @todo Manage all pathinfo dirname in all file systems.
      *
      * @param string $path
-     * @param integer $mode Pathinfo constants.
+     * @param int $mode Pathinfo constants.
      * @return string
      */
     public static function pathinfo($path, $mode)
@@ -66,6 +66,15 @@ class Helpers
         return $result;
     }
 
+    /**
+     * Checks if all the system (server + php + web environment) allows to
+     * manage Unicode filename securely.
+     *
+     * @internal This function simply checks the true result of functions
+     * escapeshellarg() and touch() with a non Ascii filename.
+     *
+     * @return array of issues.
+     */
     public static function checkUnicodeInstallation()
     {
         $result = [];

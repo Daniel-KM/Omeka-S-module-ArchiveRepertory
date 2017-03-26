@@ -29,6 +29,7 @@ class Manager extends \Omeka\File\Manager
      *
      * @internal The directory separator is always "/" to simplify management
      * of files and checks.
+     * @internal Unlike Omeka, the storage id doesn’t include the extension.
      *
      * @param Media $media
      * @return string
@@ -66,7 +67,7 @@ class Manager extends \Omeka\File\Manager
         $storageName = $this->getSingleFilename($storageName);
         $newStorageId = pathinfo($storageName, PATHINFO_FILENAME);
         if ($folderName) {
-            $newStorageId= $folderName . $newStorageId;
+            $newStorageId = $folderName . $newStorageId;
         }
 
         if (strlen($newStorageId) > 190) {
@@ -204,7 +205,6 @@ class Manager extends \Omeka\File\Manager
         return $firstDir . DIRECTORY_SEPARATOR . $secondDir;
     }
 
-
     /**
      * Get all archive folders with full paths and extensions.
      *
@@ -335,7 +335,7 @@ class Manager extends \Omeka\File\Manager
     }
 
     /**
-     * Gets first identifier of a resource (with prefix if any).
+     * Gets first identifier of a resource.
      *
      * @param Resource $resource An item set or an item.
      * @param string $termId
@@ -466,6 +466,19 @@ class Manager extends \Omeka\File\Manager
     }
 
     /**
+     * Returns a formatted string for folder or file path (spaces only).
+     *
+     * @internal The string should be already sanitized.
+     *
+     * @param string $string The string to sanitize.
+     * @return string The sanitized string.
+     */
+    protected function convertSpacesToUnderscore($string)
+    {
+        return preg_replace('/\s+/', '_', $string);
+    }
+
+    /**
      * Get a sub string from a string when mb_substr is not available.
      *
      * @see http://www.php.net/manual/en/function.mb-substr.php#107698
@@ -485,19 +498,6 @@ class Manager extends \Omeka\File\Manager
                 $length
             )
         );
-    }
-
-    /**
-     * Returns a formatted string for folder or file path (spaces only).
-     *
-     * @internal The string should be already sanitized.
-     *
-     * @param string $string The string to sanitize.
-     * @return string The sanitized string.
-     */
-    protected function convertSpacesToUnderscore($string)
-    {
-        return preg_replace('/\s+/', '_', $string);
     }
 
     /**
@@ -523,8 +523,7 @@ class Manager extends \Omeka\File\Manager
      * @param string $pathFolder
      *   (Optional) Name of folder where to create archive folder. If not set,
      *   the archive folder will be created in all derivative paths.
-     * @return bool
-     *   True if each path is created, Exception if an error occurs.
+     * @return bool True if each path is created, Exception if an error occurs.
      */
     protected function createArchiveFolders($archiveFolder, $pathFolder = '')
     {
