@@ -1,6 +1,9 @@
 <?php
 namespace ArchiveRepertory\File;
 
+use Omeka\Entity\Item;
+use Omeka\Entity\Media;
+use Omeka\Entity\Resource;
 use Omeka\File\File;
 use Omeka\File\Exception\RuntimeException;
 use Omeka\Mvc\Controller\Plugin\Messenger;
@@ -14,24 +17,18 @@ class Manager extends \Omeka\File\Manager
      */
     protected $derivatives;
 
-    /**
-     * Default extension for derivative images (hard coded in Omeka S).
-     *
-     * @var string
-     */
-    protected $defaultExtension = '.jpg';
-
     public function getBasename($name)
     {
         return substr($name, 0, strrpos($name, '.')) ? substr($name, 0, strrpos($name, '.')) : $name;
     }
 
-    public function getStorageId(File $file, $media)
+    public function getStorageId(Media $media)
     {
         $folderName = $this->getItemFolderName($media->getItem());
+        $storageId = $media->getStorageId();
 
         if ($this->getSetting('archive_repertory_file_keep_original_name') === '1') {
-            $storageName = pathinfo($file->getSourceName(), PATHINFO_BASENAME);
+            $storageName = pathinfo($media->getSource(), PATHINFO_BASENAME);
             if ($folderName) {
                 $storageName = "$folderName/$storageName";
             }
@@ -40,11 +37,8 @@ class Manager extends \Omeka\File\Manager
             if ($folderName) {
                 $storageId = "$folderName/$storageId";
             }
-        } else {
-            $storageId = $file->getStorageId();
-            if ($folderName) {
-                $storageId = "$folderName/$storageId";
-            }
+        } elseif ($folderName) {
+            $storageId = "$folderName/$storageId";
         }
 
         return $storageId;
@@ -67,7 +61,7 @@ class Manager extends \Omeka\File\Manager
         $dirname = pathinfo($filename, PATHINFO_DIRNAME);
 
         // Get the real archive path.
-        $filepath = $this->concatWithSeparator($this->getFullArchivePath('original'), $filename);
+        $filepath = $this->concatWithSeparator($this->getFullArchivePath(self::ORIGINAL_PREFIX), $filename);
         $folder = pathinfo($filepath, PATHINFO_DIRNAME);
         $name = pathinfo($filepath, PATHINFO_FILENAME);
         $extension = pathinfo($filepath, PATHINFO_EXTENSION);
@@ -101,10 +95,10 @@ class Manager extends \Omeka\File\Manager
     /**
      * Gets item folder name from an item and create folder if needed.
      *
-     * @param object $item
+     * @param Item $item
      * @return string Unique sanitized name of the item.
      */
-    public function getItemFolderName($item)
+    public function getItemFolderName(Item $item)
     {
         $settings = $this->serviceLocator->get('Omeka\Settings');
 
@@ -120,7 +114,7 @@ class Manager extends \Omeka\File\Manager
             case '':
                 return '';
             default:
-                $name = $this->_getRecordFolderNameFromMetadata($item);
+                $name = $this->_getResourceFolderNameFromMetadata($item);
         }
 
         $item_convert = $settings->get('archive_repertory_item_convert');
@@ -173,36 +167,33 @@ class Manager extends \Omeka\File\Manager
         $currentArchiveFolder = dirname($currentArchiveFilename);
         $newArchiveFolder = dirname($newArchiveFilename);
 
+        // Determine the current and new derivative filename, standard
+        // or not.
+        $currentBase = $this->getBasename($currentArchiveFilename);
+        $newBase = $this->getBasename($newArchiveFilename);
+
         // If any, move derivative files using Omeka API.
         $fileWriter = $this->getFileWriter();
         $derivatives = $this->getDerivatives();
         foreach ($derivatives as $type => $derivative) {
-            // We create a folder in any case, even if there isn't any file
-            // inside, in order to be fully compatible with any module that
-            // manages base filename only.
-            $result = $this->_createArchiveFolders($newArchiveFolder, $derivative['path']);
-
-            // Determine the current and new derivative filename, standard
-            // or not.
-            $currentBase = $this->getBasename($currentArchiveFilename);
-            $newBase = $this->getBasename($newArchiveFilename);
             foreach ($derivative['extension'] as $extension) {
                 // Manage the original.
                 if (is_null($extension)) {
                     $currentDerivativeFilename = $currentArchiveFilename;
                     $newDerivativeFilename = $newArchiveFilename;
                 } else {
-                    $currentDerivativeFilename = $this->concatWithSeparator($currentBase, $extension);
-                    $newDerivativeFilename = $this->concatWithSeparator($newBase, $extension);
+                    $currentDerivativeFilename = $currentBase . $extension;
+                    $newDerivativeFilename = $newBase . $extension;
                 }
 
                 // Check if the derivative file exists or not to avoid some
                 // errors when moving something without derivatives: here, we
                 // don't know anything of the media.
                 $checkpath = $this->concatWithSeparator($derivative['path'], $currentDerivativeFilename);
-                if ($fileWriter->fileExists($checkpath)) {
-                    $this->_moveFile($currentDerivativeFilename, $newDerivativeFilename, $derivative['path']);
+                if (!$fileWriter->fileExists($checkpath)) {
+                    continue;
                 }
+                $this->_moveFile($currentDerivativeFilename, $newDerivativeFilename, $derivative['path']);
             }
         }
 
@@ -215,39 +206,39 @@ class Manager extends \Omeka\File\Manager
     }
 
     /**
-     * Creates a unique name for a record folder from first metadata.
+     * Creates a unique name for a resource folder from first metadata.
      *
-     * If there isn't any identifier with the prefix, the record id will be used.
+     * If there isn't any identifier with the prefix, the resource id will be used.
      * The name is sanitized and the possible prefix is removed.
      *
-     * @param object $record
-     * @return string Unique sanitized name of the record.
+     * @param Resource $resource
+     * @return string Unique sanitized name of the resource.
      */
-    protected function _getRecordFolderNameFromMetadata($record)
+    protected function _getResourceFolderNameFromMetadata(Resource $resource)
     {
-        $identifier = $this->_getRecordIdentifiers($record, null, true);
+        $identifier = $this->_getResourceIdentifiers($resource, null, true);
 
         return empty($identifier)
-            ? (string) $record->getId()
+            ? (string) $resource->getId()
             : $this->_sanitizeName($identifier);
     }
 
     /**
-     * Gets identifiers of a record (with prefix if any, and only them).
+     * Gets identifiers of a resource (with prefix if any, and only them).
      *
-     * @param Record $record A collection or an item.
+     * @param Resource $resource An item set or an item.
      * @param string $folder Optional. Allow to select a specific folder instead
      * of the default one.
      * @param bool $first Optional. Allow to return only the first value.
      * @return string|array.
      */
-    protected function _getRecordIdentifiers($record, $folder = null, $first = false)
+    protected function _getResourceIdentifiers(Resource $resource, $folder = null, $first = false)
     {
         $api = $this->serviceLocator->get('Omeka\ApiManager');
         $settings = $this->serviceLocator->get('Omeka\Settings');
 
-        $recordType = get_class($record);
-        switch ($recordType) {
+        $resourceType = get_class($resource);
+        switch ($resourceType) {
             case 'Omeka\Entity\Item':
                 $folder = is_null($folder) ? $settings->get('archive_repertory_item_folder') : $folder;
                 $prefix = $settings->get('archive_repertory_item_prefix');
@@ -261,9 +252,9 @@ class Manager extends \Omeka\File\Manager
             case 'None':
                 return [];
             case 'id':
-                return [(string) $record->getId()];
+                return [(string) $resource->getId()];
             default:
-                foreach ($record->getValues() as $value) {
+                foreach ($resource->getValues() as $value) {
                     if ($value->getProperty()->getId() != $folder) {
                         continue;
                     }
@@ -451,10 +442,10 @@ class Manager extends \Omeka\File\Manager
         foreach ($types as $path => &$value) {
             $value = [];
             $value['path'] = $this->concatWithSeparator($storagePath, $path);
-            $value['extension'] = [$this->defaultExtension];
+            $value['extension'] = ['.' . self::THUMBNAIL_EXTENSION];
         }
         $types = ['original' => [
-            'path' => $this->concatWithSeparator($storagePath, 'original'),
+            'path' => $this->concatWithSeparator($storagePath, self::ORIGINAL_PREFIX),
             'extension' => [null],
         ]] + $types;
         return $types;
@@ -590,6 +581,7 @@ class Manager extends \Omeka\File\Manager
         }
 
         try {
+            $result = $this->_createFolder(dirname($realDestination));
             $result = $fileWriter->rename($realSource, $realDestination);
         } catch (Exception $e) {
             $msg = sprintf(

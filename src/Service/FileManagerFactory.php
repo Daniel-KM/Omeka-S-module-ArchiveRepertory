@@ -1,27 +1,26 @@
 <?php
-
 namespace ArchiveRepertory\Service;
 
-use Interop\Container\ContainerInterface;
-use Zend\ServiceManager\Factory\FactoryInterface;
 use ArchiveRepertory\File\Manager as FileManager;
+use Zend\ServiceManager\Factory\FactoryInterface;
+use Interop\Container\ContainerInterface;
 
 class FileManagerFactory implements FactoryInterface
 {
-    public function __invoke(ContainerInterface $services, $requestedName, array $options = null)
+    public function __invoke(ContainerInterface $serviceLocator, $requestedName, array $options = null)
     {
-        $config = $services->get('Config');
+        $config = $serviceLocator->get('Config');
         if (!isset($config['file_manager'])) {
             throw new Exception\ConfigException('Missing file manager configuration');
         }
         $fileManager = $config['file_manager'];
         if (!isset($fileManager['store'])
-            || !$services->has($fileManager['store'])
+            || !$serviceLocator->has($fileManager['store'])
         ) {
-            throw new \Exception\ConfigException('Missing file store service');
+            throw new Exception\ConfigException('Missing file store service');
         }
         if (!isset($fileManager['thumbnailer'])
-            || !$services->has($fileManager['thumbnailer'])
+            || !$serviceLocator->has($fileManager['thumbnailer'])
         ) {
             throw new Exception\ConfigException('Missing thumbnailer service');
         }
@@ -69,7 +68,6 @@ class FileManagerFactory implements FactoryInterface
             throw new Exception\ConfigException('Missing temporary directory configuration');
         }
         $tempDir = $config['temp_dir'];
-
-        return new FileManager($config['file_manager'], $tempDir, $services);
+        return new FileManager($config['file_manager'], $tempDir, $serviceLocator);
     }
 }

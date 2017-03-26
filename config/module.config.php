@@ -6,16 +6,9 @@ return [
             'ArchiveRepertory\Form\Element\PropertySelect' => 'ArchiveRepertory\Service\Form\Element\PropertySelectFactory',
         ],
     ],
-    'local_dir' => OMEKA_PATH . '/files',
-    'media_ingesters' => [
-        'factories' => [
-            'upload' => 'ArchiveRepertory\Service\MediaIngester\UploadFactory',
-            'url' => 'ArchiveRepertory\Service\MediaIngester\UrlFactory',
-        ],
-    ],
+    'local_dir' => OMEKA_PATH . DIRECTORY_SEPARATOR . 'files',
     'service_manager' => [
         'factories' => [
-            'Omeka\File\LocalStore' => 'ArchiveRepertory\Service\LocalStoreFactory',
             'Omeka\File\Manager' => 'ArchiveRepertory\Service\FileManagerFactory',
             'ArchiveRepertory\FileWriter' => 'ArchiveRepertory\Service\FileWriterFactory',
         ],

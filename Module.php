@@ -36,7 +36,6 @@ use Zend\EventManager\SharedEventManagerInterface;
 use Zend\EventManager\Event;
 use Zend\Mvc\Controller\AbstractController;
 use Zend\ServiceManager\ServiceLocatorInterface;
-use Zend\Uri\Http as HttpUri;
 use Zend\View\Renderer\PhpRenderer;
 use Omeka\File\File;
 use Omeka\Module\AbstractModule;
@@ -170,42 +169,44 @@ class Module extends AbstractModule
                 continue;
             }
 
-            if ($this->fileShouldBeMoved($media)) {
-                $file = new File('');
-                $file->setSourceName($this->getMediaSourceName($media));
-                $storageId = $fileManager->getStorageId($file, $media);
-                $extension = $media->getExtension();
-                $newFilename = $extension ? $storageId . '.' . $extension : $storageId;
-
-                // Check if the original file exists, else this is an undetected
-                // error during the convert process.
-                $path = $fileManager->getFullArchivePath('original');
-                $filepath = $fileManager->concatWithSeparator($path, $media->getFilename());
-                if (!$fileWriter->fileExists($filepath)) {
-                    $msg = $this->translate('This file is not present in the original directory : ' . $filepath);
-                    $msg .= ' ' . $this->translate('There was an undetected error before storage, probably during the convert process.');
-                    $this->_addError($msg);
-                    continue;
-                }
-
-                $result = $fileManager->moveFilesInArchiveSubfolders(
-                    $media->getFilename(),
-                    $newFilename
-                );
-
-                if (!$result) {
-                    $msg = $this->translate('Cannot move files inside archive directory.');
-                    $this->_addError($msg);
-                    continue;
-                }
-
-                // Update file in Omeka database immediately for each file.
-                $media->setStorageId($storageId);
-
-                // As it's not a file hook, the file is not automatically saved.
-                $entityManager->persist($media);
-                $entityManager->flush();
+            // Check if the file should be moved (so its storage id).
+            $currentStorageId = $media->getStorageId();
+            $newStorageId = $fileManager->getStorageId($media);
+            if ($currentStorageId == $newStorageId) {
+                continue;
             }
+
+            $extension = $media->getExtension();
+            $newFilename = $extension ? $newStorageId . '.' . $extension : $newStorageId;
+
+            // Check if the original file exists, else this is an undetected
+            // error during the convert process.
+            $path = $fileManager->getFullArchivePath($fileManager::ORIGINAL_PREFIX);
+            $filepath = $fileManager->concatWithSeparator($path, $media->getFilename());
+            if (!$fileWriter->fileExists($filepath)) {
+                $msg = $this->translate('This file is not present in the original directory : ' . $filepath);
+                $msg .= ' ' . $this->translate('There was an undetected error before storage, probably during the convert process.');
+                $this->_addError($msg);
+                continue;
+            }
+
+            $result = $fileManager->moveFilesInArchiveSubfolders(
+                $media->getFilename(),
+                $newFilename
+            );
+
+            if (!$result) {
+                $msg = $this->translate('Cannot move files inside archive directory.');
+                $this->_addError($msg);
+                continue;
+            }
+
+            // Update file in Omeka database immediately for each file.
+            $media->setStorageId($newStorageId);
+
+            // As it's not a file hook, the file is not automatically saved.
+            $entityManager->persist($media);
+            $entityManager->flush();
         }
     }
 
@@ -215,57 +216,9 @@ class Module extends AbstractModule
         $messenger->addError($msg);
     }
 
-    protected function fileShouldBeMoved($media)
-    {
-        $services = $this->getServiceLocator();
-        $fileManager = $services->get('Omeka\File\Manager');
-        $settings = $services->get('Omeka\Settings');
-
-        $keep_original_name = $settings->get('archive_repertory_file_keep_original_name');
-
-        if ($keep_original_name && !$this->filenameMatchingSourceName($media)) {
-            return true;
-        }
-
-        if (!$keep_original_name && $this->filenameMatchingSourceName($media)) {
-            return true;
-        }
-
-        $archiveFolder = $fileManager->getItemFolderName($media->getItem());
-        $newFilename = $fileManager->concatWithSeparator($archiveFolder, Helpers::basename_special($media->getFilename()));
-
-        return $media->getFilename() != $newFilename;
-    }
-
-    protected function filenameMatchingSourceName($media)
-    {
-        $source = $this->getMediaSourceName($media);
-        $sourceBasename = pathinfo($source, PATHINFO_FILENAME);
-        $filename = $media->getFilename();
-        $filenameBasename = pathinfo($filename, PATHINFO_FILENAME);
-
-        $sourceBasename = preg_replace('/\.\d+$/', '', $sourceBasename);
-        $filenameBasename = preg_replace('/\.\d+$/', '', $filenameBasename);
-
-        return $sourceBasename == $filenameBasename;
-    }
-
-    protected function getMediaSourceName($media)
-    {
-        if ($media->getIngester() == 'url') {
-            $uri = new HttpUri($media->getSource());
-            $sourceName = $uri->getPath();
-        } else {
-            $sourceName = $media->getSource();
-        }
-
-        return $sourceName;
-    }
-
     protected function translate($string)
     {
         $serviceLocator = $this->getServiceLocator();
-
         return $serviceLocator->get('MvcTranslator')->translate($string);
     }
 }
