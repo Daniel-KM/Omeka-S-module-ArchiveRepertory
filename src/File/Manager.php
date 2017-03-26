@@ -3,6 +3,7 @@ namespace ArchiveRepertory\File;
 
 use Omeka\File\File;
 use Omeka\File\Exception\RuntimeException;
+use Omeka\Mvc\Controller\Plugin\Messenger;
 
 class Manager extends \Omeka\File\Manager
 {
@@ -651,7 +652,7 @@ class Manager extends \Omeka\File\Manager
 
     protected function _addError($msg)
     {
-        $messenger = new Messenger;
+        $messenger = new Messenger();
         $messenger->addError($msg);
     }
 }
