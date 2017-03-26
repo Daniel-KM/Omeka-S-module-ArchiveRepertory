@@ -4,6 +4,7 @@
  *
  * Keeps original names of files and put them in a hierarchical structure.
  *
+ * Copyright Daniel Berthereau 2012-2017
  * Copyright BibLibre, 2016
  *
  * This software is governed by the CeCILL license under French law and abiding
@@ -48,6 +49,17 @@ class Module extends AbstractModule
      * @var array This plugin's settings.
      */
     protected $settings = [
+        // Ingesters that modify the storage id and location of files.
+        // Other modules can add their own ingesters.
+        // Note: the config is merged in the alphabetic order of modules.
+        'archive_repertory_ingesters' => [
+            // An empty array means that the thumbnail types / paths in config
+            // and the default extension ("jpg") will be used.
+            // See the module IIIF Server for a full example.
+            'upload' => [],
+            'url' => [],
+        ],
+
         // Items options.
         'archive_repertory_item_folder' => 'id',
         'archive_repertory_item_prefix' => '',
@@ -86,6 +98,15 @@ class Module extends AbstractModule
     {
         foreach ($this->settings as $key => $value) {
             $settings->delete($key);
+        }
+    }
+
+    public function upgrade($oldVersion, $newVersion, ServiceLocatorInterface $serviceLocator)
+    {
+        if (version_compare($oldVersion, '3.14.0', '<')) {
+            $settings = $serviceLocator->get('Omeka\Settings');
+            $settings->set('archive_repertory_ingesters',
+                $this->settings['archive_repertory_ingesters']);
         }
     }
 
@@ -141,12 +162,12 @@ class Module extends AbstractModule
         $fileWriter = $services->get('ArchiveRepertory\FileWriter');
 
         $item = $event->getParam('response')->getContent();
+        $ingesters = $settings->get('archive_repertory_ingesters');
 
         // Check if files are already attached and if they are at the right place.
         foreach ($item->getMedia() as $media) {
             $ingester = $media->getIngester();
-
-            if ($ingester != 'upload' && $ingester != 'url') {
+            if (!isset($ingesters[$ingester])) {
                 continue;
             }
 
