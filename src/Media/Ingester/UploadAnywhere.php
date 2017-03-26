@@ -45,7 +45,7 @@ class UploadAnywhere extends Upload
         $fileData = $fileData['file'][$index];
         $fileInput->setValue($fileData);
         if (!$fileInput->isValid()) {
-            foreach($fileInput->getMessages() as $message) {
+            foreach ($fileInput->getMessages() as $message) {
                 $errorStore->addError('upload', $message);
             }
             return;
@@ -84,7 +84,7 @@ class UploadAnywhere extends Upload
         $fileInput = new FileInput('file');
         $renameUpload = new OmekaRenameUpload([
             'target' => $file->getTempPath(),
-            'overwrite' => true
+            'overwrite' => true,
         ]);
         $renameUpload->setFileWriter($this->getFileWriter());
         $filterChain = $fileInput->getFilterChain();

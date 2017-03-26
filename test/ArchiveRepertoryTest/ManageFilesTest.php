@@ -76,7 +76,6 @@ class ManageFilesTest extends OmekaControllerTestCase
         $this->api()->delete('items', $this->item->id());
     }
 
-
     /** @test **/
     public function testWithOptionKeepOriginalNameInsertFile()
     {
@@ -100,7 +99,8 @@ class ManageFilesTest extends OmekaControllerTestCase
     }
 
     /** @test */
-    public function testStorageBasePathWithItemId() {
+    public function testStorageBasePathWithItemId()
+    {
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
 
         $settings->set('archive_repertory_file_keep_original_name', '1');
@@ -111,7 +111,7 @@ class ManageFilesTest extends OmekaControllerTestCase
         $storageFilepath = $this->item->id()
             . DIRECTORY_SEPARATOR
             . pathinfo($this->_fileUrl, PATHINFO_FILENAME);
-        $fileManager=$this->getFileManager();
+        $fileManager = $this->getFileManager();
         $this->assertEquals($storageFilepath, $fileManager->getStorageId($file, $this->media));
     }
 
@@ -191,7 +191,7 @@ class ManageFilesTest extends OmekaControllerTestCase
                     'error' => 0,
                     'size' => 1999,
                 ],
-            ]
+            ],
         ]);
         $this->getRequest()->setFiles($upload);
 

@@ -62,13 +62,14 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $this->api()->delete('items', $this->item->id());
     }
 
-    public function datas() {
+    public function datas()
+    {
         return [
                 ['archive_repertory_item_convert', 'false'],
                 ['archive_repertory_item_prefix', 'prefix'],
                 ['archive_repertory_item_folder', 'foldername'],
-                ['archive_repertory_file_keep_original_name' ,true],
-                ['archive_repertory_derivative_folders' , 'derive'],
+                ['archive_repertory_file_keep_original_name', true],
+                ['archive_repertory_derivative_folders', 'derive'],
         ];
     }
 
@@ -82,12 +83,12 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
      * @test
      * @dataProvider datas
      */
-    public function postConfigurationShouldBeSaved($name, $value) {
+    public function postConfigurationShouldBeSaved($name, $value)
+    {
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
         $this->postDispatch('/admin/module/configure?id=ArchiveRepertory', [$name => $value]);
         $this->assertEquals($value, $settings->get($name));
     }
-
 
     /** @test */
     public function postItemShouldMoveFileInAnotherDirectory()
@@ -111,7 +112,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
                     'tmp_name' => $this->_fileUrl,
                     'size' => 1,
                     'error' => 0,
-                    'content' => file_get_contents($this->_fileUrl)
+                    'content' => file_get_contents($this->_fileUrl),
                 ],
             ],
         ]);
@@ -212,7 +213,6 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
             $result[] = $media->filename();
         }
         $this->assertEquals($result_expected, $result);
-
     }
 
     /** @test */
@@ -275,7 +275,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         foreach ($item->media() as $media) {
             $existing_medias[$media->id()] = [
                 'o:id' => $media->id(),
-                'o:is_public' => 1
+                'o:is_public' => 1,
             ];
         }
 
@@ -294,7 +294,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         }
     }
 
-    protected function postDipatchFiles($title, $name_file1, $name_file2, $id1=0, $id2=1, $existing_ids = [])
+    protected function postDipatchFiles($title, $name_file1, $name_file2, $id1 = 0, $id2 = 1, $existing_ids = [])
     {
         $this->_fileUrl = dirname(dirname(__FILE__)).'/_files/image_test.png';
         $this->_fileUrl2 = dirname(dirname(__FILE__)).'/_files/image_test.save.png';
@@ -349,7 +349,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
                             'property_id' => 1,
                             '@value' => 'media1',
                         ],
-                    ]
+                    ],
                 ],
                 $id2 => [
                     'o:ingester' => 'upload',

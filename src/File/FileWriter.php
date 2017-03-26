@@ -23,7 +23,7 @@ class FileWriter
         return is_writable($path);
     }
 
-    public function mkdir($directory_name, $permissions='0777')
+    public function mkdir($directory_name, $permissions = '0777')
     {
         return mkdir($directory_name, $permissions, true);
     }

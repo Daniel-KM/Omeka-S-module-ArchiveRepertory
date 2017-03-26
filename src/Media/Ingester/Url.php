@@ -9,10 +9,12 @@ use Zend\Uri\Http as HttpUri;
 
 class Url extends \Omeka\Media\Ingester\Url
 {
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public function ingest(Media $media, Request $request,
-        ErrorStore $errorStore)
-    {
+        ErrorStore $errorStore
+    ) {
         $data = $request->getContent();
         if (!isset($data['ingest_url'])) {
             $errorStore->addError('error', 'No ingest URL specified');

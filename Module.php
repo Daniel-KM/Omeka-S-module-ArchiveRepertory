@@ -70,7 +70,8 @@ class Module extends AbstractModule
         $this->_installOptions($serviceLocator->get('Omeka\Settings'));
     }
 
-    protected function _installOptions($settings) {
+    protected function _installOptions($settings)
+    {
         foreach ($this->_options as $key => $value) {
             $settings->set($key, $value);
         }
@@ -81,7 +82,8 @@ class Module extends AbstractModule
         $this->_uninstallOptions($serviceLocator->get('Omeka\Settings'));
     }
 
-    protected function _uninstallOptions($settings) {
+    protected function _uninstallOptions($settings)
+    {
         foreach ($this->_options as $key => $value) {
             $settings->delete($key);
         }
@@ -89,8 +91,11 @@ class Module extends AbstractModule
 
     public function attachListeners(SharedEventManagerInterface $sharedEventManager)
     {
-        $sharedEventManager->attach('Omeka\Api\Adapter\ItemAdapter',
-                                    'api.update.post', [ $this, 'afterSaveItem' ]);
+        $sharedEventManager->attach(
+            'Omeka\Api\Adapter\ItemAdapter',
+            'api.update.post',
+            [$this, 'afterSaveItem']
+        );
     }
 
     public function getConfigForm(PhpRenderer $renderer)

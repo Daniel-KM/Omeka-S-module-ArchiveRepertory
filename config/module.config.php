@@ -9,9 +9,9 @@ return [
     'local_dir' => OMEKA_PATH . '/files',
     'media_ingesters' => [
         'factories' => [
-            'upload'  => 'ArchiveRepertory\Service\MediaIngester\UploadFactory',
-            'url'  => 'ArchiveRepertory\Service\MediaIngester\UrlFactory',
-        ]
+            'upload' => 'ArchiveRepertory\Service\MediaIngester\UploadFactory',
+            'url' => 'ArchiveRepertory\Service\MediaIngester\UrlFactory',
+        ],
     ],
     'service_manager' => [
         'factories' => [
