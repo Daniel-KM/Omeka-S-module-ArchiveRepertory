@@ -27,9 +27,9 @@ class Manager extends \Omeka\File\Manager
     /**
      * Get the full storage id of a media according to current settings.
      *
-     * @internal The directory separator is always "/" to simplify management
-     * of files and checks.
-     * @internal Unlike Omeka, the storage id doesn’t include the extension.
+     * Note: The directory separator is always "/" to simplify management of
+     * files and checks.
+     * Note: Unlike Omeka, the storage id doesn’t include the extension.
      *
      * @param Media $media
      * @return string
@@ -37,6 +37,7 @@ class Manager extends \Omeka\File\Manager
     public function getStorageId(Media $media)
     {
         $storageId = $media->getStorageId();
+        $currentFilename = $media->getFilename();
 
         $item = $media->getItem();
         $itemFolderName = $this->getResourceFolderName($item);
@@ -64,12 +65,11 @@ class Manager extends \Omeka\File\Manager
         if ($folderName) {
             $storageName = $folderName . $storageName;
         }
-        $storageName = $this->getSingleFilename($storageName);
+        $storageName = $this->getSingleFilename($storageName, $currentFilename);
         $newStorageId = pathinfo($storageName, PATHINFO_FILENAME);
         if ($folderName) {
             $newStorageId = $folderName . $newStorageId;
         }
-
         if (strlen($newStorageId) > 190) {
             $msg = sprintf(
                 $this->translate('Cannot move file "%s" inside archive directory: filename too long.'),
@@ -237,7 +237,7 @@ class Manager extends \Omeka\File\Manager
     /**
      * Get the list of original and standard derivatives by type.
      *
-     * @internal In Omeka S, the name and the path are the same.
+     * Note: In Omeka S, the name and the path are the same.
      *
      * @return array
      */
@@ -260,30 +260,50 @@ class Manager extends \Omeka\File\Manager
     /**
      * Check if a file is a duplicate and returns it with a suffix if needed.
      *
-     * @internal The check is done on the basename, without extension, to avoid
-     * issues with derivatives.
-     * @internal No check via database, because the file can be unsaved yet.
+     * Note: The check is done on the basename, without extension, to avoid
+     * issues with derivatives and because the table uses the basename too.
+     * No check via database, because the file can be unsaved yet.
      *
      * @param string $filename
+     * @param string $currentFilename It avoids to change when it is single.
      * @return string The unique filename, that can be the same as input name.
      */
-    protected function getSingleFilename($filename)
+    protected function getSingleFilename($filename, $currentFilename)
     {
         // Get the partial path.
         $dirname = pathinfo($filename, PATHINFO_DIRNAME);
 
         // Get the real archive path.
-        $filepath = $this->concatWithSeparator($this->getFullArchivePath(self::ORIGINAL_PREFIX), $filename);
+        $fullOriginalPath = $this->getFullArchivePath(self::ORIGINAL_PREFIX);
+        $filepath = $this->concatWithSeparator($fullOriginalPath, $filename);
         $folder = pathinfo($filepath, PATHINFO_DIRNAME);
         $name = pathinfo($filepath, PATHINFO_FILENAME);
         $extension = pathinfo($filepath, PATHINFO_EXTENSION);
+        $currentFilepath = $this->concatWithSeparator($fullOriginalPath, $currentFilename);
 
-        // Check folder for file with any extension or without any extension.
+        // Check the name.
         $checkName = $name;
-        $i = 0;
         $fileWriter = $this->getFileWriter();
-        while ($fileWriter->glob($folder . DIRECTORY_SEPARATOR . $checkName . '{.*,.,\,,}', GLOB_BRACE)) {
-            $checkName = $name . '.' . ++$i;
+        $existingFilepaths = $fileWriter->glob($folder . DIRECTORY_SEPARATOR . $checkName . '{.*,.,\,,}', GLOB_BRACE);
+
+        // Check if the filename existts.
+        if (empty($existingFilepaths)) {
+            // Nothing to do.
+        }
+        // There are filenames, so check if the current one is inside.
+        elseif (in_array($currentFilepath, $existingFilepaths)) {
+            // Keep the existing one if there are many filepaths, but use the
+            // default one if it is unique.
+            if (count($existingFilepaths) > 1) {
+                $checkName = pathinfo($currentFilename, PATHINFO_FILENAME);
+            }
+        }
+        // Check folder for file with any extension or without any extension.
+        else {
+            $i = 0;
+            while ($fileWriter->glob($folder . DIRECTORY_SEPARATOR . $checkName . '{.*,.,\,,}', GLOB_BRACE)) {
+                $checkName = $name . '.' . ++$i;
+            }
         }
 
         $result = ($dirname ? $dirname . DIRECTORY_SEPARATOR : '')
@@ -363,7 +383,8 @@ class Manager extends \Omeka\File\Manager
     /**
      * Hash a stable single storage name for a specific media.
      *
-     * @internal We cannot use a random name.
+     * Note: A random name is not used to avoid possible issues when the option
+     * changes.
      * @see Omeka\File\File::getStorageId()
      *
      * @param Media $media
@@ -398,7 +419,7 @@ class Manager extends \Omeka\File\Manager
     /**
      * Returns a formatted string for folder or file name.
      *
-     * @internal The string should be already sanitized.
+     * Note: The string should be already sanitized.
      * The string should be a simple name, not a full path or url, because "/",
      * "\" and ":" are removed (so a path should be sanitized by part).
      *
@@ -429,7 +450,7 @@ class Manager extends \Omeka\File\Manager
     /**
      * Returns an unaccentued string for folder or file name.
      *
-     * @internal The string should be already sanitized.
+     * Note: The string should be already sanitized.
      *
      * @see ArchiveRepertoryPlugin::convertFilenameTo()
      *
@@ -449,7 +470,7 @@ class Manager extends \Omeka\File\Manager
     /**
      * Returns a formatted string for folder or file path (first letter only).
      *
-     * @internal The string should be already sanitized.
+     * Note: The string should be already sanitized.
      *
      * @see ArchiveRepertoryPlugin::convertFilenameTo()
      *
@@ -468,7 +489,7 @@ class Manager extends \Omeka\File\Manager
     /**
      * Returns a formatted string for folder or file path (spaces only).
      *
-     * @internal The string should be already sanitized.
+     * Note: The string should be already sanitized.
      *
      * @param string $string The string to sanitize.
      * @return string The sanitized string.
