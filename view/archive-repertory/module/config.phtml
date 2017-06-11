@@ -3,7 +3,7 @@
 <?php $form->prepare(); ?>
 
 <?php
-    echo $this->translate('"Archive Repertory" plugin allows to save files in a hierarchical structure and to keep original name of files.') . '<br />';
+    echo $this->translate('"Archive Repertory" module allows to save files in a hierarchical structure and to keep original name of files.') . '<br />';
     echo sprintf($this->translate('See %s for more information.'), '<a href="https://github.com/Daniel-KM/Omeka-S-module-ArchiveRepertory">ReadMe</a>') . '<br />';
     echo '<br />';
     echo $this->translate('When all options are set, files will be saved in "files / original / item_set_identifier / item_identifier / original_filename.ext" instead of "files / original / hashed_filename.ext".') . '<br />';
@@ -30,8 +30,8 @@
         }
         if (isset($allow_unicode['cli'])) {
             echo '<li>' . $allow_unicode['cli'] . '<br/>';
-            echo $this->translate('Usually, this is not a problem with this plugin and common plugins.');
-            echo ' ' . $this->translate('But if you use a plugin that calls a program via the command line of the server, filenames issues can occur.') .'</li>';
+            echo $this->translate('Usually, this is not a problem with this module and common modules.');
+            echo ' ' . $this->translate('But if you use a module that calls a program via the command line of the server, filenames issues can occur.') .'</li>';
         }
         if (isset($allow_unicode['fs'])) {
             echo '<li>' . $allow_unicode['fs'] . '<br/>';

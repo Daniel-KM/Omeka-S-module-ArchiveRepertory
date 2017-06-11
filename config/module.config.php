@@ -1,16 +1,18 @@
 <?php
+namespace ArchiveRepertory;
+
 return [
     'form_elements' => [
         'factories' => [
-            'ArchiveRepertory\Form\ConfigForm' => 'ArchiveRepertory\Service\Form\ConfigFormFactory',
-            'ArchiveRepertory\Form\Element\PropertySelect' => 'ArchiveRepertory\Service\Form\Element\PropertySelectFactory',
+            'ArchiveRepertory\Form\Config' => Service\Form\ConfigFactory::class,
+            'ArchiveRepertory\Form\Element\PropertySelect' => Service\Form\Element\PropertySelectFactory::class,
         ],
     ],
     'local_dir' => OMEKA_PATH . DIRECTORY_SEPARATOR . 'files',
     'service_manager' => [
         'factories' => [
-            'Omeka\File\Manager' => 'ArchiveRepertory\Service\FileManagerFactory',
-            'ArchiveRepertory\FileWriter' => 'ArchiveRepertory\Service\FileWriterFactory',
+            'Omeka\File\Manager' => Service\FileManagerFactory::class,
+            'ArchiveRepertory\FileWriter' => Service\FileWriterFactory::class,
         ],
     ],
     'view_manager' => [
@@ -20,7 +22,7 @@ return [
     ],
     'view_helpers' => [
         'invokables' => [
-            'checkUnicodeInstallation' => 'ArchiveRepertory\View\Helper\CheckUnicodeInstallation',
+            'checkUnicodeInstallation' => View\Helper\CheckUnicodeInstallation::class,
         ],
     ],
     'translator' => [

@@ -4,9 +4,9 @@ namespace ArchiveRepertory\Service\Form;
 
 use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\Factory\FactoryInterface;
-use ArchiveRepertory\Form\ConfigForm;
+use ArchiveRepertory\Form\Config as ConfigForm;
 
-class ConfigFormFactory implements FactoryInterface
+class ConfigFactory implements FactoryInterface
 {
     public function __invoke(ContainerInterface $services, $requestedName, array $options = null)
     {

@@ -286,7 +286,7 @@ class Manager extends \Omeka\File\Manager
         $fileWriter = $this->getFileWriter();
         $existingFilepaths = $fileWriter->glob($folder . DIRECTORY_SEPARATOR . $checkName . '{.*,.,\,,}', GLOB_BRACE);
 
-        // Check if the filename existts.
+        // Check if the filename exists.
         if (empty($existingFilepaths)) {
             // Nothing to do.
         }

@@ -40,7 +40,7 @@ use Zend\View\Renderer\PhpRenderer;
 use Omeka\File\File;
 use Omeka\Module\AbstractModule;
 use Omeka\Mvc\Controller\Plugin\Messenger;
-use ArchiveRepertory\Form\ConfigForm;
+use ArchiveRepertory\Form\Config as ConfigForm;
 use Omeka\Entity\Media;
 
 class Module extends AbstractModule
@@ -137,7 +137,7 @@ class Module extends AbstractModule
     {
         $forms = $this->getServiceLocator()->get('FormElementManager');
         $form = $forms->get(ConfigForm::class);
-        return $renderer->render('archive-repertory/config-form', [
+        return $renderer->render('archive-repertory/module/config', [
             'form' => $form,
         ]);
     }

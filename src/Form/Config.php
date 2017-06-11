@@ -7,7 +7,7 @@ use Zend\I18n\Translator\TranslatorAwareInterface;
 use Zend\I18n\Translator\TranslatorAwareTrait;
 use ArchiveRepertory\Helpers;
 
-class ConfigForm extends Form implements TranslatorAwareInterface
+class Config extends Form implements TranslatorAwareInterface
 {
     use TranslatorAwareTrait;
 
