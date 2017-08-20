@@ -103,7 +103,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
 
         $fileManager = $services->get('Omeka\File\Manager');
 
-        $mediaIngesterManager = $services->get('Omeka\MediaIngesterManager');
+        $mediaIngesterManager = $services->get('Omeka\Media\Ingester\Manager');
         $mediaIngesterManager->setAllowOverride(true);
         $mockUpload = new MockUpload($fileManager);
         $mediaIngesterManager->setService('upload', $mockUpload);
