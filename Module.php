@@ -197,13 +197,12 @@ class Module extends AbstractModule
     protected function afterSaveMedia(Media $media)
     {
         $services = $this->getServiceLocator();
-        $fileManager = $services->get('Omeka\File\Manager');
         $entityManager = $services->get('Omeka\EntityManager');
         $settings = $services->get('Omeka\Settings');
+        $fileManager = $services->get('ArchiveRepertory\FileManager');
         $fileWriter = $services->get('ArchiveRepertory\FileWriter');
 
         $ingesters = $settings->get('archive_repertory_ingesters');
-
         $ingester = $media->getIngester();
         if (!isset($ingesters[$ingester])) {
             return;
@@ -221,7 +220,7 @@ class Module extends AbstractModule
 
         // Check if the original file exists, else this is an undetected
         // error during the convert process.
-        $path = $fileManager->getFullArchivePath($fileManager::ORIGINAL_PREFIX);
+        $path = $fileManager->getFullArchivePath('original');
         $filepath = $fileManager->concatWithSeparator($path, $media->getFilename());
         if (!$fileWriter->fileExists($filepath)) {
             $msg = $this->translate('This file is not present in the original directory : ' . $filepath);
@@ -242,9 +241,9 @@ class Module extends AbstractModule
         }
 
         // Update file in Omeka database immediately for each file.
+        // Because this is not a file hook, the file is not automatically saved,
+        // so persist and flush are required now.
         $media->setStorageId($newStorageId);
-
-        // As it's not a file hook, the file is not automatically saved.
         $entityManager->persist($media);
         $entityManager->flush();
     }
@@ -255,9 +254,9 @@ class Module extends AbstractModule
     public function afterDeleteItem(Event $event)
     {
         $services = $this->getServiceLocator();
-        $fileManager = $services->get('Omeka\File\Manager');
         $entityManager = $services->get('Omeka\EntityManager');
         $settings = $services->get('Omeka\Settings');
+        $fileManager = $services->get('ArchiveRepertory\FileManager');
 
         $item = $event->getParam('response')->getContent();
         $ingesters = $settings->get('archive_repertory_ingesters');

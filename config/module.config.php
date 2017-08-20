@@ -11,7 +11,7 @@ return [
     'local_dir' => OMEKA_PATH . DIRECTORY_SEPARATOR . 'files',
     'service_manager' => [
         'factories' => [
-            'Omeka\File\Manager' => Service\FileManagerFactory::class,
+            'ArchiveRepertory\FileManager' => Service\FileManagerFactory::class,
             'ArchiveRepertory\FileWriter' => Service\FileWriterFactory::class,
         ],
     ],

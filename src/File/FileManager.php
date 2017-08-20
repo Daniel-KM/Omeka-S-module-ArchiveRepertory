@@ -9,8 +9,26 @@ use Omeka\File\File;
 use Omeka\File\Exception\RuntimeException;
 use Omeka\Mvc\Controller\Plugin\Messenger;
 
-class Manager extends \Omeka\File\Manager
+use Omeka\Stdlib\Message;
+use Zend\ServiceManager\ServiceLocatorInterface;
+
+class FileManager
 {
+    /**
+     * @var array
+     */
+    protected $thumbnailTypes;
+
+    /**
+     * @var string
+     */
+    protected $basePath;
+
+    /**
+     * @var ServiceLocatorInterface
+     */
+    protected $services;
+
     /**
      * List of types (original, derivative and others), paths and extensions.
      *
@@ -18,7 +36,31 @@ class Manager extends \Omeka\File\Manager
      */
     protected $derivatives;
 
-    public function getBasename($name)
+    /**
+     * Set configuration during construction.
+     *
+     * @param array $thumbnailTypes
+     * @param string $basePath
+     * @param ServiceLocatorInterface $services
+     */
+    public function __construct(array $thumbnailTypes, $basePath, ServiceLocatorInterface $services)
+    {
+        $this->thumbnailTypes = $thumbnailTypes;
+        $this->basePath = $basePath;
+        $this->services = $services;
+    }
+
+    /**
+     * Get the base filename from a filename path (remove the extension only).
+     *
+     * This method is used with standard hash name ("afbecd1234567890afbecd.jpg")
+     * and Archive Repertory relative name ("1706/alpha.jpg"). In fact, this is
+     * the central method of the module.
+     *
+     * @param string $name
+     * @return string
+     */
+    public function getBaseName($name)
     {
         $positionExtension = strrpos($name, '.');
         return $positionExtension ? substr($name, 0, $positionExtension) : $name;
@@ -29,7 +71,7 @@ class Manager extends \Omeka\File\Manager
      *
      * Note: The directory separator is always "/" to simplify management of
      * files and checks.
-     * Note: Unlike Omeka, the storage id doesn’t include the extension.
+     * Note: Unlike Omeka Classic, the storage id doesn’t include the extension.
      *
      * @param Media $media
      * @return string
@@ -130,8 +172,8 @@ class Manager extends \Omeka\File\Manager
 
         // Determine the current and new derivative filename, standard
         // or not.
-        $currentBase = $this->getBasename($currentArchiveFilename);
-        $newBase = $this->getBasename($newArchiveFilename);
+        $currentBase = $this->getBaseName($currentArchiveFilename);
+        $newBase = $this->getBaseName($newArchiveFilename);
 
         // If any, move derivative files using Omeka API.
         $fileWriter = $this->getFileWriter();
@@ -184,8 +226,8 @@ class Manager extends \Omeka\File\Manager
             // is no item folder).
             if (realpath($derivative['path']) != realpath($folderPath)) {
                 // Check if there is an empty directory and remove it only in
-                // that case. The directory may be not empty in multiple case,
-                // for example when the config change or when there is a
+                // that case. The directory may be not empty in multiple cases,
+                // for example when the config changes or when there is a
                 // duplicate name.
                 $fileWriter->removeDir($folderPath, false);
             }
@@ -243,22 +285,24 @@ class Manager extends \Omeka\File\Manager
      */
     protected function getConfiguredTypes()
     {
-        $types = $this->config['thumbnail_types'];
+        // No need to be static, it is called only from getDerivatives().
         $storagePath = $this->getLocalStoragePath();
-        foreach ($types as $path => &$value) {
+        $types = [];
+        $types['original'] = [
+            'path' => $this->concatWithSeparator($storagePath, 'original'),
+            'extension' => [null],
+        ];
+        foreach ($this->thumbnailTypes as $path => $value) {
             $value = [];
             $value['path'] = $this->concatWithSeparator($storagePath, $path);
-            $value['extension'] = ['.' . self::THUMBNAIL_EXTENSION];
+            $value['extension'] = ['.jpg'];
+            $types[$path] = $value;
         }
-        $types = ['original' => [
-            'path' => $this->concatWithSeparator($storagePath, self::ORIGINAL_PREFIX),
-            'extension' => [null],
-        ]] + $types;
         return $types;
     }
 
     /**
-     * Check if a file is a duplicate and returns it with a suffix if needed.
+     * Check if a file is a duplicate and return it with a suffix if needed.
      *
      * Note: The check is done on the basename, without extension, to avoid
      * issues with derivatives and because the table uses the basename too.
@@ -274,7 +318,7 @@ class Manager extends \Omeka\File\Manager
         $dirname = pathinfo($filename, PATHINFO_DIRNAME);
 
         // Get the real archive path.
-        $fullOriginalPath = $this->getFullArchivePath(self::ORIGINAL_PREFIX);
+        $fullOriginalPath = $this->getFullArchivePath('original');
         $filepath = $this->concatWithSeparator($fullOriginalPath, $filename);
         $folder = pathinfo($filepath, PATHINFO_DIRNAME);
         $name = pathinfo($filepath, PATHINFO_FILENAME);
@@ -285,7 +329,6 @@ class Manager extends \Omeka\File\Manager
         $checkName = $name;
         $fileWriter = $this->getFileWriter();
         $existingFilepaths = $fileWriter->glob($folder . DIRECTORY_SEPARATOR . $checkName . '{.*,.,\,,}', GLOB_BRACE);
-
         // Check if the filename exists.
         if (empty($existingFilepaths)) {
             // Nothing to do.
@@ -522,18 +565,13 @@ class Manager extends \Omeka\File\Manager
     }
 
     /**
-     * Get the local storage path.
+     * Get the local storage path (by default the Omeka path + "/files").
      *
-     * @return array
+     * @return string
      */
     protected function getLocalStoragePath()
     {
-        $config = $this->serviceLocator->get('Config');
-        if (!$this->getFileWriter()->is_dir($config['local_dir'])) {
-            throw new RuntimeException('[ArchiveRepertory] ' . 'local_dir is not configured properly in module.config.php, check if the repertory exists' . $config['local_dir']);
-        }
-
-        return $config['local_dir'];
+        return $this->basePath;
     }
 
     /**
@@ -644,22 +682,27 @@ class Manager extends \Omeka\File\Manager
 
     protected function translate($string)
     {
-        return $this->serviceLocator->get('MvcTranslator')->translate($string);
+        return $this->services->get('MvcTranslator')->translate($string);
     }
 
     protected function getFileWriter()
     {
         static $fileWriter;
         if (is_null($fileWriter)) {
-            $fileWriter = $this->serviceLocator->get('ArchiveRepertory\FileWriter');
+            $fileWriter = $this->services->get('ArchiveRepertory\FileWriter');
         }
         return $fileWriter;
     }
 
     protected function getSetting($name)
     {
-        // Tests doesn't pass with a static settings.
-        return $this->serviceLocator->get('Omeka\Settings')->get($name);
+        // Tests don't pass with a static settings.
+        // static $settings;
+        // if (is_null($settings)) {
+        //     $settings = $this->services->get('Omeka\Settings');
+        // }
+        // return $settings->get($name);
+        return $this->services->get('Omeka\Settings')->get($name);
     }
 
     protected function addError($msg)

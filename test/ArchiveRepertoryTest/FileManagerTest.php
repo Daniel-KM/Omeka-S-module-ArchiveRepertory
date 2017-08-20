@@ -53,7 +53,7 @@ class FileManagerTest extends OmekaControllerTestCase
         $this->prepareArchiveDir();
         $originalPath = $this->workspace
             . DIRECTORY_SEPARATOR . 'files'
-            . DIRECTORY_SEPARATOR . Manager::ORIGINAL_PREFIX;
+            . DIRECTORY_SEPARATOR . 'original';
         mkdir($originalPath, 0777, true);
         mkdir($this->workspace . DIRECTORY_SEPARATOR . 'tmp', 0777, true);
 
@@ -280,7 +280,7 @@ class FileManagerTest extends OmekaControllerTestCase
 
         $originalPath = $this->workspace
             . DIRECTORY_SEPARATOR . 'files'
-            . DIRECTORY_SEPARATOR . Manager::ORIGINAL_PREFIX;
+            . DIRECTORY_SEPARATOR . 'original';
         touch($originalPath . DIRECTORY_SEPARATOR . 'photo.png');
 
         $this->assertEquals(
