@@ -9,7 +9,7 @@ use Omeka\Mvc\Controller\Plugin\Messenger;
 use OmekaTestHelper\Controller\OmekaControllerTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
-class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
+class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
 {
     private $umask;
     protected $filesystem;
@@ -93,19 +93,20 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $config['temp_dir'] = $this->workspace;
         // Local dir is configured by the module.
         $config['local_dir'] = $this->workspace . DIRECTORY_SEPARATOR . 'files';
-        // Local path is an added path to bypass the hardcoded OMEKA_PATH.
-        $config['file_manager']['localpath'] = $this->workspace;
         $config = $services->setService('Config', $config);
 
-        $services->setFactory('Omeka\File\LocalStore', 'ArchiveRepertoryTest\MockLocalStoreFactory');
-        $services->setFactory('Omeka\File\Manager', 'ArchiveRepertoryTest\MockFileManagerFactory');
+        $services->setFactory('Omeka\File\Store\Local', 'ArchiveRepertoryTest\MockLocalStoreFactory');
+        $services->setFactory('ArchiveRepertory\FileManager', 'ArchiveRepertoryTest\MockFileManagerFactory');
         $services->setAllowOverride(false);
 
-        $fileManager = $services->get('Omeka\File\Manager');
+        $validator = $services->get('Omeka\File\Validator');
+        $uploader = $services->get('Omeka\File\Uploader');
+        $tempFileFactory = $services->get('Omeka\File\TempFileFactory');
 
         $mediaIngesterManager = $services->get('Omeka\Media\Ingester\Manager');
         $mediaIngesterManager->setAllowOverride(true);
-        $mockUpload = new MockUpload($fileManager);
+        $mockUpload = new MockUpload($validator, $uploader);
+        $mockUpload->setTempFileFactory($tempFileFactory);
         $mediaIngesterManager->setService('upload', $mockUpload);
         $mediaIngesterManager->setAllowOverride(false);
     }
@@ -226,18 +227,18 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $this->settings->set('archive_repertory_item_prefix', '');
         $this->settings->set('archive_repertory_media_convert', 'keep');
 
-        $this->postDispatchFiles('My modified title', 'image_test.png', 'image_test.png');
-        $result_expected = [
+        $this->postDispatchFiles(
+            'My modified title',
+            'image_test.png',
+            'image_test.png'
+        );
+        $resultExpected = [
             'My_modified_title/image_test.png',
             'My_modified_title/image_test.1.png',
         ];
-        $result = [];
         $item = $this->api->read('items', $this->item->id())->getContent();
-        foreach ($item->media() as $media) {
-            $result[] = $media->filename();
-        }
-
-        $this->assertEquals($result_expected, $result);
+        $result = $this->getMediaFilenames($item);
+        $this->assertEquals($resultExpected, $result);
         $this->assertEquals('Item successfully updated', $this->getMessengerFirstSuccessMessage());
     }
 
@@ -256,17 +257,18 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $this->settings->set('archive_repertory_item_prefix', 'nonexisting');
         $this->settings->set('archive_repertory_media_convert', 'keep');
 
-        $this->postDispatchFiles('My modified title', 'image_test.png', 'another_file.png');
-        $result_expected = [
+        $this->postDispatchFiles(
+            'My modified title',
+            'image_test.png',
+            'another_file.png'
+        );
+        $resultExpected = [
             $this->item->id() . '/image_test.png',
             $this->item->id() . '/another_file.png',
         ];
-        $result = [];
         $item = $this->api->read('items', $this->item->id())->getContent();
-        foreach ($item->media() as $media) {
-            $result[] = $media->filename();
-        }
-        $this->assertEquals($result_expected, $result);
+        $result = $this->getMediaFilenames($item);
+        $this->assertEquals($resultExpected, $result);
     }
 
     public function testDifferentFileShouldMoveFileWithAnotherName()
@@ -277,71 +279,92 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
         $this->settings->set('archive_repertory_item_prefix', '');
         $this->settings->set('archive_repertory_media_convert', 'hash');
 
-        $this->postDispatchFiles('Previous title', 'image_test.1.png', 'another_file.png');
-        $this->settings->set('archive_repertory_media_convert', 'keep');
+        $this->postDispatchFiles(
+            'Previous title',
+            'image_test.1.png',
+            'another_file.png'
+        );
 
-        $existing_medias = [];
+        $existingMedias = [];
         $item = $this->api->read('items', $this->item->id())->getContent();
         foreach ($item->media() as $media) {
-            $existing_medias[$media->id()] = [
+            $existingMedias[$media->id()] = [
                 'o:id' => $media->id(),
                 'o:is_public' => 1,
             ];
         }
 
-        $this->postDispatchFiles('My title', 'image_test_2.png', 'another_file3.png',
-            10, 20, $existing_medias);
+        $this->settings->set('archive_repertory_media_convert', 'keep');
 
-        $result_expected = [
+        $this->postDispatchFiles(
+            'My title',
+            'image_test_2.png',
+            'another_file3.png',
+            10,
+            20,
+            $existingMedias
+        );
+
+        $resultExpected = [
             'My_title/image_test.1.png',
             'My_title/another_file.png',
             'My_title/image_test_2.png',
             'My_title/another_file3.png',
         ];
-
-        $result = [];
-        $item = $this->api->read('items', $this->item->id())->getContent();
-        foreach ($item->media() as $media) {
-            $result[] = $media->filename();
-        }
-
-        $this->assertEquals($result_expected, $result);
+        $result = $this->getMediaFilenames($item);
+        $this->assertEquals($resultExpected, $result);
     }
 
-    public function testDifferentFileShouldMoveFileWithIds()
+    public function testDifferentFileShouldMoveFileWithIdentifiers()
     {
         $this->settings->set('archive_repertory_item_set_folder', '');
         $this->settings->set('archive_repertory_item_folder', 1);
         $this->settings->set('archive_repertory_item_prefix', '');
         $this->settings->set('archive_repertory_media_convert', 'keep');
 
-        $this->postDispatchFiles('Previous title', 'photo.1.png', 'another_file.png');
-        $this->settings->set('archive_repertory_media_convert', 'hash');
-        $existing_medias = [];
+        $this->postDispatchFiles(
+            'Previous title',
+            'photo.1.png',
+            'another_file.png'
+        );
+
+        $resultExpected = [
+            'Previous_title/photo.1.png',
+            'Previous_title/another_file.png',
+        ];
         $item = $this->api->read('items', $this->item->id())->getContent();
+        $result = $this->getMediaFilenames($item);
+        $this->assertEquals($resultExpected, $result);
+
+        $existingMedias = [];
         foreach ($item->media() as $media) {
-            $existing_medias[$media->id()] = [
+            $existingMedias[$media->id()] = [
                 'o:id' => $media->id(),
                 'o:is_public' => 1,
             ];
         }
 
-        $this->postDispatchFiles('My title', 'photo2.png', 'another_file3.png', 10, 20, $existing_medias);
+        $this->postDispatchFiles(
+            'My title',
+            'photo2.png',
+            'another_file3.png',
+            10,
+            20,
+            $existingMedias
+        );
 
-        $result_expected = [
+        $resultExpected = [
             'My_title/photo.1.png',
             'My_title/another_file.png',
             'My_title/photo2.png',
             'My_title/another_file3.png',
         ];
-        $result = [];
         $item = $this->api->read('items', $this->item->id())->getContent();
-        foreach ($item->media() as $media) {
-            $this->assertEquals(1, preg_match('/^My_title\/.*\.png/', $media->filename()));
-        }
+        $result = $this->getMediaFilenames($item);
+        $this->assertEquals($resultExpected, $result);
     }
 
-    protected function postDispatchFiles($title, $name_file1, $name_file2, $id1 = 0, $id2 = 1, $existing_ids = [])
+    protected function postDispatchFiles($title, $name_file1, $name_file2, $id1 = 0, $id2 = 1, $existingMedias = [])
     {
         $this->tempname1 = $this->workspace
             . DIRECTORY_SEPARATOR . 'tmp'
@@ -391,7 +414,7 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
                     '@value' => $title,
                 ],
             ],
-            'o:media' => array_merge($existing_ids, [
+            'o:media' => array_merge($existingMedias, [
                 $id1 => [
                     'o:ingester' => 'upload',
                     'file_index' => $id1,
@@ -419,5 +442,14 @@ class ArchiveRepertoryAdminControllerTest extends OmekaControllerTestCase
             ]),
             'csrf' => (new \Zend\Form\Element\Csrf('csrf'))->getValue(),
         ]);
+    }
+
+    protected function getMediaFilenames($item)
+    {
+        $result = [];
+        foreach ($item->media() as $media) {
+            $result[] = $media->filename();
+        }
+        return $result;
     }
 }

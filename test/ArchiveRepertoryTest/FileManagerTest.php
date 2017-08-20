@@ -1,12 +1,12 @@
 <?php
 namespace ArchiveRepertoryTest;
 
+use ArchiveRepertory\FileManager;
 use Omeka\Entity\Item;
 use Omeka\Entity\ItemSet;
 use Omeka\Entity\Media;
 use Omeka\Entity\Value;
 use Omeka\File\File;
-use Omeka\File\Manager;
 use OmekaTestHelper\Controller\OmekaControllerTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -125,20 +125,23 @@ class FileManagerTest extends OmekaControllerTestCase
         $config['temp_dir'] = $this->workspace;
         // Local dir is configured by the module.
         $config['local_dir'] = $this->workspace . DIRECTORY_SEPARATOR . 'files';
-        // Local path is an added path to bypass the hardcoded OMEKA_PATH.
-        $config['file_manager']['localpath'] = $this->workspace;
         $config = $services->setService('Config', $config);
 
-        $services->setFactory('Omeka\File\LocalStore', 'ArchiveRepertoryTest\MockLocalStoreFactory');
-        $services->setFactory('Omeka\File\Manager', 'ArchiveRepertoryTest\MockFileManagerFactory');
+        $services->setFactory('Omeka\File\Store\Local', 'ArchiveRepertoryTest\MockLocalStoreFactory');
+        $services->setFactory('ArchiveRepertory\FileManager', 'ArchiveRepertoryTest\MockFileManagerFactory');
         $services->setAllowOverride(false);
 
-        $fileManager = $services->get('Omeka\File\Manager');
+        $fileManager = $services->get('ArchiveRepertory\FileManager');
         $this->fileManager = $fileManager;
+
+        $validator = $services->get('Omeka\File\Validator');
+        $uploader = $services->get('Omeka\File\Uploader');
+        $tempFileFactory = $services->get('Omeka\File\TempFileFactory');
 
         $mediaIngesterManager = $services->get('Omeka\Media\Ingester\Manager');
         $mediaIngesterManager->setAllowOverride(true);
-        $mockUpload = new MockUpload($fileManager);
+        $mockUpload = new MockUpload($validator, $uploader);
+        $mockUpload->setTempFileFactory($tempFileFactory);
         $mediaIngesterManager->setService('upload', $mockUpload);
         $mediaIngesterManager->setAllowOverride(false);
     }
@@ -262,7 +265,10 @@ class FileManagerTest extends OmekaControllerTestCase
 
         $this->assertResponseStatusCode(302);
 
-        $location = $this->getResponse()->getHeaders()->get('Location');
+        $headers = $this->getResponse()->getHeaders();
+        $location = $headers->get('Location');
+        $this->assertNotEmpty($location);
+
         $path = $location->uri()->getPath();
         $itemId = substr(strrchr($path, '/'), 1);
         $item = $this->api->read('items', $itemId)->getContent();
@@ -285,13 +291,13 @@ class FileManagerTest extends OmekaControllerTestCase
 
         $this->assertEquals(
             './photo.1.png',
-            $this->fileManager->getSingleFilenameBypassProtectedMethod('photo.png'));
+            $this->fileManager->getSingleFilenameBypassProtectedMethod('photo.png', null));
         touch($originalPath . DIRECTORY_SEPARATOR . 'photo.1.png');
 
         $filepath = $originalPath . DIRECTORY_SEPARATOR . 'photo.png';
         $this->assertEquals(
             './photo.2.png',
-            $this->fileManager->getSingleFilenameBypassProtectedMethod('photo.png'));
+            $this->fileManager->getSingleFilenameBypassProtectedMethod('photo.png', null));
     }
 
     /**

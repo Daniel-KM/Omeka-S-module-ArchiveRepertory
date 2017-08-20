@@ -7,35 +7,39 @@ use Omeka\Entity\Media;
 use Omeka\File\File;
 use Omeka\Stdlib\ErrorStore;
 use Omeka\Media\Ingester\Upload;
+use Omeka\File\TempFile;
+use Omeka\File\TempFileFactory;
 
 class MockUpload extends Upload
 {
-    public function ingest(Media $media, Request $request,
-        ErrorStore $errorStore
-    ) {
+    protected $tempFileFactory;
+
+    public function setTempFileFactory(TempFileFactory $tempFileFactory)
+    {
+        $this->tempFileFactory = $tempFileFactory;
+    }
+
+    public function ingest(Media $media, Request $request, ErrorStore $errorStore)
+    {
         $data = $request->getContent();
         $fileData = $request->getFileData();
 
         $index = $data['file_index'];
 
-        $fileManager = $this->fileManager;
+        $tempFile = $this->tempFileFactory->build();
+        $tempFile->setSourceName($fileData['file'][$index]['name']);
 
-        $fileData = $fileData['file'][$index];
-
-        $file = new File($fileData['tmp_name']);
-        $file->setSourceName($fileData['name']);
-
-        $media->setStorageId($file->getStorageId());
-        $media->setExtension($file->getExtension($fileManager));
-        $media->setMediaType($file->getMediaType());
-        $media->setSha256($file->getSha256());
-        $media->setHasThumbnails($fileManager->storeThumbnails($file));
+        $media->setStorageId($tempFile->getStorageId());
+        $media->setExtension($tempFile->getExtension());
+        $media->setMediaType($tempFile->getMediaType());
+        $media->setSha256($tempFile->getSha256());
+        $hasThumbnails = $tempFile->storeThumbnails();
+        $media->setHasThumbnails($hasThumbnails);
         $media->setHasOriginal(true);
         if (!array_key_exists('o:source', $data)) {
-            $media->setSource($fileData['name']);
+            $media->setSource($fileData['file'][$index]['name']);
         }
-        $fileManager->storeOriginal($file);
-
-        $file->delete();
+        $tempFile->storeOriginal();
+        $tempFile->delete();
     }
 }

@@ -2,14 +2,14 @@
 
 namespace ArchiveRepertoryTest;
 
+use ArchiveRepertory\File\FileManager;
 use Omeka\File\File;
-use ArchiveRepertory\File\Manager as FileManager;
 
 class MockFileManager extends FileManager
 {
-    public function getSingleFilenameBypassProtectedMethod($filename)
+    public function getSingleFilenameBypassProtectedMethod($filename, $currentFilename)
     {
-        return $this->getSingleFilename($filename);
+        return $this->getSingleFilename($filename, $currentFilename);
     }
 
     public function getExtension(File $file)

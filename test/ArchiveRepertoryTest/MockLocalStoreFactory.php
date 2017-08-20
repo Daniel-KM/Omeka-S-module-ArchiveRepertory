@@ -1,9 +1,9 @@
 <?php
 namespace ArchiveRepertoryTest;
 
-use Omeka\File\Store\LocalStore;
-use Zend\ServiceManager\Factory\FactoryInterface;
 use Interop\Container\ContainerInterface;
+use Omeka\File\Store\Local;
+use Zend\ServiceManager\Factory\FactoryInterface;
 
 /**
  * Service factory for the Local file store.
@@ -24,9 +24,9 @@ class MockLocalStoreFactory implements FactoryInterface
 
         $config = $serviceLocator->get('Config');
 
-        $localPath = $config['file_manager']['localpath'] . DIRECTORY_SEPARATOR . 'files';
+        $localPath = $config['local_dir'];
         $webPath = $serverUrl($basePath('files'));
-        $fileStore = new LocalStore($localPath, $webPath, $logger);
+        $fileStore = new Local($localPath, $webPath, $logger);
         return $fileStore;
     }
 }

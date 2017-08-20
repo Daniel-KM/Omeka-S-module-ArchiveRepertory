@@ -11,9 +11,12 @@ class MockFileManagerFactory implements FactoryInterface
     {
         $config = $services->get('Config');
 
-        $fileManager = $config['file_manager'];
-        $tempDir = $config['temp_dir'];
+        $thumbnailTypes = $config['thumbnails']['types'];
+        $basePath = $config['local_dir'];
 
-        return new MockFileManager($fileManager, $tempDir, $services);
+        return new MockFileManager(
+            $thumbnailTypes,
+            $basePath,
+            $services);
     }
 }

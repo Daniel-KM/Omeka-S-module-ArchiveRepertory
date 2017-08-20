@@ -47,6 +47,15 @@ this module. To enable it, just open and submit the config page of the
 IIIF Server, the integration between the two modules will be registered
 automatically.
 
+For development, PhpUnit 6 is used, unlike Omeka S, that requires PhpUnit 4.8.
+Example:
+
+```
+    cd  test
+    wget https://phar.phpunit.de/phpunit-6.3.phar
+    php phpunit-6.3.phar
+```
+
 
 Unicode filenames
 -----------------
