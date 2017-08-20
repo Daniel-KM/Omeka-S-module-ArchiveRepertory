@@ -363,20 +363,20 @@ class FileManager
      */
     protected function getResourceFolderName(Resource $resource)
     {
-        $resourceType = get_class($resource);
-        switch ($resourceType) {
-            case ItemSet::class:
+        $resourceName = $resource->getResourceName();
+        switch ($resourceName) {
+            case 'item_sets':
                 $folder = $this->getSetting('archive_repertory_item_set_folder');
                 $prefix = $this->getSetting('archive_repertory_item_set_prefix');
                 $convert = $this->getSetting('archive_repertory_item_set_convert');
                 break;
-            case Item::class:
+            case 'items':
                 $folder = $this->getSetting('archive_repertory_item_folder');
                 $prefix = $this->getSetting('archive_repertory_item_prefix');
                 $convert = $this->getSetting('archive_repertory_item_convert');
                 break;
             default:
-                throw new RuntimeException('[ArchiveRepertory] ' . sprintf('Unallowed resource type "%s".', $resourceType));
+                throw new RuntimeException('[ArchiveRepertory] ' . sprintf('Unallowed resource type "%s".', $resourceName));
         }
 
         if (empty($folder)) {
