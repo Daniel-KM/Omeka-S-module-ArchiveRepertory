@@ -349,7 +349,7 @@ class FileManager
             }
         }
 
-        $result = ($dirname ? $dirname . DIRECTORY_SEPARATOR : '')
+        $result = ($dirname && $dirname !== '.' ? $dirname . DIRECTORY_SEPARATOR : '')
             . $checkName
             . ($extension ? '.' . $extension : '');
         return $result;
@@ -361,8 +361,13 @@ class FileManager
      * @param Resource $resource
      * @return string Unique sanitized name of the resource.
      */
-    protected function getResourceFolderName(Resource $resource)
+    protected function getResourceFolderName(Resource $resource = null)
     {
+        // This check may allow to make Archive Repertory more compatible.
+        if (is_null($resource)) {
+            return '';
+        }
+
         $resourceName = $resource->getResourceName();
         switch ($resourceName) {
             case 'item_sets':
