@@ -8,7 +8,6 @@ use Omeka\Entity\Resource;
 use Omeka\File\File;
 use Omeka\File\Exception\RuntimeException;
 use Omeka\Mvc\Controller\Plugin\Messenger;
-
 use Omeka\Stdlib\Message;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -671,7 +670,7 @@ class FileManager
         try {
             $result = $this->createFolder(dirname($realDestination));
             $result = $fileWriter->rename($realSource, $realDestination);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $msg = sprintf(
                 $this->translate('Error during move of a file from "%s" to "%s" (local dir: "%s").'),
                 $source,
