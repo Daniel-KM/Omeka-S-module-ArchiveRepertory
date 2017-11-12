@@ -164,17 +164,20 @@ class Module extends AbstractModule
         $sharedEventManager->attach(
             'Omeka\Api\Adapter\ItemAdapter',
             'api.create.post',
-            [$this, 'afterSaveItem']
+            [$this, 'afterSaveItem'],
+            100
         );
         $sharedEventManager->attach(
             'Omeka\Api\Adapter\ItemAdapter',
             'api.update.post',
-            [$this, 'afterSaveItem']
+            [$this, 'afterSaveItem'],
+            100
         );
         $sharedEventManager->attach(
             'Omeka\Api\Adapter\ItemAdapter',
             'api.delete.post',
-            [$this, 'afterDeleteItem']
+            [$this, 'afterDeleteItem'],
+            100
         );
     }
 
