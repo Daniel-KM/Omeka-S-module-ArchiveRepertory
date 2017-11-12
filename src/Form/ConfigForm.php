@@ -1,13 +1,13 @@
 <?php
 namespace ArchiveRepertory\Form;
 
+use ArchiveRepertory\Helpers;
 use Zend\Form\Element;
 use Zend\Form\Form;
 use Zend\I18n\Translator\TranslatorAwareInterface;
 use Zend\I18n\Translator\TranslatorAwareTrait;
-use ArchiveRepertory\Helpers;
 
-class Config extends Form implements TranslatorAwareInterface
+class ConfigForm extends Form implements TranslatorAwareInterface
 {
     use TranslatorAwareTrait;
 
@@ -34,20 +34,20 @@ class Config extends Form implements TranslatorAwareInterface
         $this->setAttribute('id', 'config-form');
 
         $this->add([
-            'name' => 'archive_repertory_item_set_folder',
+            'name' => 'archiverepertory_item_set_folder',
             'type' => 'ArchiveRepertory\Form\Element\PropertySelect',
             'options' => [
                 'label' => $this->translate('Item set folder'),
                 'empty_option' => $this->translate('Don’t add folder'),
             ],
             'attributes' => [
-                'id' => 'archive_repertory_item_set_folder',
-                'value' => $this->getSetting('archive_repertory_item_set_folder'),
+                'id' => 'archiverepertory_item_set_folder',
+                'value' => $this->getSetting('archiverepertory_item_set_folder'),
             ],
         ]);
 
         $this->add([
-            'name' => 'archive_repertory_item_set_prefix',
+            'name' => 'archiverepertory_item_set_prefix',
             'type' => 'Text',
             'options' => [
                 'label' => $this->translate('Prefix for item sets'),
@@ -55,31 +55,31 @@ class Config extends Form implements TranslatorAwareInterface
                     . ' ' . $this->translate('Let empty to use simply the first one.'),
             ],
             'attributes' => [
-                'id' => 'archive_repertory_item_set_prefix',
-                'value' => $this->getSetting('archive_repertory_item_set_prefix'),
+                'id' => 'archiverepertory_item_set_prefix',
+                'value' => $this->getSetting('archiverepertory_item_set_prefix'),
             ],
         ]);
 
         $this->add(
-            $this->getRadioForConversion('archive_repertory_item_set_convert',
+            $this->getRadioForConversion('archiverepertory_item_set_convert',
                 $this->translate('Convert item set names'))
         );
 
         $this->add([
-            'name' => 'archive_repertory_item_folder',
+            'name' => 'archiverepertory_item_folder',
             'type' => 'ArchiveRepertory\Form\Element\PropertySelect',
             'options' => [
                 'label' => $this->translate('Item folder'),
                 'empty_option' => $this->translate('Don’t add folder'),
             ],
             'attributes' => [
-                'id' => 'archive_repertory_item_folder',
-                'value' => $this->getSetting('archive_repertory_item_folder'),
+                'id' => 'archiverepertory_item_folder',
+                'value' => $this->getSetting('archiverepertory_item_folder'),
             ],
         ]);
 
         $this->add([
-            'name' => 'archive_repertory_item_prefix',
+            'name' => 'archiverepertory_item_prefix',
             'type' => 'Text',
             'options' => [
                 'label' => $this->translate('Prefix for items'),
@@ -87,17 +87,17 @@ class Config extends Form implements TranslatorAwareInterface
                     . ' ' . $this->translate('Let empty to use simply the first one.'),
             ],
             'attributes' => [
-                'id' => 'archive_repertory_item_prefix',
-                'value' => $this->getSetting('archive_repertory_item_prefix'),
+                'id' => 'archiverepertory_item_prefix',
+                'value' => $this->getSetting('archiverepertory_item_prefix'),
             ],
         ]);
 
         $this->add(
-            $this->getRadioForConversion('archive_repertory_item_convert',
+            $this->getRadioForConversion('archiverepertory_item_convert',
                 $this->translate('Convert item names'))
         );
 
-        $radios = $this->getRadioForConversion('archive_repertory_media_convert',
+        $radios = $this->getRadioForConversion('archiverepertory_media_convert',
             $this->translate('Convert file names'));
         $valueOptions = $radios->getValueOptions();
         $valueOptions['hash'] = $this->translate('Hash filename (default Omeka)');

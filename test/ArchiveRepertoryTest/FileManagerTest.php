@@ -157,18 +157,18 @@ class FileManagerTest extends OmekaControllerTestCase
 
     public function testKeepOriginalFileName()
     {
-        $this->settings->set('archive_repertory_item_set_folder', '');
-        $this->settings->set('archive_repertory_item_folder', '');
-        $this->settings->set('archive_repertory_media_convert', 'hash');
+        $this->settings->set('archiverepertory_item_set_folder', '');
+        $this->settings->set('archiverepertory_item_folder', '');
+        $this->settings->set('archiverepertory_media_convert', 'hash');
 
         $this->assertNotEquals('image_test', $this->fileManager->getStorageId($this->media));
     }
 
     public function testDontKeepOriginalName()
     {
-        $this->settings->set('archive_repertory_item_set_folder', '');
-        $this->settings->set('archive_repertory_item_folder', '');
-        $this->settings->set('archive_repertory_media_convert', 'keep');
+        $this->settings->set('archiverepertory_item_set_folder', '');
+        $this->settings->set('archiverepertory_item_folder', '');
+        $this->settings->set('archiverepertory_media_convert', 'keep');
 
         $this->assertEquals(
             pathinfo($this->file['filename'], PATHINFO_FILENAME),
@@ -177,9 +177,9 @@ class FileManagerTest extends OmekaControllerTestCase
 
     public function testAddItemIdWithoutOriginalName()
     {
-        $this->settings->set('archive_repertory_item_set_folder', '');
-        $this->settings->set('archive_repertory_item_folder', 'id');
-        $this->settings->set('archive_repertory_media_convert', 'hash');
+        $this->settings->set('archiverepertory_item_set_folder', '');
+        $this->settings->set('archiverepertory_item_folder', 'id');
+        $this->settings->set('archiverepertory_media_convert', 'hash');
 
         $this->assertEquals(
             $this->item->getId() . '/' . $this->media->getStorageId(),
@@ -188,9 +188,9 @@ class FileManagerTest extends OmekaControllerTestCase
 
     public function testAddItemIdAndOriginalName()
     {
-        $this->settings->set('archive_repertory_item_set_folder', '');
-        $this->settings->set('archive_repertory_item_folder', 'id');
-        $this->settings->set('archive_repertory_media_convert', 'keep');
+        $this->settings->set('archiverepertory_item_set_folder', '');
+        $this->settings->set('archiverepertory_item_folder', 'id');
+        $this->settings->set('archiverepertory_media_convert', 'keep');
 
         $this->assertEquals(
             $this->item->getId() . '/' . pathinfo($this->file['filename'], PATHINFO_FILENAME),
@@ -199,9 +199,9 @@ class FileManagerTest extends OmekaControllerTestCase
 
     public function testAddItemSetIdAndItemIdAndOriginalName()
     {
-        $this->settings->set('archive_repertory_item_set_folder', 'id');
-        $this->settings->set('archive_repertory_item_folder', 'id');
-        $this->settings->set('archive_repertory_media_convert', 'keep');
+        $this->settings->set('archiverepertory_item_set_folder', 'id');
+        $this->settings->set('archiverepertory_item_folder', 'id');
+        $this->settings->set('archiverepertory_media_convert', 'keep');
 
         $this->assertEquals(
             $this->itemSet->getId() . '/' . $this->item->getId() . '/' . pathinfo($this->file['filename'], PATHINFO_FILENAME),
@@ -210,8 +210,8 @@ class FileManagerTest extends OmekaControllerTestCase
 
     public function testStorageBasePathWithIdDirectory()
     {
-        $this->settings->set('archive_repertory_item_folder', 'id');
-        $this->settings->set('archive_repertory_media_convert', 'keep');
+        $this->settings->set('archiverepertory_item_folder', 'id');
+        $this->settings->set('archiverepertory_media_convert', 'keep');
 
         $tempname = $this->workspace
             . DIRECTORY_SEPARATOR . 'tmp'
@@ -282,7 +282,7 @@ class FileManagerTest extends OmekaControllerTestCase
 
     public function testInsertDuplicateFile()
     {
-        $this->settings->set('archive_repertory_media_convert', 'keep');
+        $this->settings->set('archiverepertory_media_convert', 'keep');
 
         $originalPath = $this->workspace
             . DIRECTORY_SEPARATOR . 'files'

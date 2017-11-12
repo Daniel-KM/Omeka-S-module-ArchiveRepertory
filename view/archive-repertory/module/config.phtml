@@ -52,10 +52,10 @@
         <?php echo $this->translate('If this identifier does not exists, the Omeka internal item set id will be used.'); ?>
     </p>
 
-    <?php echo $this->formRow($form->get('archive_repertory_item_set_folder')); ?>
+    <?php echo $this->formRow($form->get('archiverepertory_item_set_folder')); ?>
     <div id="item-set-prefix-convert-wrapper">
-        <?php echo $this->formRow($form->get('archive_repertory_item_set_prefix')); ?>
-        <?php echo $this->formRow($form->get('archive_repertory_item_set_convert')); ?>
+        <?php echo $this->formRow($form->get('archiverepertory_item_set_prefix')); ?>
+        <?php echo $this->formRow($form->get('archiverepertory_item_set_convert')); ?>
     </div>
 </fieldset>
 
@@ -70,24 +70,24 @@
         <?php echo $this->translate('If this identifier does not exists, the Omeka internal item id will be used.'); ?>
     </p>
 
-    <?php echo $this->formRow($form->get('archive_repertory_item_folder')); ?>
+    <?php echo $this->formRow($form->get('archiverepertory_item_folder')); ?>
     <div id="item-prefix-convert-wrapper">
-        <?php echo $this->formRow($form->get('archive_repertory_item_prefix')); ?>
-        <?php echo $this->formRow($form->get('archive_repertory_item_convert')); ?>
+        <?php echo $this->formRow($form->get('archiverepertory_item_prefix')); ?>
+        <?php echo $this->formRow($form->get('archiverepertory_item_convert')); ?>
     </div>
 </fieldset>
 
 <fieldset id="fieldset-files">
     <legend><?php echo $this->translate('Files'); ?></legend>
 
-    <?php echo $this->formRow($form->get('archive_repertory_media_convert')); ?>
+    <?php echo $this->formRow($form->get('archiverepertory_media_convert')); ?>
 </fieldset>
 
 <script type="text/javascript">
 (function($) {
     var itemSetPrefixConvertWrapper = $("#item-set-prefix-convert-wrapper");
     jQuery(document).ready(function () {
-        $('#archive_repertory_item_set_folder').on('click', function() {
+        $('#archiverepertory_item_set_folder').on('click', function() {
             if (this.value === '' || this.value === 'id') {
                 itemSetPrefixConvertWrapper.hide();
             } else {
@@ -98,7 +98,7 @@
 
     var itemPrefixConvertWrapper = $("#item-prefix-convert-wrapper");
     jQuery(document).ready(function () {
-        $('#archive_repertory_item_folder').on('click', function() {
+        $('#archiverepertory_item_folder').on('click', function() {
             if (this.value === '' || this.value === 'id') {
                 itemPrefixConvertWrapper.hide();
             } else {

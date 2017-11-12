@@ -24,6 +24,11 @@ class FileManager
     protected $basePath;
 
     /**
+     * @var array
+     */
+    protected $ingesters;
+
+    /**
      * @var ServiceLocatorInterface
      */
     protected $services;
@@ -40,12 +45,18 @@ class FileManager
      *
      * @param array $thumbnailTypes
      * @param string $basePath
+     * @param array $ingesters
      * @param ServiceLocatorInterface $services
      */
-    public function __construct(array $thumbnailTypes, $basePath, ServiceLocatorInterface $services)
-    {
+    public function __construct(
+        array $thumbnailTypes,
+        $basePath,
+        array $ingesters,
+        ServiceLocatorInterface $services
+    ) {
         $this->thumbnailTypes = $thumbnailTypes;
         $this->basePath = $basePath;
+        $this->ingesters = $ingesters;
         $this->services = $services;
     }
 
@@ -87,7 +98,7 @@ class FileManager
         $folderName = ($itemSetFolderName ? $itemSetFolderName . '/' : '')
             . ($itemFolderName ? $itemFolderName . '/' : '');
 
-        $mediaConvert = $this->getSetting('archive_repertory_media_convert');
+        $mediaConvert = $this->getSetting('archiverepertory_media_convert');
         if ($mediaConvert == 'hash') {
             $storageName = $this->hashStorageName($media);
             $storageId = $storageName;
@@ -261,8 +272,7 @@ class FileManager
             $storagePath = $this->getLocalStoragePath();
 
             // Add specific paths and extensions
-            $ingesters = $this->getSetting('archive_repertory_ingesters');
-            foreach ($ingesters as $name => $params) {
+            foreach ($this->ingesters as $name => $params) {
                 // Bypass internal ingesters.
                 if ($params) {
                     $params['path'] = $this->concatWithSeparator($storagePath, $params['path']);
@@ -370,14 +380,14 @@ class FileManager
         $resourceName = $resource->getResourceName();
         switch ($resourceName) {
             case 'item_sets':
-                $folder = $this->getSetting('archive_repertory_item_set_folder');
-                $prefix = $this->getSetting('archive_repertory_item_set_prefix');
-                $convert = $this->getSetting('archive_repertory_item_set_convert');
+                $folder = $this->getSetting('archiverepertory_item_set_folder');
+                $prefix = $this->getSetting('archiverepertory_item_set_prefix');
+                $convert = $this->getSetting('archiverepertory_item_set_convert');
                 break;
             case 'items':
-                $folder = $this->getSetting('archive_repertory_item_folder');
-                $prefix = $this->getSetting('archive_repertory_item_prefix');
-                $convert = $this->getSetting('archive_repertory_item_convert');
+                $folder = $this->getSetting('archiverepertory_item_folder');
+                $prefix = $this->getSetting('archiverepertory_item_prefix');
+                $convert = $this->getSetting('archiverepertory_item_convert');
                 break;
             default:
                 throw new RuntimeException('[ArchiveRepertory] ' . sprintf('Unallowed resource type "%s".', $resourceName));

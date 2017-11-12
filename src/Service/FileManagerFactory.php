@@ -25,9 +25,15 @@ class FileManagerFactory implements FactoryInterface
         }
         $basePath = $config['local_dir'];
 
+        if (!isset($config['archiverepertory']['ingesters'])) {
+            throw new ConfigException('Missing Archive Repertory ingesters configuration');
+        }
+        $ingesters = $config['archiverepertory']['ingesters'];
+
         return new FileManager(
             $thumbnailTypes,
             $basePath,
+            $ingesters,
             $services);
     }
 }

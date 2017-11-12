@@ -32,48 +32,19 @@
  */
 namespace ArchiveRepertory;
 
-use Zend\EventManager\SharedEventManagerInterface;
-use Zend\EventManager\Event;
-use Zend\Mvc\Controller\AbstractController;
-use Zend\ServiceManager\ServiceLocatorInterface;
-use Zend\View\Renderer\PhpRenderer;
+use ArchiveRepertory\Form\ConfigForm;
+use Omeka\Entity\Media;
 use Omeka\File\File;
 use Omeka\Module\AbstractModule;
 use Omeka\Mvc\Controller\Plugin\Messenger;
-use ArchiveRepertory\Form\Config as ConfigForm;
-use Omeka\Entity\Media;
+use Zend\EventManager\Event;
+use Zend\EventManager\SharedEventManagerInterface;
+use Zend\Mvc\Controller\AbstractController;
+use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\View\Renderer\PhpRenderer;
 
 class Module extends AbstractModule
 {
-    /**
-     * @var array This plugin's settings.
-     */
-    protected $settings = [
-        // Ingesters that modify the storage id and location of files.
-        // Other modules can add their own ingesters.
-        // Note: the config is merged in the alphabetic order of modules.
-        'archive_repertory_ingesters' => [
-            // An empty array means that the thumbnail types / paths in config
-            // and the default extension ("jpg") will be used.
-            // See the module IIIF Server for a full example.
-            'upload' => [],
-            'url' => [],
-        ],
-
-        // Item sets options.
-        'archive_repertory_item_set_folder' => '',
-        'archive_repertory_item_set_prefix' => '',
-        'archive_repertory_item_set_convert' => 'full',
-
-        // Items options.
-        'archive_repertory_item_folder' => 'id',
-        'archive_repertory_item_prefix' => '',
-        'archive_repertory_item_convert' => 'full',
-
-        // Files options.
-        'archive_repertory_media_convert' => 'full',
-    ];
-
     public function getConfig()
     {
         return include __DIR__ . '/config/module.config.php';
@@ -86,8 +57,10 @@ class Module extends AbstractModule
 
     protected function installSettings($settings)
     {
-        foreach ($this->settings as $key => $value) {
-            $settings->set($key, $value);
+        $config = require __DIR__ . '/config/module.config.php';
+        $defaultSettings = $config[strtolower(__NAMESPACE__)]['settings'];
+        foreach ($defaultSettings as $name => $value) {
+            $settings->set($name, $value);
         }
     }
 
@@ -98,8 +71,10 @@ class Module extends AbstractModule
 
     protected function uninstallSettings($settings)
     {
-        foreach ($this->settings as $key => $value) {
-            $settings->delete($key);
+        $config = require __DIR__ . '/config/module.config.php';
+        $defaultSettings = $config[strtolower(__NAMESPACE__)]['settings'];
+        foreach ($defaultSettings as $name => $value) {
+            $settings->delete($name);
         }
     }
 
@@ -107,29 +82,40 @@ class Module extends AbstractModule
     {
         if (version_compare($oldVersion, '3.14.0', '<')) {
             $settings = $serviceLocator->get('Omeka\Settings');
-            $settings->set('archive_repertory_ingesters',
-                $this->settings['archive_repertory_ingesters']);
+            $config = require __DIR__ . '/config/module.config.php';
+            $defaultSettings = $config[strtolower(__NAMESPACE__)]['settings'];
 
-            $settings->set('archive_repertory_item_set_folder',
-                $this->settings['archive_repertory_item_set_folder']);
-            $settings->set('archive_repertory_item_set_prefix',
-                $this->settings['archive_repertory_item_set_prefix']);
-            $settings->set('archive_repertory_item_set_convert',
-                $this->settings['archive_repertory_item_set_convert']);
+            $settings->set('archiverepertory_item_set_folder',
+                $defaultSettings['archiverepertory_item_set_folder']);
+            $settings->set('archiverepertory_item_set_prefix',
+                $defaultSettings['archiverepertory_item_set_prefix']);
+            $settings->set('archiverepertory_item_set_convert',
+                $defaultSettings['archiverepertory_item_set_convert']);
 
             $itemConvert = strtolower($settings->get['archive_repertory_item_convert']);
             if ($itemConvert == 'keep name') {
                 $itemConvert = 'keep';
             }
-            $settings->set('archive_repertory_item_convert', $itemConvert);
+            $settings->set('archiverepertory_item_convert', $itemConvert);
 
             $mediaConvert = $settings->get('archive_repertory_file_keep_original_name')
-                ? $this->settings['archive_repertory_media_convert']
+                ? $defaultSettings['archiverepertory_media_convert']
                 : 'hash';
-            $settings->set('archive_repertory_media_convert', $mediaConvert);
+            $settings->set('archiverepertory_media_convert', $mediaConvert);
             $settings->delete('archive_repertory_file_keep_original_name');
 
             $settings->delete('archive_repertory_derivative_folders');
+        }
+
+        if (version_compare($oldVersion, '3.15.3', '<')) {
+            $settings = $serviceLocator->get('Omeka\Settings');
+            $config = include __DIR__ . '/config/module.config.php';
+            foreach ($config['archiverepertory']['settings'] as $name => $value) {
+                $oldName = str_replace('archiverepertory_', 'archive_repertory_', $name);
+                $settings->set($name, $settings->get($oldName, $value));
+                $settings->delete($oldName);
+            }
+            $settings->delete('archive_repertory_ingesters');
         }
     }
 
@@ -149,12 +135,25 @@ class Module extends AbstractModule
      */
     public function handleConfigForm(AbstractController $controller)
     {
-        $settings = $this->getServiceLocator()->get('Omeka\Settings');
+        $services = $this->getServiceLocator();
+        $config = $services->get('Config');
+        $settings = $services->get('Omeka\Settings');
 
-        $post = $controller->getRequest()->getPost();
-        foreach ($this->settings as $key => $value) {
-            if (isset($post[$key])) {
-                $settings->set($key, $post[$key]);
+        $params = $controller->getRequest()->getPost();
+
+        $form = $this->getServiceLocator()->get('FormElementManager')
+            ->get(ConfigForm::class);
+        $form->init();
+        $form->setData($params);
+        if (!$form->isValid()) {
+            $controller->messenger()->addErrors($form->getMessages());
+            return false;
+        }
+
+        $defaultSettings = $config[strtolower(__NAMESPACE__)]['settings'];
+        foreach ($params as $name => $value) {
+            if (isset($defaultSettings[$name])) {
+                $settings->set($name, $value);
             }
         }
     }
@@ -201,11 +200,11 @@ class Module extends AbstractModule
     {
         $services = $this->getServiceLocator();
         $entityManager = $services->get('Omeka\EntityManager');
-        $settings = $services->get('Omeka\Settings');
+        $config = $services->get('Config');
         $fileManager = $services->get('ArchiveRepertory\FileManager');
         $fileWriter = $services->get('ArchiveRepertory\FileWriter');
 
-        $ingesters = $settings->get('archive_repertory_ingesters');
+        $ingesters = $config['archiverepertory']['ingesters'];
         $ingester = $media->getIngester();
         if (!isset($ingesters[$ingester])) {
             return;
@@ -258,11 +257,11 @@ class Module extends AbstractModule
     {
         $services = $this->getServiceLocator();
         $entityManager = $services->get('Omeka\EntityManager');
-        $settings = $services->get('Omeka\Settings');
+        $config = $services->get('Config');
         $fileManager = $services->get('ArchiveRepertory\FileManager');
 
         $item = $event->getParam('response')->getContent();
-        $ingesters = $settings->get('archive_repertory_ingesters');
+        $ingesters = $config['archiverepertory']['ingesters'];
 
         // Check if a folder was added without checking settings, because they
         // could change.

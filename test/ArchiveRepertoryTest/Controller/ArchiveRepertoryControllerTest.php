@@ -129,11 +129,10 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
     public function settingsProvider()
     {
         return [
-                ['archive_repertory_ingesters', ['upload' => []]],
-                ['archive_repertory_item_convert', 'false'],
-                ['archive_repertory_item_prefix', 'prefix'],
-                ['archive_repertory_item_folder', 'foldername'],
-                ['archive_repertory_media_convert', 'keep'],
+                ['archiverepertory_item_convert', 'false'],
+                ['archiverepertory_item_prefix', 'prefix'],
+                ['archiverepertory_item_folder', 'foldername'],
+                ['archiverepertory_media_convert', 'keep'],
         ];
     }
 
@@ -156,10 +155,10 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
     public function testPostItemShouldMoveFileInAnotherDirectory()
     {
         // 1 is the Dublin Core Title.
-        $this->settings->set('archive_repertory_item_set_folder', '');
-        $this->settings->set('archive_repertory_item_folder', 1);
-        $this->settings->set('archive_repertory_item_prefix', 'prefix:');
-        $this->settings->set('archive_repertory_media_convert', 'keep');
+        $this->settings->set('archiverepertory_item_set_folder', '');
+        $this->settings->set('archiverepertory_item_folder', 1);
+        $this->settings->set('archiverepertory_item_prefix', 'prefix:');
+        $this->settings->set('archiverepertory_media_convert', 'keep');
 
         $files = new \Zend\Stdlib\Parameters([
             'file' => [
@@ -222,10 +221,10 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
     public function testDuplicateNameShouldMoveFileWithAnotherName()
     {
         // 1 is the Dublin Core Title.
-        $this->settings->set('archive_repertory_item_set_folder', '');
-        $this->settings->set('archive_repertory_item_folder', 1);
-        $this->settings->set('archive_repertory_item_prefix', '');
-        $this->settings->set('archive_repertory_media_convert', 'keep');
+        $this->settings->set('archiverepertory_item_set_folder', '');
+        $this->settings->set('archiverepertory_item_folder', 1);
+        $this->settings->set('archiverepertory_item_prefix', '');
+        $this->settings->set('archiverepertory_media_convert', 'keep');
 
         $this->postDispatchFiles(
             'My modified title',
@@ -252,10 +251,10 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
     public function testDifferentNameShouldMoveFileWithAnotherName()
     {
         // 1 is the Dublin Core Title.
-        $this->settings->set('archive_repertory_item_set_folder', '');
-        $this->settings->set('archive_repertory_item_folder', 1);
-        $this->settings->set('archive_repertory_item_prefix', 'nonexisting');
-        $this->settings->set('archive_repertory_media_convert', 'keep');
+        $this->settings->set('archiverepertory_item_set_folder', '');
+        $this->settings->set('archiverepertory_item_folder', 1);
+        $this->settings->set('archiverepertory_item_prefix', 'nonexisting');
+        $this->settings->set('archiverepertory_media_convert', 'keep');
 
         $this->postDispatchFiles(
             'My modified title',
@@ -274,10 +273,10 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
     public function testDifferentFileShouldMoveFileWithAnotherName()
     {
         // 1 is the Dublin Core Title.
-        $this->settings->set('archive_repertory_item_set_folder', '');
-        $this->settings->set('archive_repertory_item_folder', 1);
-        $this->settings->set('archive_repertory_item_prefix', '');
-        $this->settings->set('archive_repertory_media_convert', 'hash');
+        $this->settings->set('archiverepertory_item_set_folder', '');
+        $this->settings->set('archiverepertory_item_folder', 1);
+        $this->settings->set('archiverepertory_item_prefix', '');
+        $this->settings->set('archiverepertory_media_convert', 'hash');
 
         $this->postDispatchFiles(
             'Previous title',
@@ -294,7 +293,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
             ];
         }
 
-        $this->settings->set('archive_repertory_media_convert', 'keep');
+        $this->settings->set('archiverepertory_media_convert', 'keep');
 
         $this->postDispatchFiles(
             'My title',
@@ -317,10 +316,10 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
 
     public function testDifferentFileShouldMoveFileWithIdentifiers()
     {
-        $this->settings->set('archive_repertory_item_set_folder', '');
-        $this->settings->set('archive_repertory_item_folder', 1);
-        $this->settings->set('archive_repertory_item_prefix', '');
-        $this->settings->set('archive_repertory_media_convert', 'keep');
+        $this->settings->set('archiverepertory_item_set_folder', '');
+        $this->settings->set('archiverepertory_item_folder', 1);
+        $this->settings->set('archiverepertory_item_prefix', '');
+        $this->settings->set('archiverepertory_media_convert', 'keep');
 
         $this->postDispatchFiles(
             'Previous title',
