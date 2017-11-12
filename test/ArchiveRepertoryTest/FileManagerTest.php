@@ -1,7 +1,6 @@
 <?php
 namespace ArchiveRepertoryTest;
 
-use ArchiveRepertory\FileManager;
 use Omeka\Entity\Item;
 use Omeka\Entity\ItemSet;
 use Omeka\Entity\Media;

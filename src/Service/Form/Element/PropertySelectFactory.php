@@ -9,7 +9,7 @@ class PropertySelectFactory implements FactoryInterface
 {
     public function __invoke(ContainerInterface $services, $requestedName, array $options = null)
     {
-        $element = new PropertySelect;
+        $element = new PropertySelect(null, $options);
         $element->setApiManager($services->get('Omeka\ApiManager'));
         return $element;
     }

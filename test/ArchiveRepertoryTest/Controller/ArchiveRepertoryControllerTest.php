@@ -3,7 +3,6 @@
 namespace OmekaTest\Controller;
 
 use ArchiveRepertoryTest\MockUpload;
-use Exception;
 use Omeka\Api\Representation\ItemRepresentation;
 use Omeka\Mvc\Controller\Plugin\Messenger;
 use OmekaTestHelper\Controller\OmekaControllerTestCase;
@@ -45,7 +44,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
             $this->overrideConfig();
 
             $this->setDefaultSettings();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             error_log($e);
         }
 

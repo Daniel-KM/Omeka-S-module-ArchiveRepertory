@@ -7,7 +7,6 @@ use Omeka\Entity\Media;
 use Omeka\File\File;
 use Omeka\Stdlib\ErrorStore;
 use Omeka\Media\Ingester\Upload;
-use Omeka\File\TempFile;
 use Omeka\File\TempFileFactory;
 
 class MockUpload extends Upload

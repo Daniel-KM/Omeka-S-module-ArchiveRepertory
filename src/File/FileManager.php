@@ -2,7 +2,6 @@
 namespace ArchiveRepertory\File;
 
 use Omeka\Entity\Item;
-use Omeka\Entity\ItemSet;
 use Omeka\Entity\Media;
 use Omeka\Entity\Resource;
 use Omeka\File\File;
