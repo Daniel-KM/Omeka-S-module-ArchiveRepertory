@@ -52,29 +52,27 @@ class Module extends AbstractModule
 
     public function install(ServiceLocatorInterface $serviceLocator)
     {
-        $this->installSettings($serviceLocator->get('Omeka\Settings'));
-    }
-
-    protected function installSettings($settings)
-    {
-        $config = require __DIR__ . '/config/module.config.php';
-        $defaultSettings = $config[strtolower(__NAMESPACE__)]['settings'];
-        foreach ($defaultSettings as $name => $value) {
-            $settings->set($name, $value);
-        }
+        $this->manageSettings($serviceLocator->get('Omeka\Settings'), 'install');
     }
 
     public function uninstall(ServiceLocatorInterface $serviceLocator)
     {
-        $this->uninstallSettings($serviceLocator->get('Omeka\Settings'));
+        $this->manageSettings($serviceLocator->get('Omeka\Settings'), 'uninstall');
     }
 
-    protected function uninstallSettings($settings)
+    protected function manageSettings($settings, $process, $key = 'settings')
     {
         $config = require __DIR__ . '/config/module.config.php';
-        $defaultSettings = $config[strtolower(__NAMESPACE__)]['settings'];
+        $defaultSettings = $config[strtolower(__NAMESPACE__)][$key];
         foreach ($defaultSettings as $name => $value) {
-            $settings->delete($name);
+            switch ($process) {
+                case 'install':
+                    $settings->set($name, $value);
+                    break;
+                case 'uninstall':
+                    $settings->delete($name);
+                    break;
+            }
         }
     }
 
@@ -121,18 +119,26 @@ class Module extends AbstractModule
 
     public function getConfigForm(PhpRenderer $renderer)
     {
-        $forms = $this->getServiceLocator()->get('FormElementManager');
-        $form = $forms->get(ConfigForm::class);
+        $services = $this->getServiceLocator();
+        $config = $services->get('Config');
+        $settings = $services->get('Omeka\Settings');
+        $formElementManager = $services->get('FormElementManager');
+
+        $data = [];
+        $defaultSettings = $config[strtolower(__NAMESPACE__)]['settings'];
+        foreach ($defaultSettings as $name => $value) {
+            $data[$name] = $settings->get($name);
+        }
+
+        $form = $formElementManager->get(ConfigForm::class);
+        $form->init();
+        $form->setData($data);
+
         return $renderer->render('archive-repertory/module/config', [
             'form' => $form,
         ]);
     }
 
-    /**
-     * Saves plugin configuration page and creates folders if needed.
-     *
-     * @param array Settings set in the config form.
-     */
     public function handleConfigForm(AbstractController $controller)
     {
         $services = $this->getServiceLocator();

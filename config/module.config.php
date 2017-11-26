@@ -15,7 +15,6 @@ return [
     'form_elements' => [
         'factories' => [
             Form\ConfigForm::class => Service\Form\ConfigFormFactory::class,
-            'ArchiveRepertory\Form\Element\PropertySelect' => Service\Form\Element\PropertySelectFactory::class,
         ],
     ],
     'local_dir' => OMEKA_PATH . DIRECTORY_SEPARATOR . 'files',

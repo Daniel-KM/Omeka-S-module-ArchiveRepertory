@@ -2,7 +2,9 @@
 namespace ArchiveRepertory\Form;
 
 use ArchiveRepertory\Helpers;
+use Omeka\Form\Element\PropertySelect;
 use Zend\Form\Element;
+use Zend\Form\Element\Text;
 use Zend\Form\Form;
 use Zend\I18n\Translator\TranslatorAwareInterface;
 use Zend\I18n\Translator\TranslatorAwareTrait;
@@ -35,74 +37,102 @@ class ConfigForm extends Form implements TranslatorAwareInterface
 
         $this->add([
             'name' => 'archiverepertory_item_set_folder',
-            'type' => 'ArchiveRepertory\Form\Element\PropertySelect',
+            'type' => PropertySelect::class,
             'options' => [
-                'label' => $this->translate('Item set folder'),
-                'empty_option' => $this->translate('Don’t add folder'),
+                'label' => 'Item set folder', // @translate
+                'empty_option' => 'Don’t add folder', // @translate
+                'prepend_value_options' => [
+                    'id' => 'Internal numeric id of the resource', // @translate
+                ],
             ],
             'attributes' => [
-                'id' => 'archiverepertory_item_set_folder',
-                'value' => $this->getSetting('archiverepertory_item_set_folder'),
+                'class' => 'chosen-select',
+                'data-placeholder' => 'Select a property', // @translate
             ],
         ]);
 
         $this->add([
             'name' => 'archiverepertory_item_set_prefix',
-            'type' => 'Text',
+            'type' => Text::class,
             'options' => [
-                'label' => $this->translate('Prefix for item sets'),
-                'info' => $this->translate('Choose a prefix, for example "item:", "record:" or "doc:", to select the appropriate metadata when they are multiple.')
-                    . ' ' . $this->translate('Let empty to use simply the first one.'),
-            ],
-            'attributes' => [
-                'id' => 'archiverepertory_item_set_prefix',
-                'value' => $this->getSetting('archiverepertory_item_set_prefix'),
+                'label' => 'Prefix for item sets', // @translate
+                'info' => $this->translate('Choose a prefix, for example "item:", "record:" or "doc:", to select the appropriate metadata when they are multiple.') // @translate
+                    . ' ' . $this->translate('Let empty to use simply the first one.'), // @translate
             ],
         ]);
 
         $this->add(
             $this->getRadioForConversion('archiverepertory_item_set_convert',
-                $this->translate('Convert item set names'))
+                $this->translate('Convert item set names')) // @translate
         );
 
         $this->add([
             'name' => 'archiverepertory_item_folder',
-            'type' => 'ArchiveRepertory\Form\Element\PropertySelect',
+            'type' => PropertySelect::class,
             'options' => [
-                'label' => $this->translate('Item folder'),
-                'empty_option' => $this->translate('Don’t add folder'),
+                'label' => 'Item folder', // @translate
+                'empty_option' => 'Don’t add folder', // @translate
+                'prepend_value_options' => [
+                    'id' => 'Internal numeric id of the resource', // @translate
+                ],
             ],
             'attributes' => [
-                'id' => 'archiverepertory_item_folder',
-                'value' => $this->getSetting('archiverepertory_item_folder'),
+                'class' => 'chosen-select',
+                'data-placeholder' => 'Select a property', // @translate
             ],
         ]);
 
         $this->add([
             'name' => 'archiverepertory_item_prefix',
-            'type' => 'Text',
+            'type' => Text::class,
             'options' => [
-                'label' => $this->translate('Prefix for items'),
-                'info' => $this->translate('Choose a prefix, for example "item:", "record:" or "doc:", to select the appropriate metadata when they are multiple.')
-                    . ' ' . $this->translate('Let empty to use simply the first one.'),
-            ],
-            'attributes' => [
-                'id' => 'archiverepertory_item_prefix',
-                'value' => $this->getSetting('archiverepertory_item_prefix'),
+                'label' => 'Prefix for items',
+                'info' => $this->translate('Choose a prefix, for example "item:", "record:" or "doc:", to select the appropriate metadata when they are multiple.') // @translate
+                . ' ' . $this->translate('Let empty to use simply the first one.'), // @translate
             ],
         ]);
 
         $this->add(
             $this->getRadioForConversion('archiverepertory_item_convert',
-                $this->translate('Convert item names'))
+                $this->translate('Convert item names')) // @translate
         );
 
         $radios = $this->getRadioForConversion('archiverepertory_media_convert',
-            $this->translate('Convert file names'));
+            $this->translate('Convert file names')); // @translate
         $valueOptions = $radios->getValueOptions();
-        $valueOptions['hash'] = $this->translate('Hash filename (default Omeka)');
+        $valueOptions['hash'] = $this->translate('Hash filename (default Omeka)'); // @translate
         $radios->setValueOptions($valueOptions);
         $this->add($radios);
+
+        $inputFilter = $this->getInputFilter();
+        $inputFilter->add([
+            'name' => 'archiverepertory_item_set_folder',
+            'required' => false,
+        ]);
+        $inputFilter->add([
+            'name' => 'archiverepertory_item_set_prefix',
+            'required' => false,
+        ]);
+        $inputFilter->add([
+            'name' => 'archiverepertory_item_set_convert',
+            'required' => false,
+        ]);
+        $inputFilter->add([
+            'name' => 'archiverepertory_item_folder',
+            'required' => false,
+        ]);
+        $inputFilter->add([
+            'name' => 'archiverepertory_item_prefix',
+            'required' => false,
+        ]);
+        $inputFilter->add([
+            'name' => 'archiverepertory_item_convert',
+            'required' => false,
+        ]);
+        $inputFilter->add([
+            'name' => 'archiverepertory_media_convert',
+            'required' => false,
+        ]);
     }
 
     protected function getSetting($name)
@@ -120,29 +150,24 @@ class ConfigForm extends Form implements TranslatorAwareInterface
     {
         $allow_unicode = Helpers::checkUnicodeInstallation();
 
-        $info = $this->translate('Depending on your server and your needs, to avoid some potential issues, you can choose or not to rename every folder to its Ascii equivalent (or only the first letter).')
-            . ' ' . $this->translate('In all cases, names are sanitized: "/", "\", "|" and other special characters are removed.');
+        $info = $this->translate('Depending on your server and your needs, to avoid some potential issues, you can choose or not to rename every folder to its Ascii equivalent (or only the first letter).') // @translate
+            . ' ' . $this->translate('In all cases, names are sanitized: "/", "\", "|" and other special characters are removed.'); // @translate
         $radio = new Element\Radio($name);
         $radio->setLabel($label);
         $radio->setOptions(['info' => $info]);
         $radio->setValue($this->getSetting($name));
 
-        $not_recommended = (isset($allow_unicode['ascii']) ? ' ' . $this->translate('(not recommended because your server is not fully compatible with Unicode)') : '');
-        $recommended = (isset($allow_unicode['cli']) || isset($allow_unicode['fs'])) ? ' ' . $this->translate('(recommended because your server is not fully compatible with Unicode)') : '';
+        $not_recommended = (isset($allow_unicode['ascii']) ? ' ' . $this->translate('(not recommended because your server is not fully compatible with Unicode)') : ''); // @translate
+        $recommended = (isset($allow_unicode['cli']) || isset($allow_unicode['fs'])) ? ' ' . $this->translate('(recommended because your server is not fully compatible with Unicode)') : ''; // @translate
 
         $radio->setValueOptions([
-            'keep' => $this->translate('Keep name as it') . $not_recommended,
-            'spaces' => $this->translate('Convert spaces to underscores'),
-            'first letter' => $this->translate('Convert first letter only'),
-            'first and spaces' => $this->translate('Convert first letter and spaces'),
-            'full' => $this->translate('Full conversion to Ascii.') . $recommended,
+            'keep' => $this->translate('Keep name as it') . $not_recommended, // @translate
+            'spaces' => $this->translate('Convert spaces to underscores'), // @translate
+            'first letter' => $this->translate('Convert first letter only'), // @translate
+            'first and spaces' => $this->translate('Convert first letter and spaces'), // @translate
+            'full' => $this->translate('Full conversion to Ascii.') . $recommended, // @translate
          ]);
 
         return $radio;
-    }
-
-    protected function addResourceSelect($name, $label, $info = '')
-    {
-        $translator = $this->getTranslator();
     }
 }
