@@ -4,8 +4,6 @@ namespace ArchiveRepertoryTest;
 use Omeka\Entity\Item;
 use Omeka\Entity\ItemSet;
 use Omeka\Entity\Media;
-use Omeka\Entity\Value;
-use Omeka\File\File;
 use OmekaTestHelper\Controller\OmekaControllerTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -101,7 +99,7 @@ class FileManagerTest extends OmekaControllerTestCase
     }
 
     /**
-     * @see Symfony\Component\Filesystem\Tests\FilesystemTestCase
+     * @see \Symfony\Component\Filesystem\Tests\FilesystemTestCase
      */
     protected function prepareArchiveDir()
     {
@@ -289,20 +287,20 @@ class FileManagerTest extends OmekaControllerTestCase
         touch($originalPath . DIRECTORY_SEPARATOR . 'photo.png');
 
         $this->assertEquals(
-            './photo.1.png',
+            'photo.1.png',
             $this->fileManager->getSingleFilenameBypassProtectedMethod('photo.png', null));
         touch($originalPath . DIRECTORY_SEPARATOR . 'photo.1.png');
 
         $filepath = $originalPath . DIRECTORY_SEPARATOR . 'photo.png';
         $this->assertEquals(
-            './photo.2.png',
+            'photo.2.png',
             $this->fileManager->getSingleFilenameBypassProtectedMethod('photo.png', null));
     }
 
     /**
      * Hash a stable single storage name for a specific media.
      *
-     * @see ArchiveRepertory\File::hashStorageName()
+     * @see \ArchiveRepertory\File\FileManager::hashStorageName()
      *
      * @param Media $media
      * @return string

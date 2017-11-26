@@ -34,7 +34,6 @@ namespace ArchiveRepertory;
 
 use ArchiveRepertory\Form\ConfigForm;
 use Omeka\Entity\Media;
-use Omeka\File\File;
 use Omeka\Module\AbstractModule;
 use Omeka\Mvc\Controller\Plugin\Messenger;
 use Zend\EventManager\Event;
@@ -167,19 +166,19 @@ class Module extends AbstractModule
     public function attachListeners(SharedEventManagerInterface $sharedEventManager)
     {
         $sharedEventManager->attach(
-            'Omeka\Api\Adapter\ItemAdapter',
+            \Omeka\Api\Adapter\ItemAdapter::class,
             'api.create.post',
             [$this, 'afterSaveItem'],
             100
         );
         $sharedEventManager->attach(
-            'Omeka\Api\Adapter\ItemAdapter',
+            \Omeka\Api\Adapter\ItemAdapter::class,
             'api.update.post',
             [$this, 'afterSaveItem'],
             100
         );
         $sharedEventManager->attach(
-            'Omeka\Api\Adapter\ItemAdapter',
+            \Omeka\Api\Adapter\ItemAdapter::class,
             'api.delete.post',
             [$this, 'afterDeleteItem'],
             100
@@ -231,8 +230,8 @@ class Module extends AbstractModule
         $path = $fileManager->getFullArchivePath('original');
         $filepath = $fileManager->concatWithSeparator($path, $media->getFilename());
         if (!$fileWriter->fileExists($filepath)) {
-            $msg = $this->translate('This file is not present in the original directory : ' . $filepath);
-            $msg .= ' ' . $this->translate('There was an undetected error before storage, probably during the convert process.');
+            $msg = $this->translate('This file is not present in the original directory : ' . $filepath); // @translate
+            $msg .= ' ' . $this->translate('There was an undetected error before storage, probably during the convert process.'); // @translate
             $this->addError($msg);
             return;
         }
@@ -243,7 +242,7 @@ class Module extends AbstractModule
         );
 
         if (!$result) {
-            $msg = $this->translate('Cannot move files inside archive directory.');
+            $msg = $this->translate('Cannot move files inside archive directory.'); // @translate
             $this->addError($msg);
             return;
         }

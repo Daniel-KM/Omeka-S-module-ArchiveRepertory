@@ -1,6 +1,5 @@
 <?php
-
-namespace OmekaTest\Controller;
+namespace ArchiveRepertoryTest\Controller;
 
 use ArchiveRepertoryTest\MockUpload;
 use Omeka\Api\Representation\ItemRepresentation;
@@ -69,7 +68,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
     }
 
     /**
-     * @see Symfony\Component\Filesystem\Tests\FilesystemTestCase
+     * @see \Symfony\Component\Filesystem\Tests\FilesystemTestCase
      */
     protected function prepareArchiveDir()
     {
@@ -300,7 +299,8 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
             'another_file3.png',
             10,
             20,
-            $existingMedias
+            $existingMedias,
+            true
         );
 
         $resultExpected = [
@@ -348,7 +348,8 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
             'another_file3.png',
             10,
             20,
-            $existingMedias
+            $existingMedias,
+            true
         );
 
         $resultExpected = [
@@ -362,7 +363,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
         $this->assertEquals($resultExpected, $result);
     }
 
-    protected function postDispatchFiles($title, $name_file1, $name_file2, $id1 = 0, $id2 = 1, $existingMedias = [])
+    protected function postDispatchFiles($title, $name_file1, $name_file2, $id1 = 0, $id2 = 1, $existingMedias = [], $viaApi = false)
     {
         $this->tempname1 = $this->workspace
             . DIRECTORY_SEPARATOR . 'tmp'
@@ -374,30 +375,9 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
             . DIRECTORY_SEPARATOR . 'uploaded_' . md5($this->source . microtime(true) . '.' . mt_rand());
         copy($this->source, $this->tempname2);
 
-        $files = new \Zend\Stdlib\Parameters([
-            'file' => [
-                $id1 => [
-                    'name' => $name_file1,
-                    'type' => $this->file['media_type'],
-                    'tmp_name' => $this->tempname1,
-                    'size' => $this->file['size'],
-                    'error' => 0,
-                    'content' => $this->file['content'],
-                ],
-                $id2 => [
-                    'name' => $name_file2,
-                    'type' => $this->file['media_type'],
-                    'tmp_name' => $this->tempname2,
-                    'size' => $this->file['size'],
-                    'error' => 0,
-                    'content' => $this->file['content'],
-                ],
-            ],
-        ]);
-        $this->getRequest()->setFiles($files);
-
         $itemId = $this->item->id();
-        $this->postDispatch("/admin/item/$itemId/edit", [
+
+        $data = [
             'dcterms:identifier' => [
                 [
                     'type' => 'literal',
@@ -438,8 +418,36 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
                     ],
                 ],
             ]),
-            'csrf' => (new \Zend\Form\Element\Csrf('csrf'))->getValue(),
-        ]);
+        ];
+
+        $files = [
+            'file' => [
+                $id1 => [
+                    'name' => $name_file1,
+                    'type' => $this->file['media_type'],
+                    'tmp_name' => $this->tempname1,
+                    'size' => $this->file['size'],
+                    'error' => 0,
+                    'content' => $this->file['content'],
+                ],
+                $id2 => [
+                    'name' => $name_file2,
+                    'type' => $this->file['media_type'],
+                    'tmp_name' => $this->tempname2,
+                    'size' => $this->file['size'],
+                    'error' => 0,
+                    'content' => $this->file['content'],
+                ],
+            ],
+        ];
+
+        if ($viaApi) {
+            $this->api()->update('items', $itemId, $data, $files);
+        } else {
+            $data['csrf'] = (new \Zend\Form\Element\Csrf('csrf'))->getValue();
+            $this->getRequest()->setFiles(new \Zend\Stdlib\Parameters($files));
+            $this->postDispatch("/admin/item/$itemId/edit", $data);
+        }
     }
 
     protected function getMediaFilenames($item)

@@ -1,5 +1,4 @@
 <?php
-
 namespace ArchiveRepertoryTest;
 
 use Interop\Container\ContainerInterface;
@@ -13,10 +12,13 @@ class MockFileManagerFactory implements FactoryInterface
 
         $thumbnailTypes = $config['thumbnails']['types'];
         $basePath = $config['local_dir'];
+        $ingesters = $config['archiverepertory']['ingesters'];
 
         return new MockFileManager(
             $thumbnailTypes,
             $basePath,
-            $services);
+            $ingesters,
+            $services
+        );
     }
 }

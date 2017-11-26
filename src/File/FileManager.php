@@ -1,13 +1,10 @@
 <?php
 namespace ArchiveRepertory\File;
 
-use Omeka\Entity\Item;
 use Omeka\Entity\Media;
 use Omeka\Entity\Resource;
-use Omeka\File\File;
 use Omeka\File\Exception\RuntimeException;
 use Omeka\Mvc\Controller\Plugin\Messenger;
-use Omeka\Stdlib\Message;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 class FileManager
@@ -123,7 +120,7 @@ class FileManager
         }
         if (strlen($newStorageId) > 190) {
             $msg = sprintf(
-                $this->translate('Cannot move file "%s" inside archive directory: filename too long.'),
+                $this->translate('Cannot move file "%s" inside archive directory: filename too long.'), // @translate
                 pathinfo($media->getSource(), PATHINFO_BASENAME)
             );
             $this->addError($msg);
@@ -163,7 +160,7 @@ class FileManager
     {
         // A quick check to avoid some errors.
         if (trim($currentArchiveFilename) == '' || trim($newArchiveFilename) == '') {
-            $msg = $this->translate('Cannot move file inside archive directory: no filename.');
+            $msg = $this->translate('Cannot move file inside archive directory: no filename.'); // @translate
             $this->addError($msg);
             return false;
         }
@@ -441,7 +438,7 @@ class FileManager
      *
      * Note: A random name is not used to avoid possible issues when the option
      * changes.
-     * @see Omeka\File\File::getStorageId()
+     * @see \Omeka\File\TempFile::getStorageId()
      *
      * @param Media $media
      * @return string
@@ -618,7 +615,7 @@ class FileManager
      *
      * @param string $path Full path of the folder to create.
      * @return bool True if the path is created
-     * @throws Omeka\File\Exception\RuntimeException
+     * @throws \Omeka\File\Exception\RuntimeException
      */
     protected function createFolder($path)
     {

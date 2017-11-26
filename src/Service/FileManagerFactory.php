@@ -34,6 +34,7 @@ class FileManagerFactory implements FactoryInterface
             $thumbnailTypes,
             $basePath,
             $ingesters,
-            $services);
+            $services
+        );
     }
 }

@@ -1,10 +1,8 @@
 <?php
-
 namespace ArchiveRepertoryTest;
 
 use Omeka\Api\Request;
 use Omeka\Entity\Media;
-use Omeka\File\File;
 use Omeka\Stdlib\ErrorStore;
 use Omeka\Media\Ingester\Upload;
 use Omeka\File\TempFileFactory;
