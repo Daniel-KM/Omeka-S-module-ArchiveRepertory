@@ -13,9 +13,6 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
     protected $filesystem;
     protected $workspace;
 
-    protected $api;
-    protected $settings;
-
     /**
      * @var ItemRepresentation
      */
@@ -48,8 +45,6 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
         }
 
         $services = $this->getServiceLocator();
-        $this->api = $services->get('Omeka\ApiManager');
-        $this->settings = $services->get('Omeka\Settings');
 
         $this->source = dirname(__DIR__)
             . DIRECTORY_SEPARATOR . '_files'
@@ -59,7 +54,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
         $this->file['size'] = filesize($this->source);
         $this->file['content'] = file_get_contents($this->source);
 
-        $this->item = $this->api->create('items', [])->getContent();
+        $this->item = $this->api()->create('items', [])->getContent();
 
         $this->tempname = $this->workspace
             . DIRECTORY_SEPARATOR . 'tmp'
@@ -153,10 +148,10 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
     public function testPostItemShouldMoveFileInAnotherDirectory()
     {
         // 1 is the Dublin Core Title.
-        $this->settings->set('archiverepertory_item_set_folder', '');
-        $this->settings->set('archiverepertory_item_folder', 1);
-        $this->settings->set('archiverepertory_item_prefix', 'prefix:');
-        $this->settings->set('archiverepertory_media_convert', 'keep');
+        $this->settings()->set('archiverepertory_item_set_folder', '');
+        $this->settings()->set('archiverepertory_item_folder', 1);
+        $this->settings()->set('archiverepertory_item_prefix', 'prefix:');
+        $this->settings()->set('archiverepertory_media_convert', 'keep');
 
         $files = new \Zend\Stdlib\Parameters([
             'file' => [
@@ -210,7 +205,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
 
         $this->assertResponseStatusCode(302);
 
-        $item = $this->api->read('items', $this->item->id())->getContent();
+        $item = $this->api()->read('items', $this->item->id())->getContent();
         $medias = $item->media();
         $this->assertCount(1, $medias);
         $this->assertEquals('Other_modified_title/image_test.png', $medias[0]->filename());
@@ -219,10 +214,10 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
     public function testDuplicateNameShouldMoveFileWithAnotherName()
     {
         // 1 is the Dublin Core Title.
-        $this->settings->set('archiverepertory_item_set_folder', '');
-        $this->settings->set('archiverepertory_item_folder', 1);
-        $this->settings->set('archiverepertory_item_prefix', '');
-        $this->settings->set('archiverepertory_media_convert', 'keep');
+        $this->settings()->set('archiverepertory_item_set_folder', '');
+        $this->settings()->set('archiverepertory_item_folder', 1);
+        $this->settings()->set('archiverepertory_item_prefix', '');
+        $this->settings()->set('archiverepertory_media_convert', 'keep');
 
         $this->postDispatchFiles(
             'My modified title',
@@ -233,7 +228,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
             'My_modified_title/image_test.png',
             'My_modified_title/image_test.1.png',
         ];
-        $item = $this->api->read('items', $this->item->id())->getContent();
+        $item = $this->api()->read('items', $this->item->id())->getContent();
         $result = $this->getMediaFilenames($item);
         $this->assertEquals($resultExpected, $result);
         $this->assertEquals('Item successfully updated', $this->getMessengerFirstSuccessMessage());
@@ -249,10 +244,10 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
     public function testDifferentNameShouldMoveFileWithAnotherName()
     {
         // 1 is the Dublin Core Title.
-        $this->settings->set('archiverepertory_item_set_folder', '');
-        $this->settings->set('archiverepertory_item_folder', 1);
-        $this->settings->set('archiverepertory_item_prefix', 'nonexisting');
-        $this->settings->set('archiverepertory_media_convert', 'keep');
+        $this->settings()->set('archiverepertory_item_set_folder', '');
+        $this->settings()->set('archiverepertory_item_folder', 1);
+        $this->settings()->set('archiverepertory_item_prefix', 'nonexisting');
+        $this->settings()->set('archiverepertory_media_convert', 'keep');
 
         $this->postDispatchFiles(
             'My modified title',
@@ -263,7 +258,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
             $this->item->id() . '/image_test.png',
             $this->item->id() . '/another_file.png',
         ];
-        $item = $this->api->read('items', $this->item->id())->getContent();
+        $item = $this->api()->read('items', $this->item->id())->getContent();
         $result = $this->getMediaFilenames($item);
         $this->assertEquals($resultExpected, $result);
     }
@@ -271,10 +266,10 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
     public function testDifferentFileShouldMoveFileWithAnotherName()
     {
         // 1 is the Dublin Core Title.
-        $this->settings->set('archiverepertory_item_set_folder', '');
-        $this->settings->set('archiverepertory_item_folder', 1);
-        $this->settings->set('archiverepertory_item_prefix', '');
-        $this->settings->set('archiverepertory_media_convert', 'hash');
+        $this->settings()->set('archiverepertory_item_set_folder', '');
+        $this->settings()->set('archiverepertory_item_folder', 1);
+        $this->settings()->set('archiverepertory_item_prefix', '');
+        $this->settings()->set('archiverepertory_media_convert', 'hash');
 
         $this->postDispatchFiles(
             'Previous title',
@@ -283,7 +278,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
         );
 
         $existingMedias = [];
-        $item = $this->api->read('items', $this->item->id())->getContent();
+        $item = $this->api()->read('items', $this->item->id())->getContent();
         foreach ($item->media() as $media) {
             $existingMedias[$media->id()] = [
                 'o:id' => $media->id(),
@@ -291,7 +286,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
             ];
         }
 
-        $this->settings->set('archiverepertory_media_convert', 'keep');
+        $this->settings()->set('archiverepertory_media_convert', 'keep');
 
         $this->postDispatchFiles(
             'My title',
@@ -315,10 +310,10 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
 
     public function testDifferentFileShouldMoveFileWithIdentifiers()
     {
-        $this->settings->set('archiverepertory_item_set_folder', '');
-        $this->settings->set('archiverepertory_item_folder', 1);
-        $this->settings->set('archiverepertory_item_prefix', '');
-        $this->settings->set('archiverepertory_media_convert', 'keep');
+        $this->settings()->set('archiverepertory_item_set_folder', '');
+        $this->settings()->set('archiverepertory_item_folder', 1);
+        $this->settings()->set('archiverepertory_item_prefix', '');
+        $this->settings()->set('archiverepertory_media_convert', 'keep');
 
         $this->postDispatchFiles(
             'Previous title',
@@ -330,7 +325,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
             'Previous_title/photo.1.png',
             'Previous_title/another_file.png',
         ];
-        $item = $this->api->read('items', $this->item->id())->getContent();
+        $item = $this->api()->read('items', $this->item->id())->getContent();
         $result = $this->getMediaFilenames($item);
         $this->assertEquals($resultExpected, $result);
 
@@ -358,7 +353,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
             'My_title/photo2.png',
             'My_title/another_file3.png',
         ];
-        $item = $this->api->read('items', $this->item->id())->getContent();
+        $item = $this->api()->read('items', $this->item->id())->getContent();
         $result = $this->getMediaFilenames($item);
         $this->assertEquals($resultExpected, $result);
     }
