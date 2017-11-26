@@ -121,8 +121,9 @@ class FileManagerTest extends OmekaControllerTestCase
         $config['local_dir'] = $this->workspace . DIRECTORY_SEPARATOR . 'files';
         $config = $services->setService('Config', $config);
 
-        $services->setFactory('Omeka\File\Store\Local', 'ArchiveRepertoryTest\MockLocalStoreFactory');
-        $services->setFactory('ArchiveRepertory\FileManager', 'ArchiveRepertoryTest\MockFileManagerFactory');
+        $services->setFactory('Omeka\File\Store\Local', \ArchiveRepertoryTest\MockLocalStoreFactory::class);
+        $services->setFactory('Omeka\File\TempFileFactory', \ArchiveRepertoryTest\MockTempFileFactoryFactory::class);
+        $services->setFactory('ArchiveRepertory\FileManager', \ArchiveRepertoryTest\MockFileManagerFactory::class);
         $services->setAllowOverride(false);
 
         $validator = $services->get('Omeka\File\Validator');
