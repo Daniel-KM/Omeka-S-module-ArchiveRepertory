@@ -22,11 +22,9 @@ class MockLocalStoreFactory implements FactoryInterface
         $serverUrl = $viewHelpers->get('ServerUrl');
         $basePath = $viewHelpers->get('BasePath');
 
-        $config = $serviceLocator->get('Config');
-
-        $localPath = $config['local_dir'];
+        $basePath = $serviceLocator->get('Config')['file_store']['local']['base_path'] ?: (OMEKA_PATH . '/files');
         $webPath = $serverUrl($basePath('files'));
-        $fileStore = new Local($localPath, $webPath, $logger);
+        $fileStore = new Local($basePath, $webPath, $logger);
         return $fileStore;
     }
 }

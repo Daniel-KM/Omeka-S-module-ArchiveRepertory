@@ -9,12 +9,12 @@ class ConfigFormFactory implements FactoryInterface
 {
     public function __invoke(ContainerInterface $services, $requestedName, array $options = null)
     {
-        $config = $services->get('Config');
+        $basePath = $services->get('Config')['file_store']['local']['base_path'] ?: (OMEKA_PATH . '/files');
         $settings = $services->get('Omeka\Settings');
         $translator = $services->get('MvcTranslator');
 
         $form = new ConfigForm(null, $options);
-        $form->setLocalStorage($config['local_dir']);
+        $form->setLocalStorage($basePath);
         $form->setSettings($settings);
         $form->setTranslator($translator);
 

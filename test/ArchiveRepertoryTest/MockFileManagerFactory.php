@@ -11,7 +11,7 @@ class MockFileManagerFactory implements FactoryInterface
         $config = $services->get('Config');
 
         $thumbnailTypes = $config['thumbnails']['types'];
-        $basePath = $config['local_dir'];
+        $basePath = $config['file_store']['local']['base_path'] ?: (OMEKA_PATH . '/files');
         $ingesters = $config['archiverepertory']['ingesters'];
 
         return new MockFileManager(

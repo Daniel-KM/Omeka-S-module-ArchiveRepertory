@@ -82,10 +82,8 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
         $services->setAllowOverride(true);
 
         $config = $services->get('Config');
-        // Temp dir is configured by Omeka S.
         $config['temp_dir'] = $this->workspace;
-        // Local dir is configured by the module.
-        $config['local_dir'] = $this->workspace . DIRECTORY_SEPARATOR . 'files';
+        $config['file_store']['local']['base_path'] = $this->workspace . DIRECTORY_SEPARATOR . 'files';
         $config = $services->setService('Config', $config);
 
         $services->setFactory('Omeka\File\Store\Local', \ArchiveRepertoryTest\MockLocalStoreFactory::class);

@@ -17,7 +17,6 @@ return [
             Form\ConfigForm::class => Service\Form\ConfigFormFactory::class,
         ],
     ],
-    'local_dir' => OMEKA_PATH . DIRECTORY_SEPARATOR . 'files',
     'service_manager' => [
         'factories' => [
             'ArchiveRepertory\FileManager' => Service\FileManagerFactory::class,
