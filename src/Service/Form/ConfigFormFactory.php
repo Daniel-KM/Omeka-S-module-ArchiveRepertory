@@ -10,16 +10,14 @@ class ConfigFormFactory implements FactoryInterface
     public function __invoke(ContainerInterface $services, $requestedName, array $options = null)
     {
         $config = $services->get('Config');
-        $formElementManager = $services->get('FormElementManager');
         $settings = $services->get('Omeka\Settings');
         $translator = $services->get('MvcTranslator');
 
-        $configForm = new ConfigForm(null, $options);
-        $configForm->setLocalStorage($config['local_dir']);
-        $configForm->setFormElementManager($formElementManager);
-        $configForm->setSettings($settings);
-        $configForm->setTranslator($translator);
+        $form = new ConfigForm(null, $options);
+        $form->setLocalStorage($config['local_dir']);
+        $form->setSettings($settings);
+        $form->setTranslator($translator);
 
-        return $configForm;
+        return $form;
     }
 }

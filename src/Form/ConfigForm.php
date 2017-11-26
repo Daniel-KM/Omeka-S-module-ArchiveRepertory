@@ -14,16 +14,10 @@ class ConfigForm extends Form implements TranslatorAwareInterface
     use TranslatorAwareTrait;
 
     protected $local_storage = '';
-    protected $formElementManager;
 
     public function setLocalStorage($local_storage)
     {
         $this->local_storage = $local_storage;
-    }
-
-    public function setFormElementManager($formElementManager)
-    {
-        $this->formElementManager = $formElementManager;
     }
 
     public function setSettings($settings)
