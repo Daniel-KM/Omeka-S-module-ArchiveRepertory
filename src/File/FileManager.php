@@ -633,7 +633,7 @@ class FileManager
                 $msg = $this->translate('Error directory non writable: "%s".', $path);
                 throw new RuntimeException('[ArchiveRepertory] ' . $msg);
             }
-            $msg = $this->translate('Failed to create folder "%s": a file with the same name exists...', $path);
+            $msg = $this->translate('Failed to create folder "%s": a file with the same name exists…', $path);
             throw new RuntimeException('[ArchiveRepertory] ' . $msg);
         }
 
