@@ -147,7 +147,7 @@ Copyright
 [Archive Repertory]: https://github.com/Daniel-KM/Omeka-S-module-ArchiveRepertory
 [Omeka S]: https://omeka.org/s
 [Omeka Classic]: https://omeka.org
-[Archive Repertory plugin]: https://github.com/Daniel-KM/ArchiveRepertory
+[Archive Repertory plugin]: https://github.com/Daniel-KM/Omeka-plugin-ArchiveRepertory
 [module issues]: https://github.com/Daniel-KM/Omeka-S-module-ArchiveRepertory/issues
 [Clean Url]: https://github.com/biblibre/Omeka-S-module-CleanUrl
 [IIIF Server]: https://github.com/Daniel-KM/Omeka-S-module-IiifServer
