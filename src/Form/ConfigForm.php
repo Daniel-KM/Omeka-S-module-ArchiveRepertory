@@ -27,8 +27,6 @@ class ConfigForm extends Form implements TranslatorAwareInterface
 
     public function init()
     {
-        $this->setAttribute('id', 'config-form');
-
         $this->add([
             'name' => 'archiverepertory_item_set_folder',
             'type' => PropertySelect::class,
