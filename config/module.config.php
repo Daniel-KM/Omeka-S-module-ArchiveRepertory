@@ -44,7 +44,7 @@ return [
             'upload' => [],
             'url' => [],
         ],
-        'settings' => [
+        'config' => [
             // Item sets options.
             'archiverepertory_item_set_folder' => '',
             'archiverepertory_item_set_prefix' => '',

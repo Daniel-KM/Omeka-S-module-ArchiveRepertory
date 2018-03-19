@@ -59,7 +59,7 @@ class Module extends AbstractModule
         $this->manageSettings($serviceLocator->get('Omeka\Settings'), 'uninstall');
     }
 
-    protected function manageSettings($settings, $process, $key = 'settings')
+    protected function manageSettings($settings, $process, $key = 'config')
     {
         $config = require __DIR__ . '/config/module.config.php';
         $defaultSettings = $config[strtolower(__NAMESPACE__)][$key];
@@ -80,7 +80,7 @@ class Module extends AbstractModule
         if (version_compare($oldVersion, '3.14.0', '<')) {
             $settings = $serviceLocator->get('Omeka\Settings');
             $config = require __DIR__ . '/config/module.config.php';
-            $defaultSettings = $config[strtolower(__NAMESPACE__)]['settings'];
+            $defaultSettings = $config[strtolower(__NAMESPACE__)]['config'];
 
             $settings->set('archiverepertory_item_set_folder',
                 $defaultSettings['archiverepertory_item_set_folder']);
@@ -107,7 +107,7 @@ class Module extends AbstractModule
         if (version_compare($oldVersion, '3.15.3', '<')) {
             $settings = $serviceLocator->get('Omeka\Settings');
             $config = include __DIR__ . '/config/module.config.php';
-            foreach ($config['archiverepertory']['settings'] as $name => $value) {
+            foreach ($config[strtolower(__NAMESPACE__)]['config'] as $name => $value) {
                 $oldName = str_replace('archiverepertory_', 'archive_repertory_', $name);
                 $settings->set($name, $settings->get($oldName, $value));
                 $settings->delete($oldName);
@@ -124,7 +124,7 @@ class Module extends AbstractModule
         $formElementManager = $services->get('FormElementManager');
 
         $data = [];
-        $defaultSettings = $config[strtolower(__NAMESPACE__)]['settings'];
+        $defaultSettings = $config[strtolower(__NAMESPACE__)]['config'];
         foreach ($defaultSettings as $name => $value) {
             $data[$name] = $settings->get($name);
         }
@@ -155,7 +155,7 @@ class Module extends AbstractModule
             return false;
         }
 
-        $defaultSettings = $config[strtolower(__NAMESPACE__)]['settings'];
+        $defaultSettings = $config[strtolower(__NAMESPACE__)]['config'];
         foreach ($params as $name => $value) {
             if (isset($defaultSettings[$name])) {
                 $settings->set($name, $value);
