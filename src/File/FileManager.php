@@ -626,7 +626,7 @@ class FileManager
         $fileWriter = $this->getFileWriter();
         if ($fileWriter->fileExists($path)) {
             if ($fileWriter->is_dir($path)) {
-                @chmod($path, 0755);
+                @chmod($path, 0775);
                 if ($fileWriter->is_writable($path)) {
                     return true;
                 }
@@ -637,11 +637,11 @@ class FileManager
             throw new RuntimeException('[ArchiveRepertory] ' . $msg);
         }
 
-        if (!$fileWriter->mkdir($path, 0755, true)) {
+        if (!$fileWriter->mkdir($path, 0775, true)) {
             $msg = sprintf($this->translate('Error making directory: "%s".'), $path);
             throw new RuntimeException('[ArchiveRepertory] ' . $msg);
         }
-        @chmod($path, 0755);
+        @chmod($path, 0775);
 
         return true;
     }
