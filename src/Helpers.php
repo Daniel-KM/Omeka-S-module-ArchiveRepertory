@@ -73,6 +73,8 @@ class Helpers
      * @internal This function simply checks the true result of functions
      * escapeshellarg() and touch() with a non Ascii filename.
      *
+     * @see https://gist.github.com/Daniel-KM/9754f18f9632423fb1a08909e9f01c04
+     *
      * @return array of issues.
      */
     public static function checkUnicodeInstallation()

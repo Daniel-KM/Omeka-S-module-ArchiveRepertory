@@ -121,7 +121,7 @@ class Module extends AbstractModule
         $services = $this->getServiceLocator();
         $config = $services->get('Config');
         $settings = $services->get('Omeka\Settings');
-        $formElementManager = $services->get('FormElementManager');
+        $form = $services->get('FormElementManager')->get(ConfigForm::class);
 
         $data = [];
         $defaultSettings = $config[strtolower(__NAMESPACE__)]['config'];
@@ -129,7 +129,6 @@ class Module extends AbstractModule
             $data[$name] = $settings->get($name);
         }
 
-        $form = $formElementManager->get(ConfigForm::class);
         $form->init();
         $form->setData($data);
 
@@ -146,8 +145,7 @@ class Module extends AbstractModule
 
         $params = $controller->getRequest()->getPost();
 
-        $form = $this->getServiceLocator()->get('FormElementManager')
-            ->get(ConfigForm::class);
+        $form = $services->get('FormElementManager')->get(ConfigForm::class);
         $form->init();
         $form->setData($params);
         if (!$form->isValid()) {
