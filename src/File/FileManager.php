@@ -5,6 +5,7 @@ use Omeka\Entity\Media;
 use Omeka\Entity\Resource;
 use Omeka\File\Exception\RuntimeException;
 use Omeka\Mvc\Controller\Plugin\Messenger;
+use Omeka\Stdlib\Message;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 class FileManager
@@ -119,10 +120,15 @@ class FileManager
             $newStorageId = $folderName . $newStorageId;
         }
         if (strlen($newStorageId) > 190) {
-            $msg = sprintf(
-                $this->translate('Cannot move file "%s" inside archive directory: filename too long.'), // @translate
-                pathinfo($media->getSource(), PATHINFO_BASENAME)
-            );
+            if ($folderName) {
+                $msg = new Message('Cannot move file "%s" inside archive directory ("%s"): filepath longer than 190 characters.', // @translate
+                    pathinfo($media->getSource(), PATHINFO_BASENAME), $folderName
+                );
+            } else {
+                $msg = new Message('Cannot move file "%s" inside archive directory: filepath longer than 190 characters.', // @translate
+                    pathinfo($media->getSource(), PATHINFO_BASENAME)
+                );
+            }
             $this->addError($msg);
             return $storageId;
         }
@@ -386,7 +392,7 @@ class FileManager
                 $convert = $this->getSetting('archiverepertory_item_convert');
                 break;
             default:
-                throw new RuntimeException('[ArchiveRepertory] ' . sprintf('Unallowed resource type "%s".', $resourceName));
+                throw new RuntimeException('[ArchiveRepertory] ' . new Message('Unallowed resource type "%s".', $resourceName));
         }
 
         if (empty($folder)) {
