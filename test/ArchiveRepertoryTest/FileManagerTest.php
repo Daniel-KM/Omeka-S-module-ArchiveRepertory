@@ -55,13 +55,13 @@ class FileManagerTest extends OmekaControllerTestCase
         $this->overrideConfig();
 
         $services = $this->getServiceLocator();
-        $config = $services->get('Config');
+        // $config = $services->get('Config');
         $entityManager = $services->get('Omeka\EntityManager');
 
         $this->entityManager = $entityManager;
 
         $api = $this->api();
-        $settings = $this->settings();
+        // $settings = $this->settings();
 
         $source = __DIR__
             . DIRECTORY_SEPARATOR . '_files'
@@ -287,7 +287,7 @@ class FileManagerTest extends OmekaControllerTestCase
             $this->fileManager->getSingleFilenameBypassProtectedMethod('photo.png', null));
         touch($originalPath . DIRECTORY_SEPARATOR . 'photo.1.png');
 
-        $filepath = $originalPath . DIRECTORY_SEPARATOR . 'photo.png';
+        // $filepath = $originalPath . DIRECTORY_SEPARATOR . 'photo.png';
         $this->assertEquals(
             'photo.2.png',
             $this->fileManager->getSingleFilenameBypassProtectedMethod('photo.png', null));

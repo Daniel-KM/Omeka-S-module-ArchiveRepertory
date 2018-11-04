@@ -184,7 +184,7 @@ class FileManager
         // If any, move derivative files using Omeka API.
         $fileWriter = $this->getFileWriter();
         $derivatives = $this->getDerivatives();
-        foreach ($derivatives as $type => $derivative) {
+        foreach ($derivatives as $derivative) {
             foreach ($derivative['extension'] as $extension) {
                 // Manage the original.
                 if (is_null($extension)) {
@@ -422,6 +422,7 @@ class FileManager
                 continue;
             }
             if ($prefix) {
+                $matches = [];
                 preg_match('/^' . $prefix . '(.*)/', $value->getValue(), $matches);
                 if (isset($matches[1])) {
                     return trim($matches[1]);
@@ -463,8 +464,8 @@ class FileManager
         $string = strip_tags($string);
         // The first character is a space and the last one is a no-break space.
         $string = trim($string, ' /\\?<>:*%|"\'`&; ');
-        $string = preg_replace('/[\(\{]/', '[', $string);
-        $string = preg_replace('/[\)\}]/', ']', $string);
+        $string = str_replace(['(', '{'], '[', $string);
+        $string = str_replace([')', '}'], ']', $string);
         $string = preg_replace('/[[:cntrl:]\/\\\?<>:\*\%\|\"\'`\&\;#+\^\$\s]/', ' ', $string);
         return substr(preg_replace('/\s+/', ' ', $string), -180);
     }
@@ -476,7 +477,7 @@ class FileManager
      * The string should be a simple name, not a full path or url, because "/",
      * "\" and ":" are removed (so a path should be sanitized by part).
      *
-     * @see ArchiveRepertoryPlugin::sanitizeName)
+     * See \ArchiveRepertoryPlugin::sanitizeName()
      *
      * @param string $string The string to sanitize.
      * @param string $format The format to convert to.
@@ -505,7 +506,7 @@ class FileManager
      *
      * Note: The string should be already sanitized.
      *
-     * @see ArchiveRepertoryPlugin::convertFilenameTo()
+     * See \ArchiveRepertoryPlugin::convertFilenameTo()
      *
      * @param string $string The string to convert to ascii.
      * @return string The converted string to use as a folder or a file name.
@@ -525,7 +526,7 @@ class FileManager
      *
      * Note: The string should be already sanitized.
      *
-     * @see ArchiveRepertoryPlugin::convertFilenameTo()
+     * See \ArchiveRepertoryPlugin::convertFilenameTo()
      *
      * @param string $string The string to sanitize.
      * @return string The sanitized string.
@@ -602,7 +603,7 @@ class FileManager
                 : [['path' => $pathFolder]];
             foreach ($folders as $derivative) {
                 $fullpath = $this->concatWithSeparator($derivative['path'], $archiveFolder);
-                $result = $this->createFolder($fullpath);
+                $this->createFolder($fullpath);
             }
         }
         return true;

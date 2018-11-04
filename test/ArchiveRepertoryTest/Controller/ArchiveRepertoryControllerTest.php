@@ -44,7 +44,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
             error_log($e);
         }
 
-        $services = $this->getServiceLocator();
+        // $services = $this->getServiceLocator();
 
         $this->source = dirname(__DIR__)
             . DIRECTORY_SEPARATOR . '_files'

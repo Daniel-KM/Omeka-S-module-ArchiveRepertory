@@ -4,7 +4,7 @@
  *
  * Keeps original names of files and put them in a hierarchical structure.
  *
- * Copyright Daniel Berthereau 2012-2017
+ * Copyright Daniel Berthereau 2012-2018
  * Copyright BibLibre, 2016
  *
  * This software is governed by the CeCILL license under French law and abiding
@@ -51,12 +51,14 @@ class Module extends AbstractModule
 
     public function install(ServiceLocatorInterface $serviceLocator)
     {
-        $this->manageSettings($serviceLocator->get('Omeka\Settings'), 'install');
+        $settings = $serviceLocator->get('Omeka\Settings');
+        $this->manageSettings($settings, 'install');
     }
 
     public function uninstall(ServiceLocatorInterface $serviceLocator)
     {
-        $this->manageSettings($serviceLocator->get('Omeka\Settings'), 'uninstall');
+        $settings = $serviceLocator->get('Omeka\Settings');
+        $this->manageSettings($settings, 'uninstall');
     }
 
     protected function manageSettings($settings, $process, $key = 'config')
@@ -77,88 +79,7 @@ class Module extends AbstractModule
 
     public function upgrade($oldVersion, $newVersion, ServiceLocatorInterface $serviceLocator)
     {
-        if (version_compare($oldVersion, '3.14.0', '<')) {
-            $settings = $serviceLocator->get('Omeka\Settings');
-            $config = require __DIR__ . '/config/module.config.php';
-            $defaultSettings = $config[strtolower(__NAMESPACE__)]['config'];
-
-            $settings->set('archiverepertory_item_set_folder',
-                $defaultSettings['archiverepertory_item_set_folder']);
-            $settings->set('archiverepertory_item_set_prefix',
-                $defaultSettings['archiverepertory_item_set_prefix']);
-            $settings->set('archiverepertory_item_set_convert',
-                $defaultSettings['archiverepertory_item_set_convert']);
-
-            $itemConvert = strtolower($settings->get['archive_repertory_item_convert']);
-            if ($itemConvert == 'keep name') {
-                $itemConvert = 'keep';
-            }
-            $settings->set('archiverepertory_item_convert', $itemConvert);
-
-            $mediaConvert = $settings->get('archive_repertory_file_keep_original_name')
-                ? $defaultSettings['archiverepertory_media_convert']
-                : 'hash';
-            $settings->set('archiverepertory_media_convert', $mediaConvert);
-            $settings->delete('archive_repertory_file_keep_original_name');
-
-            $settings->delete('archive_repertory_derivative_folders');
-        }
-
-        if (version_compare($oldVersion, '3.15.3', '<')) {
-            $settings = $serviceLocator->get('Omeka\Settings');
-            $config = include __DIR__ . '/config/module.config.php';
-            foreach ($config[strtolower(__NAMESPACE__)]['config'] as $name => $value) {
-                $oldName = str_replace('archiverepertory_', 'archive_repertory_', $name);
-                $settings->set($name, $settings->get($oldName, $value));
-                $settings->delete($oldName);
-            }
-            $settings->delete('archive_repertory_ingesters');
-        }
-    }
-
-    public function getConfigForm(PhpRenderer $renderer)
-    {
-        $services = $this->getServiceLocator();
-        $config = $services->get('Config');
-        $settings = $services->get('Omeka\Settings');
-        $form = $services->get('FormElementManager')->get(ConfigForm::class);
-
-        $data = [];
-        $defaultSettings = $config[strtolower(__NAMESPACE__)]['config'];
-        foreach ($defaultSettings as $name => $value) {
-            $data[$name] = $settings->get($name);
-        }
-
-        $form->init();
-        $form->setData($data);
-
-        return $renderer->render('archive-repertory/module/config', [
-            'form' => $form,
-        ]);
-    }
-
-    public function handleConfigForm(AbstractController $controller)
-    {
-        $services = $this->getServiceLocator();
-        $config = $services->get('Config');
-        $settings = $services->get('Omeka\Settings');
-
-        $params = $controller->getRequest()->getPost();
-
-        $form = $services->get('FormElementManager')->get(ConfigForm::class);
-        $form->init();
-        $form->setData($params);
-        if (!$form->isValid()) {
-            $controller->messenger()->addErrors($form->getMessages());
-            return false;
-        }
-
-        $defaultSettings = $config[strtolower(__NAMESPACE__)]['config'];
-        foreach ($params as $name => $value) {
-            if (array_key_exists($name, $defaultSettings)) {
-                $settings->set($name, $value);
-            }
-        }
+        require_once 'data/scripts/upgrade.php';
     }
 
     public function attachListeners(SharedEventManagerInterface $sharedEventManager)
@@ -181,6 +102,51 @@ class Module extends AbstractModule
             [$this, 'afterDeleteItem'],
             100
         );
+    }
+
+    public function getConfigForm(PhpRenderer $renderer)
+    {
+        $services = $this->getServiceLocator();
+        $config = $services->get('Config');
+        $settings = $services->get('Omeka\Settings');
+        $form = $services->get('FormElementManager')->get(ConfigForm::class);
+
+        $data = [];
+        $defaultSettings = $config[strtolower(__NAMESPACE__)]['config'];
+        foreach ($defaultSettings as $name => $value) {
+            $data[$name] = $settings->get($name, $value);
+        }
+
+        $form->init();
+        $form->setData($data);
+        $html = $renderer->render('archive-repertory/module/config', [
+            'form' => $form,
+        ]);
+        return $html;
+    }
+
+    public function handleConfigForm(AbstractController $controller)
+    {
+        $services = $this->getServiceLocator();
+        $config = $services->get('Config');
+        $settings = $services->get('Omeka\Settings');
+        $form = $services->get('FormElementManager')->get(ConfigForm::class);
+
+        $params = $controller->getRequest()->getPost();
+
+        $form->init();
+        $form->setData($params);
+        if (!$form->isValid()) {
+            $controller->messenger()->addErrors($form->getMessages());
+            return false;
+        }
+
+        $params = $form->getData();
+        $defaultSettings = $config[strtolower(__NAMESPACE__)]['config'];
+        $params = array_intersect_key($params, $defaultSettings);
+        foreach ($params as $name => $value) {
+            $settings->set($name, $value);
+        }
     }
 
     /**
@@ -259,7 +225,6 @@ class Module extends AbstractModule
     public function afterDeleteItem(Event $event)
     {
         $services = $this->getServiceLocator();
-        $entityManager = $services->get('Omeka\EntityManager');
         $config = $services->get('Config');
         $fileManager = $services->get('ArchiveRepertory\FileManager');
 

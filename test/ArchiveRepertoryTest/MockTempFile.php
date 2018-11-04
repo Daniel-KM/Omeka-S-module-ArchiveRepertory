@@ -21,7 +21,8 @@ class MockTempFile extends TempFile
         try {
             $thumbnailer->setSource($this);
             $thumbnailer->setOptions($this->thumbnailManager->getThumbnailerOptions());
-            foreach ($this->thumbnailManager->getTypeConfig() as $type => $config) {
+            $typeConfig = $this->thumbnailManager->getTypeConfig();
+            foreach (array_keys($typeConfig) as $type) {
                 $destinationTempPath = tempnam(sys_get_temp_dir(), 'omk_ar_');
                 copy($this->testpath, $destinationTempPath);
                 $tempPaths[$type] = $destinationTempPath;
