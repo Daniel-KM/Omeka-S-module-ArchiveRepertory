@@ -144,7 +144,7 @@ Omeka S has been built by [BibLibre].
 Copyright
 ---------
 
-* Copyright Daniel Berthereau, 2012-2018
+* Copyright Daniel Berthereau, 2012-2019
 * Copyright BibLibre, 2016-2017
 
 
