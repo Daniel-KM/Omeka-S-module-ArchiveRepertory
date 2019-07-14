@@ -25,6 +25,7 @@ class Helpers
      */
     public static function basename($path)
     {
+        $path = rtrim($path, '/\\');
         return preg_replace('/^.+[\\\\\\/]/', '', $path);
     }
 
@@ -41,9 +42,11 @@ class Helpers
     {
         switch ($mode) {
             case PATHINFO_BASENAME:
+                $path = rtrim($path, '/\\');
                 $result = preg_replace('/^.+[\\\\\\/]/', '', $path);
                 break;
             case PATHINFO_FILENAME:
+                $path = rtrim($path, '/\\');
                 $result = preg_replace('/^.+[\\\\\\/]/', '', $path);
                 $positionExtension = strrpos($result, '.');
                 if ($positionExtension) {
