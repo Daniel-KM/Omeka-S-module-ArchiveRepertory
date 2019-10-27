@@ -149,8 +149,12 @@ class ConfigForm extends Form implements TranslatorAwareInterface
         $radio->setOptions(['info' => $info]);
         $radio->setValue($this->getSetting($name));
 
-        $not_recommended = (isset($allow_unicode['ascii']) ? ' ' . $this->translate('(not recommended because your server is not fully compatible with Unicode)') : ''); // @translate
-        $recommended = (isset($allow_unicode['cli']) || isset($allow_unicode['fs'])) ? ' ' . $this->translate('(recommended because your server is not fully compatible with Unicode)') : ''; // @translate
+        $not_recommended = isset($allow_unicode['ascii'])
+            ? ' ' . $this->translate('(not recommended because your server is not fully compatible with Unicode)') // @translate
+            : '';
+        $recommended = (isset($allow_unicode['cli']) || isset($allow_unicode['fs']))
+            ? ' ' . $this->translate('(recommended because your server is not fully compatible with Unicode)') // @translate
+            : '';
 
         $radio->setValueOptions([
             'keep' => $this->translate('Keep name as it') . $not_recommended, // @translate
