@@ -43,6 +43,7 @@ return [
             // See the module IIIF Server for a full example.
             'upload' => [],
             'url' => [],
+            'sideload' => [],
         ],
         'config' => [
             // Item sets options.
