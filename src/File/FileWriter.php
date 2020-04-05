@@ -64,7 +64,7 @@ class FileWriter
     public function removeDir($path, $evenNonEmpty = false)
     {
         $path = realpath($path);
-        if (strlen($path)
+        if (mb_strlen($path)
             && $path != DIRECTORY_SEPARATOR
             && file_exists($path)
             && is_dir($path)

@@ -64,7 +64,7 @@ class Module extends AbstractModule
     protected function manageSettings($settings, $process, $key = 'config')
     {
         $config = require __DIR__ . '/config/module.config.php';
-        $defaultSettings = $config[strtolower(__NAMESPACE__)][$key];
+        $defaultSettings = $config['archiverepertory'][$key];
         foreach ($defaultSettings as $name => $value) {
             switch ($process) {
                 case 'install':
@@ -112,7 +112,7 @@ class Module extends AbstractModule
         $form = $services->get('FormElementManager')->get(ConfigForm::class);
 
         $data = [];
-        $defaultSettings = $config[strtolower(__NAMESPACE__)]['config'];
+        $defaultSettings = $config['archiverepertory']['config'];
         foreach ($defaultSettings as $name => $value) {
             $data[$name] = $settings->get($name, $value);
         }
@@ -142,7 +142,7 @@ class Module extends AbstractModule
         }
 
         $params = $form->getData();
-        $defaultSettings = $config[strtolower(__NAMESPACE__)]['config'];
+        $defaultSettings = $config['archiverepertory']['config'];
         $params = array_intersect_key($params, $defaultSettings);
         foreach ($params as $name => $value) {
             $settings->set($name, $value);

@@ -119,7 +119,7 @@ class FileManager
         if ($folderName) {
             $newStorageId = $folderName . $newStorageId;
         }
-        if (strlen($newStorageId) > 190) {
+        if (mb_strlen($newStorageId) > 190) {
             if ($folderName) {
                 $msg = new Message('Cannot move file "%s" inside archive directory ("%s"): filepath longer than 190 characters.', // @translate
                     pathinfo($media->getSource(), PATHINFO_BASENAME), $folderName
