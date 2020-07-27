@@ -40,7 +40,7 @@ return [
         'ingesters' => [
             // An empty array means that the thumbnail types / paths in config
             // and the default extension ("jpg") will be used.
-            // See the module IIIF Server for a full example.
+            // See the module Image Server for a full example.
             'upload' => [],
             'url' => [],
             'sideload' => [],

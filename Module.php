@@ -4,7 +4,7 @@
  *
  * Keeps original names of files and put them in a hierarchical structure.
  *
- * Copyright Daniel Berthereau 2012-2018
+ * Copyright Daniel Berthereau 2012-2020
  * Copyright BibLibre, 2016
  *
  * This software is governed by the CeCILL license under French law and abiding
@@ -32,55 +32,23 @@
  */
 namespace ArchiveRepertory;
 
+if (!class_exists(\Generic\AbstractModule::class)) {
+    require file_exists(dirname(__DIR__) . '/Generic/AbstractModule.php')
+        ? dirname(__DIR__) . '/Generic/AbstractModule.php'
+        : __DIR__ . '/src/Generic/AbstractModule.php';
+}
+
 use ArchiveRepertory\Form\ConfigForm;
+use Generic\AbstractModule;
 use Omeka\Entity\Media;
-use Omeka\Module\AbstractModule;
 use Omeka\Mvc\Controller\Plugin\Messenger;
 use Zend\EventManager\Event;
 use Zend\EventManager\SharedEventManagerInterface;
-use Zend\Mvc\Controller\AbstractController;
-use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\View\Renderer\PhpRenderer;
 
 class Module extends AbstractModule
 {
-    public function getConfig()
-    {
-        return include __DIR__ . '/config/module.config.php';
-    }
-
-    public function install(ServiceLocatorInterface $serviceLocator)
-    {
-        $settings = $serviceLocator->get('Omeka\Settings');
-        $this->manageSettings($settings, 'install');
-    }
-
-    public function uninstall(ServiceLocatorInterface $serviceLocator)
-    {
-        $settings = $serviceLocator->get('Omeka\Settings');
-        $this->manageSettings($settings, 'uninstall');
-    }
-
-    protected function manageSettings($settings, $process, $key = 'config')
-    {
-        $config = require __DIR__ . '/config/module.config.php';
-        $defaultSettings = $config['archiverepertory'][$key];
-        foreach ($defaultSettings as $name => $value) {
-            switch ($process) {
-                case 'install':
-                    $settings->set($name, $value);
-                    break;
-                case 'uninstall':
-                    $settings->delete($name);
-                    break;
-            }
-        }
-    }
-
-    public function upgrade($oldVersion, $newVersion, ServiceLocatorInterface $serviceLocator)
-    {
-        require_once 'data/scripts/upgrade.php';
-    }
+    const NAMESPACE = __NAMESPACE__;
 
     public function attachListeners(SharedEventManagerInterface $sharedEventManager)
     {
@@ -125,30 +93,6 @@ class Module extends AbstractModule
         return $html;
     }
 
-    public function handleConfigForm(AbstractController $controller)
-    {
-        $services = $this->getServiceLocator();
-        $config = $services->get('Config');
-        $settings = $services->get('Omeka\Settings');
-        $form = $services->get('FormElementManager')->get(ConfigForm::class);
-
-        $params = $controller->getRequest()->getPost();
-
-        $form->init();
-        $form->setData($params);
-        if (!$form->isValid()) {
-            $controller->messenger()->addErrors($form->getMessages());
-            return false;
-        }
-
-        $params = $form->getData();
-        $defaultSettings = $config['archiverepertory']['config'];
-        $params = array_intersect_key($params, $defaultSettings);
-        foreach ($params as $name => $value) {
-            $settings->set($name, $value);
-        }
-    }
-
     /**
      * Manages folders for attached files of items.
      */
@@ -167,6 +111,10 @@ class Module extends AbstractModule
      */
     protected function afterSaveMedia(Media $media)
     {
+        /**
+         * @var \ArchiveRepertory\File\FileManager $fileManager
+         * @var \ArchiveRepertory\File\FileWriter $fileWriter
+         */
         $services = $this->getServiceLocator();
         $entityManager = $services->get('Omeka\EntityManager');
         $config = $services->get('Config');
