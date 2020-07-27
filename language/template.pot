@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-10-28 00:00+0100\n"
+"POT-Creation-Date: 2020-07-27 00:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,17 +17,17 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: Module.php:197
+#: Module.php:145
 msgid "This file is not present in the original directory : "
 msgstr ""
 
-#: Module.php:198
+#: Module.php:146
 msgid ""
 "There was an undetected error before storage, probably during the convert "
 "process."
 msgstr ""
 
-#: Module.php:209
+#: Module.php:157
 msgid "Cannot move files inside archive directory."
 msgstr ""
 
@@ -35,29 +35,29 @@ msgstr ""
 msgid "Cannot move file inside archive directory: no filename."
 msgstr ""
 
-#: src/File/FileManager.php:640
+#: src/File/FileManager.php:645
 #, php-format
 msgid "Error directory non writable: \"%s\"."
 msgstr ""
 
-#: src/File/FileManager.php:643
+#: src/File/FileManager.php:648
 #, php-format
 msgid "Failed to create folder \"%s\": a file with the same name exists…"
 msgstr ""
 
-#: src/File/FileManager.php:648
+#: src/File/FileManager.php:653
 #, php-format
 msgid "Error making directory: \"%s\"."
 msgstr ""
 
-#: src/File/FileManager.php:674
+#: src/File/FileManager.php:680
 #, php-format
 msgid ""
 "Error during move of a file from \"%s\" to \"%s\" (local dir: \"%s\"): "
 "source does not exist."
 msgstr ""
 
-#: src/File/FileManager.php:688
+#: src/File/FileManager.php:694
 #, php-format
 msgid "Error during move of a file from \"%s\" to \"%s\" (local dir: \"%s\")."
 msgstr ""
@@ -128,6 +128,23 @@ msgstr ""
 
 #: src/Form/ConfigForm.php:164
 msgid "Full conversion to Ascii."
+msgstr ""
+
+#: src/Generic/AbstractModule.php:601
+#, php-format
+msgid "This module requires the module \"%s\"."
+msgstr ""
+
+#: src/Generic/AbstractModule.php:621
+#, php-format
+msgid "This module requires modules \"%s\"."
+msgstr ""
+
+#: src/Generic/AbstractModule.php:689
+#, php-format
+msgid ""
+"The module \"%s\" was automatically deactivated because the dependencies are "
+"unavailable."
 msgstr ""
 
 #: view/archive-repertory/module/config.phtml:14
@@ -289,6 +306,14 @@ msgstr ""
 
 #: src/Form/ConfigForm.php:65
 msgid "Item folder"
+msgstr ""
+
+#: src/Service/FileManagerFactory.php:16
+msgid "Missing thumbnails configuration"
+msgstr ""
+
+#: src/Service/FileManagerFactory.php:20
+msgid "Missing Archive Repertory ingesters configuration"
 msgstr ""
 
 #: src/File/FileManager.php:124
