@@ -196,6 +196,11 @@ class FileManager
                 if (is_null($extension)) {
                     $currentDerivativeFilename = $currentArchiveFilename;
                     $newDerivativeFilename = $newArchiveFilename;
+                } elseif ($extension === '') {
+                    $extension = pathinfo($currentArchiveFilename, PATHINFO_EXTENSION);
+                    $extension = strlen($extension) ? '.' . $extension : '';
+                    $currentDerivativeFilename = $currentBase . $extension;
+                    $newDerivativeFilename = $newBase . $extension;
                 } else {
                     $currentDerivativeFilename = $currentBase . $extension;
                     $newDerivativeFilename = $newBase . $extension;
@@ -669,6 +674,7 @@ class FileManager
         if ($fileWriter->fileExists($realDestination)) {
             return true;
         }
+
         if (!$fileWriter->fileExists($realSource)) {
             $msg = sprintf(
                 $this->translate('Error during move of a file from "%s" to "%s" (local dir: "%s"): source does not exist.'),
@@ -697,11 +703,18 @@ class FileManager
         return $result;
     }
 
+    /**
+     * @param string $string
+     * @return string
+     */
     protected function translate($string)
     {
         return $this->services->get('MvcTranslator')->translate($string);
     }
 
+    /**
+     * @return \ArchiveRepertory\File\FileWriter
+     */
     protected function getFileWriter()
     {
         static $fileWriter;

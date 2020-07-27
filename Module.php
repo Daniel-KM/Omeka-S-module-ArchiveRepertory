@@ -169,9 +169,12 @@ class Module extends AbstractModule
 
     /**
      * Remove folders for attached files of items.
+     *
+     * The default files are removed with the standard process.
      */
     public function afterDeleteItem(Event $event)
     {
+        /** @var \ArchiveRepertory\File\FileManager $fileManager */
         $services = $this->getServiceLocator();
         $config = $services->get('Config');
         $fileManager = $services->get('ArchiveRepertory\FileManager');
