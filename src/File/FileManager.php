@@ -472,7 +472,7 @@ class FileManager
      */
     protected function sanitizeName($string): string
     {
-        $string = strip_tags($string);
+        $string = strip_tags((string) $string);
         // The first character is a space and the last one is a no-break space.
         $string = trim($string, ' /\\?<>:*%|"\'`&; ');
         $string = str_replace(['(', '{'], '[', $string);
