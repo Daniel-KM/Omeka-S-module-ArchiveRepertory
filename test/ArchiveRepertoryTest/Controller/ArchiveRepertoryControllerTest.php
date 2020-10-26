@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace ArchiveRepertoryTest\Controller;
 
 use ArchiveRepertoryTest\MockUpload;
@@ -26,7 +26,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
     protected $source;
     protected $tempname;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -65,7 +65,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
     /**
      * @see \Symfony\Component\Filesystem\Tests\FilesystemTestCase
      */
-    protected function prepareArchiveDir()
+    protected function prepareArchiveDir(): void
     {
         $this->umask = umask(0);
         $this->filesystem = new Filesystem();
@@ -75,7 +75,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
         $this->workspace = realpath($this->workspace);
     }
 
-    protected function overrideConfig()
+    protected function overrideConfig(): void
     {
         $services = $this->getServiceLocator();
 
@@ -103,14 +103,14 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
         $mediaIngesterManager->setAllowOverride(false);
     }
 
-    protected function setDefaultSettings()
+    protected function setDefaultSettings(): void
     {
         foreach ($this->settingsProvider() as $data) {
             $this->setSettings($data[0], $data[1]);
         }
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         $this->api()->delete('items', $this->item->id());
 
@@ -128,7 +128,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
         ];
     }
 
-    public function testConfigFormIsOk()
+    public function testConfigFormIsOk(): void
     {
         $this->dispatch('/admin/module/configure?id=ArchiveRepertory');
         $this->assertResponseStatusCode(200);
@@ -137,14 +137,14 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
     /**
      * @dataProvider settingsProvider
      */
-    public function testPostConfigurationShouldBeSaved($name, $value)
+    public function testPostConfigurationShouldBeSaved($name, $value): void
     {
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
         $this->postDispatch('/admin/module/configure?id=ArchiveRepertory', [$name => $value]);
         $this->assertEquals($value, $settings->get($name));
     }
 
-    public function testPostItemShouldMoveFileInAnotherDirectory()
+    public function testPostItemShouldMoveFileInAnotherDirectory(): void
     {
         // 1 is the Dublin Core Title.
         $this->settings()->set('archiverepertory_item_set_folder', '');
@@ -210,7 +210,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
         $this->assertEquals('Other_modified_title/image_test.png', $medias[0]->filename());
     }
 
-    public function testDuplicateNameShouldMoveFileWithAnotherName()
+    public function testDuplicateNameShouldMoveFileWithAnotherName(): void
     {
         // 1 is the Dublin Core Title.
         $this->settings()->set('archiverepertory_item_set_folder', '');
@@ -240,7 +240,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
         return $messages[Messenger::SUCCESS][0];
     }
 
-    public function testDifferentNameShouldMoveFileWithAnotherName()
+    public function testDifferentNameShouldMoveFileWithAnotherName(): void
     {
         // 1 is the Dublin Core Title.
         $this->settings()->set('archiverepertory_item_set_folder', '');
@@ -262,7 +262,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
         $this->assertEquals($resultExpected, $result);
     }
 
-    public function testDifferentFileShouldMoveFileWithAnotherName()
+    public function testDifferentFileShouldMoveFileWithAnotherName(): void
     {
         // 1 is the Dublin Core Title.
         $this->settings()->set('archiverepertory_item_set_folder', '');
@@ -307,7 +307,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
         $this->assertEquals($resultExpected, $result);
     }
 
-    public function testDifferentFileShouldMoveFileWithIdentifiers()
+    public function testDifferentFileShouldMoveFileWithIdentifiers(): void
     {
         $this->settings()->set('archiverepertory_item_set_folder', '');
         $this->settings()->set('archiverepertory_item_folder', 1);
@@ -357,7 +357,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
         $this->assertEquals($resultExpected, $result);
     }
 
-    protected function postDispatchFiles($title, $name_file1, $name_file2, $id1 = 0, $id2 = 1, $existingMedias = [], $viaApi = false)
+    protected function postDispatchFiles($title, $name_file1, $name_file2, $id1 = 0, $id2 = 1, $existingMedias = [], $viaApi = false): void
     {
         $this->tempname1 = $this->workspace
             . DIRECTORY_SEPARATOR . 'tmp'

@@ -1,10 +1,10 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace ArchiveRepertory\Service;
 
+use ArchiveRepertory\File\FileWriter;
 use Interop\Container\ContainerInterface;
 use Laminas\ServiceManager\Factory\FactoryInterface;
-use ArchiveRepertory\File\FileWriter;
 
 class FileWriterFactory implements FactoryInterface
 {

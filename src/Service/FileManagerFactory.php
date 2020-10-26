@@ -1,10 +1,10 @@
-<?php
+<?php declare(strict_types=1);
 namespace ArchiveRepertory\Service;
 
 use ArchiveRepertory\File\FileManager;
 use Interop\Container\ContainerInterface;
-use Omeka\Service\Exception\ConfigException;
 use Laminas\ServiceManager\Factory\FactoryInterface;
+use Omeka\Service\Exception\ConfigException;
 
 class FileManagerFactory implements FactoryInterface
 {

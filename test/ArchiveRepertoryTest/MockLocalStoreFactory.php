@@ -1,9 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 namespace ArchiveRepertoryTest;
 
 use Interop\Container\ContainerInterface;
-use Omeka\File\Store\Local;
 use Laminas\ServiceManager\Factory\FactoryInterface;
+use Omeka\File\Store\Local;
 
 /**
  * Service factory for the Local file store.

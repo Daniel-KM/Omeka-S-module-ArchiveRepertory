@@ -1,9 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace ArchiveRepertory\View\Helper;
 
-use Laminas\View\Helper\AbstractHelper;
 use ArchiveRepertory\Helpers;
+use Laminas\View\Helper\AbstractHelper;
 
 class CheckUnicodeInstallation extends AbstractHelper
 {

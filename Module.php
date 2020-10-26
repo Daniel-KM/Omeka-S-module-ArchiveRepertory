@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /*
  * Archive Repertory
  *
@@ -40,17 +40,17 @@ if (!class_exists(\Generic\AbstractModule::class)) {
 
 use ArchiveRepertory\Form\ConfigForm;
 use Generic\AbstractModule;
-use Omeka\Entity\Media;
-use Omeka\Mvc\Controller\Plugin\Messenger;
 use Laminas\EventManager\Event;
 use Laminas\EventManager\SharedEventManagerInterface;
 use Laminas\View\Renderer\PhpRenderer;
+use Omeka\Entity\Media;
+use Omeka\Mvc\Controller\Plugin\Messenger;
 
 class Module extends AbstractModule
 {
     const NAMESPACE = __NAMESPACE__;
 
-    public function attachListeners(SharedEventManagerInterface $sharedEventManager)
+    public function attachListeners(SharedEventManagerInterface $sharedEventManager): void
     {
         $sharedEventManager->attach(
             \Omeka\Api\Adapter\ItemAdapter::class,
@@ -96,7 +96,7 @@ class Module extends AbstractModule
     /**
      * Manages folders for attached files of items.
      */
-    public function afterSaveItem(Event $event)
+    public function afterSaveItem(Event $event): void
     {
         $item = $event->getParam('response')->getContent();
         foreach ($item->getMedia() as $media) {
@@ -109,7 +109,7 @@ class Module extends AbstractModule
      *
      * @param Media $media
      */
-    protected function afterSaveMedia(Media $media)
+    protected function afterSaveMedia(Media $media): void
     {
         /**
          * @var \ArchiveRepertory\File\FileManager $fileManager
@@ -172,7 +172,7 @@ class Module extends AbstractModule
      *
      * The default files are removed with the standard process.
      */
-    public function afterDeleteItem(Event $event)
+    public function afterDeleteItem(Event $event): void
     {
         /** @var \ArchiveRepertory\File\FileManager $fileManager */
         $services = $this->getServiceLocator();
@@ -202,7 +202,7 @@ class Module extends AbstractModule
         }
     }
 
-    protected function addError($msg)
+    protected function addError($msg): void
     {
         $messenger = new Messenger;
         $messenger->addError($msg);

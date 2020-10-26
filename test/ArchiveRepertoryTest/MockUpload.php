@@ -1,22 +1,22 @@
-<?php
+<?php declare(strict_types=1);
 namespace ArchiveRepertoryTest;
 
 use Omeka\Api\Request;
 use Omeka\Entity\Media;
-use Omeka\Stdlib\ErrorStore;
-use Omeka\Media\Ingester\Upload;
 use Omeka\File\TempFileFactory;
+use Omeka\Media\Ingester\Upload;
+use Omeka\Stdlib\ErrorStore;
 
 class MockUpload extends Upload
 {
     protected $tempFileFactory;
 
-    public function setTempFileFactory(TempFileFactory $tempFileFactory)
+    public function setTempFileFactory(TempFileFactory $tempFileFactory): void
     {
         $this->tempFileFactory = $tempFileFactory;
     }
 
-    public function ingest(Media $media, Request $request, ErrorStore $errorStore)
+    public function ingest(Media $media, Request $request, ErrorStore $errorStore): void
     {
         $data = $request->getContent();
         $fileData = $request->getFileData();
