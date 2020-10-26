@@ -1,6 +1,9 @@
 Archive Repertory (module for Omeka S)
 ======================================
 
+> __New versions of this module and support for Omeka S version 3.0 and above
+> are available on [GitLab], which seems to respect users and privacy better.__
+
 [![Build Status](https://travis-ci.org/Daniel-KM/Omeka-S-module-ArchiveRepertory.svg?branch=master)](https://travis-ci.org/Daniel-KM/Omeka-S-module-ArchiveRepertory)
 
 [Archive Repertory] is a module for [Omeka S] that allows Omeka to keep the
@@ -110,7 +113,7 @@ See online issues on the [module issues] page on GitHub.
 License
 -------
 
-This plugin is published under the [CeCILL v2.1] licence, compatible with
+This plugin is published under the [CeCILL v2.1] license, compatible with
 [GNU/GPL] and approved by [FSF] and [OSI].
 
 In consideration of access to the source code and the rights to copy, modify and
@@ -156,4 +159,5 @@ Omeka S has been built by [BibLibre].
 [BibLibre]: https://github.com/biblibre
 [École des Ponts ParisTech]: http://bibliotheque.enpc.fr
 [Mines ParisTech]: https://patrimoine.mines-paristech.fr
+[GitLab]: https://gitlab.com/Daniel-KM
 [Daniel-KM]: https://github.com/Daniel-KM "Daniel Berthereau"
