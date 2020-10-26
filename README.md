@@ -107,7 +107,7 @@ your archives regularly so you can roll back if needed.
 Troubleshooting
 ---------------
 
-See online issues on the [module issues] page on GitHub.
+See online issues on the [module issues] page on GitLab.
 
 
 License
@@ -136,7 +136,7 @@ altered, and that no provisions are either added or removed herefrom.
 Copyright
 ---------
 
-* Copyright Daniel Berthereau, 2012-2019 (see [Daniel-KM] on GitHub)
+* Copyright Daniel Berthereau, 2012-2019 (see [Daniel-KM] on GitLab)
 * Copyright BibLibre, 2016-2017
 
 First version of this plugin has been built for [École des Ponts ParisTech].
@@ -144,14 +144,14 @@ The upgrade for Omeka 2.0 has been built for [Mines ParisTech]. The upgrade for
 Omeka S has been built by [BibLibre].
 
 
-[Archive Repertory]: https://github.com/Daniel-KM/Omeka-S-module-ArchiveRepertory
+[Archive Repertory]: https://gitlab.com/Daniel-KM/Omeka-S-module-ArchiveRepertory
 [Omeka S]: https://omeka.org/s
 [Omeka Classic]: https://omeka.org
-[Archive Repertory plugin]: https://github.com/Daniel-KM/Omeka-plugin-ArchiveRepertory
-[test file]: https://gist.github.com/Daniel-KM/9754f18f9632423fb1a08909e9f01c04
-[module issues]: https://github.com/Daniel-KM/Omeka-S-module-ArchiveRepertory/issues
+[Archive Repertory plugin]: https://gitlab.com/Daniel-KM/Omeka-plugin-ArchiveRepertory
+[test file]: https://gist.gitlab.com/Daniel-KM/9754f18f9632423fb1a08909e9f01c04
+[module issues]: https://gitlab.com/Daniel-KM/Omeka-S-module-ArchiveRepertory/-/issues
 [Clean Url]: https://github.com/biblibre/Omeka-S-module-CleanUrl
-[IIIF Server]: https://github.com/Daniel-KM/Omeka-S-module-IiifServer
+[IIIF Server]: https://gitlab.com/Daniel-KM/Omeka-S-module-IiifServer
 [CeCILL v2.1]: https://www.cecill.info/licences/Licence_CeCILL_V2.1-en.html
 [GNU/GPL]: https://www.gnu.org/licenses/gpl-3.0.html
 [FSF]: https://www.fsf.org
@@ -160,4 +160,4 @@ Omeka S has been built by [BibLibre].
 [École des Ponts ParisTech]: http://bibliotheque.enpc.fr
 [Mines ParisTech]: https://patrimoine.mines-paristech.fr
 [GitLab]: https://gitlab.com/Daniel-KM
-[Daniel-KM]: https://github.com/Daniel-KM "Daniel Berthereau"
+[Daniel-KM]: https://gitlab.com/Daniel-KM "Daniel Berthereau"
