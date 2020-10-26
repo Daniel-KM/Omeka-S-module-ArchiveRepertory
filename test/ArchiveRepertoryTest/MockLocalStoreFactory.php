@@ -3,7 +3,7 @@ namespace ArchiveRepertoryTest;
 
 use Interop\Container\ContainerInterface;
 use Omeka\File\Store\Local;
-use Zend\ServiceManager\Factory\FactoryInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
 
 /**
  * Service factory for the Local file store.

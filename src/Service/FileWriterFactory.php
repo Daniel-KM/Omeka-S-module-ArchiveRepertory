@@ -3,7 +3,7 @@
 namespace ArchiveRepertory\Service;
 
 use Interop\Container\ContainerInterface;
-use Zend\ServiceManager\Factory\FactoryInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
 use ArchiveRepertory\File\FileWriter;
 
 class FileWriterFactory implements FactoryInterface

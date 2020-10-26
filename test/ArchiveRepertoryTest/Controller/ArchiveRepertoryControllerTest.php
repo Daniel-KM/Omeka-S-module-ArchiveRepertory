@@ -152,7 +152,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
         $this->settings()->set('archiverepertory_item_prefix', 'prefix:');
         $this->settings()->set('archiverepertory_media_convert', 'keep');
 
-        $files = new \Zend\Stdlib\Parameters([
+        $files = new \Laminas\Stdlib\Parameters([
             'file' => [
                 1 => [
                     'name' => pathinfo($this->source, PATHINFO_BASENAME),
@@ -199,7 +199,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
                     ],
                 ],
             ],
-            'csrf' => (new \Zend\Form\Element\Csrf('csrf'))->getValue(),
+            'csrf' => (new \Laminas\Form\Element\Csrf('csrf'))->getValue(),
         ]);
 
         $this->assertResponseStatusCode(302);
@@ -438,8 +438,8 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
         if ($viaApi) {
             $this->api()->update('items', $itemId, $data, $files);
         } else {
-            $data['csrf'] = (new \Zend\Form\Element\Csrf('csrf'))->getValue();
-            $this->getRequest()->setFiles(new \Zend\Stdlib\Parameters($files));
+            $data['csrf'] = (new \Laminas\Form\Element\Csrf('csrf'))->getValue();
+            $this->getRequest()->setFiles(new \Laminas\Stdlib\Parameters($files));
             $this->postDispatch("/admin/item/$itemId/edit", $data);
         }
     }

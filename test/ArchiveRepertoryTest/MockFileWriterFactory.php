@@ -2,7 +2,7 @@
 namespace ArchiveRepertoryTest;
 
 use Interop\Container\ContainerInterface;
-use Zend\ServiceManager\Factory\FactoryInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
 
 class MockFileWriterFactory implements FactoryInterface
 {

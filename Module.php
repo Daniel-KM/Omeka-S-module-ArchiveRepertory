@@ -42,9 +42,9 @@ use ArchiveRepertory\Form\ConfigForm;
 use Generic\AbstractModule;
 use Omeka\Entity\Media;
 use Omeka\Mvc\Controller\Plugin\Messenger;
-use Zend\EventManager\Event;
-use Zend\EventManager\SharedEventManagerInterface;
-use Zend\View\Renderer\PhpRenderer;
+use Laminas\EventManager\Event;
+use Laminas\EventManager\SharedEventManagerInterface;
+use Laminas\View\Renderer\PhpRenderer;
 
 class Module extends AbstractModule
 {

@@ -2,7 +2,7 @@
 
 namespace ArchiveRepertory\View\Helper;
 
-use Zend\View\Helper\AbstractHelper;
+use Laminas\View\Helper\AbstractHelper;
 use ArchiveRepertory\Helpers;
 
 class CheckUnicodeInstallation extends AbstractHelper

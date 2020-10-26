@@ -4,7 +4,7 @@ namespace ArchiveRepertory\Service;
 use ArchiveRepertory\File\FileManager;
 use Interop\Container\ContainerInterface;
 use Omeka\Service\Exception\ConfigException;
-use Zend\ServiceManager\Factory\FactoryInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
 
 class FileManagerFactory implements FactoryInterface
 {

@@ -211,7 +211,7 @@ class FileManagerTest extends OmekaControllerTestCase
             . DIRECTORY_SEPARATOR . 'uploaded_' . md5($this->source . microtime(true) . '.' . mt_rand());
         copy($this->source, $tempname);
 
-        $upload = new \Zend\Stdlib\Parameters([
+        $upload = new \Laminas\Stdlib\Parameters([
             'file' => [
                 1 => [
                     'name' => 'image_uploaded.png',
@@ -253,7 +253,7 @@ class FileManagerTest extends OmekaControllerTestCase
                     ],
                 ],
             ],
-            'csrf' => (new \Zend\Form\Element\Csrf('csrf'))->getValue(),
+            'csrf' => (new \Laminas\Form\Element\Csrf('csrf'))->getValue(),
         ]);
 
         $this->assertResponseStatusCode(302);
