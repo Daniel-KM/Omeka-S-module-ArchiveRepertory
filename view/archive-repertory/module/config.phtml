@@ -1,9 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @var \Laminas\View\Renderer\PhpRenderer $this
  * @var \ArchiveRepertory\Form\ConfigForm $form
  */
-
 $translate = $this->plugin('translate');
 ?>
 <?php $this->headStyle()->appendStyle('.inputs label { display: block; }'); ?>
@@ -27,8 +26,7 @@ $translate = $this->plugin('translate');
     $allow_unicode = $this->checkUnicodeInstallation();
     if (empty($allow_unicode)) {
         echo '<p>' . $translate('This server is compatible with Unicode.') . '</p>';
-    }
-    else {
+    } else {
         echo '<p><strong>' . $translate('Warning') . '</strong></p>';
         echo $translate('This server is not fully compatible with Unicode:') . '<br />';
         echo '<ul>';
@@ -39,7 +37,7 @@ $translate = $this->plugin('translate');
         if (isset($allow_unicode['cli'])) {
             echo '<li>' . $allow_unicode['cli'] . '<br/>';
             echo $translate('Usually, this is not a problem with this module and common modules.');
-            echo ' ' . $translate('But if you use a module that calls a program via the command line of the server, filenames issues can occur.') .'</li>';
+            echo ' ' . $translate('But if you use a module that calls a program via the command line of the server, filenames issues can occur.') . '</li>';
         }
         if (isset($allow_unicode['fs'])) {
             echo '<li>' . $allow_unicode['fs'] . '<br/>';
