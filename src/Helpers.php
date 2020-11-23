@@ -12,9 +12,9 @@ class Helpers
      * @param string $string
      * @return string
      */
-    public static function escapeshellarg($string)
+    public static function escapeshellarg($string): string
     {
-        return "'" . str_replace("'", "'\\''", $string) . "'";
+        return "'" . str_replace("'", "'\\''", (string) $string) . "'";
     }
 
     /**
@@ -23,9 +23,9 @@ class Helpers
      * @param string $path
      * @return string
      */
-    public static function basename($path)
+    public static function basename($path): string
     {
-        $path = rtrim($path, '/\\');
+        $path = rtrim((string) $path, '/\\');
         return preg_replace('/^.+[\\\\\\/]/', '', $path);
     }
 
@@ -38,9 +38,10 @@ class Helpers
      * @param int $mode Pathinfo constants.
      * @return string
      */
-    public static function pathinfo($path, $mode)
+    public static function pathinfo($path, $mode): string
     {
-        switch ($mode) {
+        $path = (string) $path;
+        switch ((int) $mode) {
             case PATHINFO_BASENAME:
                 $path = rtrim($path, '/\\');
                 $result = preg_replace('/^.+[\\\\\\/]/', '', $path);
@@ -80,7 +81,7 @@ class Helpers
      *
      * @return array of issues.
      */
-    public static function checkUnicodeInstallation()
+    public static function checkUnicodeInstallation(): array
     {
         $result = [];
 

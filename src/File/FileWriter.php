@@ -57,6 +57,8 @@ class FileWriter
     /**
      * Checks and removes a folder recursively.
      *
+     * @todo Use Omeka dependencies.
+     *
      * @param string $path Full path of the folder to remove.
      * @param bool $evenNonEmpty Remove non empty folder. This parameter can be
      * used with non standard folders.
