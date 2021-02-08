@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-26 00:00+0000\n"
-"PO-Revision-Date: 2020-10-26 00:00+0000\n"
+"POT-Creation-Date: 2021-02-08 00:00+0000\n"
+"PO-Revision-Date: 2021-02-08 00:00+0000\n"
+"Last-Translator: Daniel Berthereau <Daniel.fr@Berthereau.net>\n"
+"Language-Team: \n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Last-Translator: Daniel Berthereau <Daniel.fr@Berthereau.net>\n"
-"Language-Team: \n"
-"X-Generator: Poedit 2.4.1\n"
+"X-Generator: Poedit 2.4.2\n"
 
 #: Module.php:145
 msgid "This file is not present in the original directory : "
@@ -33,29 +33,29 @@ msgstr ""
 msgid "Cannot move files inside archive directory."
 msgstr "Impossible de déplacer les fichiers dans l’arborescence."
 
-#: src/File/FileManager.php:170
+#: src/File/FileManager.php:172
 msgid "Cannot move file inside archive directory: no filename."
 msgstr ""
 "Impossible de déplacer le fichier dans l’arborescence : pas de nom de "
 "fichier."
 
-#: src/File/FileManager.php:645
+#: src/File/FileManager.php:647
 #, php-format
 msgid "Error directory non writable: \"%s\"."
 msgstr "Erreur dossier fermé en écriture : \"%s\"."
 
-#: src/File/FileManager.php:648
+#: src/File/FileManager.php:650
 #, php-format
 msgid "Failed to create folder \"%s\": a file with the same name exists…"
 msgstr ""
 "Impossible de créer le dossier \"%s\" : un fichier existe avec le même nom…"
 
-#: src/File/FileManager.php:653
+#: src/File/FileManager.php:655
 #, php-format
 msgid "Error making directory: \"%s\"."
 msgstr "Erreur lors de la création du dossier : \"%s\"."
 
-#: src/File/FileManager.php:680
+#: src/File/FileManager.php:682
 #, php-format
 msgid ""
 "Error during move of a file from \"%s\" to \"%s\" (local dir: \"%s\"): "
@@ -64,7 +64,7 @@ msgstr ""
 "Erreur lors du déplacement d’un fichier de \"%s\" à \"%s\" (dossier local : "
 "\"%s\"): la source n’existe pas."
 
-#: src/File/FileManager.php:694
+#: src/File/FileManager.php:696
 #, php-format
 msgid "Error during move of a file from \"%s\" to \"%s\" (local dir: \"%s\")."
 msgstr ""
@@ -163,16 +163,16 @@ msgstr "Ce module requiert les modules \"%s\"."
 msgid "This module has resources that connot be installed."
 msgstr "Ce module a des ressources qui ne peuvent pas être installées."
 
-#: src/Generic/AbstractModule.php:709
+#: src/Generic/AbstractModule.php:707
 #, php-format
 msgid ""
 "The module \"%s\" was automatically deactivated because the dependencies are "
 "unavailable."
 msgstr ""
-"Le module %s\" a été automatiquement désactivé car ses dépendances ne sont "
+"Le module \"%s\" a été automatiquement désactivé car ses dépendances ne sont "
 "plus disponibles."
 
-#: view/archive-repertory/module/config.phtml:14
+#: view/archive-repertory/module/config.phtml:13
 msgid ""
 "\"Archive Repertory\" module allows to save files in a hierarchical "
 "structure and to keep original name of files."
@@ -180,12 +180,12 @@ msgstr ""
 "Le module \"Archive Repertory\" permet d’enregistrer les fichiers dans une "
 "arborescence et de conserver les noms de fichiers originaux."
 
-#: view/archive-repertory/module/config.phtml:15
+#: view/archive-repertory/module/config.phtml:14
 #, php-format
 msgid "See %s for more information."
 msgstr "Voir %s pour plus d’informations."
 
-#: view/archive-repertory/module/config.phtml:17
+#: view/archive-repertory/module/config.phtml:16
 msgid ""
 "When all options are set, files will be saved in \"files / original / "
 "item_set_identifier / item_identifier / original_filename.ext\" instead of "
@@ -195,7 +195,7 @@ msgstr ""
 "\"files / original / identifiant_collection / identifiant_item / "
 "fichier_original.ext\" au lieu de \"files / original / hashed_filename.ext\"."
 
-#: view/archive-repertory/module/config.phtml:20
+#: view/archive-repertory/module/config.phtml:19
 msgid ""
 "Currently, changes in these settings affect only new uploaded files. So, "
 "after a change, old files will continue to be stored and available as "
@@ -205,7 +205,7 @@ msgstr ""
 "les nouveaux fichiers. Les anciens fichiers restent localisés au même "
 "endroit."
 
-#: view/archive-repertory/module/config.phtml:21
+#: view/archive-repertory/module/config.phtml:20
 msgid ""
 "Nevertheless, when an item is updated, attached files will follow the "
 "current settings, so all files of a record will move and stay together "
@@ -215,7 +215,7 @@ msgstr ""
 "les paramètres en cours et tous les fichiers d’'un contenu sont déplacés et "
 "restent ensemble dans le même dossier."
 
-#: view/archive-repertory/module/config.phtml:22
+#: view/archive-repertory/module/config.phtml:21
 msgid ""
 "Currently, no check is done on the name of folders, either for items. No "
 "files will be lost if two folders have the same name, but files attached to "
@@ -226,7 +226,7 @@ msgstr ""
 "même nom, mais les fichiers attachés aux contenus seront placés ensemble "
 "dans le dossier."
 
-#: view/archive-repertory/module/config.phtml:24
+#: view/archive-repertory/module/config.phtml:23
 msgid ""
 "Omeka works fine with filenames with Unicode characters (\"é\", \"ñ\", \"Å"
 "\"…)."
@@ -234,21 +234,21 @@ msgstr ""
 "Omeka gère parfaitement les noms de fichiers avec des caractères Unicode (\"é"
 "\", \"ñ\", \"Å\"…)."
 
-#: view/archive-repertory/module/config.phtml:25
+#: view/archive-repertory/module/config.phtml:24
 msgid "If this is not the case, filenames should use only Ascii characters."
 msgstr ""
 "Si ce n’est pas le cas, les noms de fichiers doivent utiliser seulement des "
 "caractères Ascii."
 
-#: view/archive-repertory/module/config.phtml:29
+#: view/archive-repertory/module/config.phtml:28
 msgid "This server is compatible with Unicode."
 msgstr "Ce serveur est compatible avec Unicode."
 
-#: view/archive-repertory/module/config.phtml:33
+#: view/archive-repertory/module/config.phtml:31
 msgid "This server is not fully compatible with Unicode:"
 msgstr "Ce serveur n’est pas complètement compatible avec Unicode :"
 
-#: view/archive-repertory/module/config.phtml:37
+#: view/archive-repertory/module/config.phtml:35
 msgid ""
 "Use only an Ascii character as first character of your filenames or set the "
 "option \"Convert first character of filename\"."
@@ -257,13 +257,13 @@ msgstr ""
 "fichiers ou choisissez l’option \"Convertir le premier caractère du nom de "
 "fichier\"."
 
-#: view/archive-repertory/module/config.phtml:41
+#: view/archive-repertory/module/config.phtml:39
 msgid "Usually, this is not a problem with this module and common modules."
 msgstr ""
 "Généralement, ce n’est pas un problème avec ce module ou les modules "
 "courants."
 
-#: view/archive-repertory/module/config.phtml:42
+#: view/archive-repertory/module/config.phtml:40
 msgid ""
 "But if you use a module that calls a program via the command line of the "
 "server, filenames issues can occur."
@@ -271,15 +271,15 @@ msgstr ""
 "Cependant, si vous utilisez un module qui appelle un programme via le "
 "terminal du serveur, des erreurs liées aux noms de fichiers peuvent survenir."
 
-#: view/archive-repertory/module/config.phtml:46
+#: view/archive-repertory/module/config.phtml:44
 msgid "It is strongly recommanded to convert your filename to ascii."
 msgstr "Il est recommandé de convertir les noms de fichiers en ascii."
 
-#: view/archive-repertory/module/config.phtml:53
+#: view/archive-repertory/module/config.phtml:51
 msgid "Item Sets"
 msgstr "Collections"
 
-#: view/archive-repertory/module/config.phtml:55
+#: view/archive-repertory/module/config.phtml:53
 #, php-format
 msgid ""
 "If you choose to add a folder, Omeka will add subfolders for the %sfirst%s "
@@ -290,7 +290,7 @@ msgstr ""
 "collection de chaque contenu comme nom de sous-dossier, par exemple \"files/"
 "original/identifiant_collection/\"."
 
-#: view/archive-repertory/module/config.phtml:56
+#: view/archive-repertory/module/config.phtml:54
 msgid ""
 "New files will be stored inside them. Old files will be moved when item set "
 "will be updated."
@@ -298,8 +298,8 @@ msgstr ""
 "Les nouveaux fichiers sont enregistrés à l’intérieur. Les anciens fichiers "
 "sont déplacés quand la collection est mise à jour."
 
-#: view/archive-repertory/module/config.phtml:58
-#: view/archive-repertory/module/config.phtml:76
+#: view/archive-repertory/module/config.phtml:56
+#: view/archive-repertory/module/config.phtml:74
 msgid ""
 "Note that if you choose a non unique name, files will be mixed in the same "
 "folder, with higher risk of name collision."
@@ -307,7 +307,7 @@ msgstr ""
 "Notez que si vous choisissez un nom non-unique, les fichiers seront mélangés "
 "dans le même dossier, avec un risque de collision plus élevé."
 
-#: view/archive-repertory/module/config.phtml:59
+#: view/archive-repertory/module/config.phtml:57
 msgid ""
 "So recommended ids are a specific metadata, \"Dublin Core:Identifier\", "
 "\"Internal resource id\" and eventually \"Dublin Core:Title\"."
@@ -316,7 +316,7 @@ msgstr ""
 "identifiant : \"Dublin Core : Identifiant\", \"Numéro de ressource interne\" "
 "et éventuellement \"Dublin Core  : Titre\"."
 
-#: view/archive-repertory/module/config.phtml:60
+#: view/archive-repertory/module/config.phtml:58
 msgid ""
 "If this identifier does not exists, the Omeka internal item set id will be "
 "used."
@@ -324,7 +324,7 @@ msgstr ""
 "Si l’identifiant n’ existe pas, le numéro interne Omeka de la collection "
 "sera utilisé."
 
-#: view/archive-repertory/module/config.phtml:73
+#: view/archive-repertory/module/config.phtml:71
 msgid ""
 "If you choose to add a folder, Omeka will add subfolders for each item in "
 "\"files\" folders, for example \"files/original/unique_identifier/\"."
@@ -333,7 +333,7 @@ msgstr ""
 "pour chaque contenu dans les dossiers \"files/\", par exemple \"files/"
 "original/identifiant_unique/\"."
 
-#: view/archive-repertory/module/config.phtml:74
+#: view/archive-repertory/module/config.phtml:72
 msgid ""
 "New files will be stored inside them. Old files will be moved when item will "
 "be updated."
@@ -341,7 +341,7 @@ msgstr ""
 "Les nouveaux fichiers sont enregistrés à l’intérieur. Les anciens fichiers "
 "sont déplacés quand le contenu est mis à jour."
 
-#: view/archive-repertory/module/config.phtml:77
+#: view/archive-repertory/module/config.phtml:75
 msgid ""
 "So recommended ids are a specifc metadata, \"Dublin Core Identifier\", "
 "\"Internal resource id\" and eventually \"Dublin Core Title\"."
@@ -350,14 +350,14 @@ msgstr ""
 "identifiant : \"Dublin Core Identifiant\", \"Numéro de ressource interne\" "
 "et éventuellement \"Dublin Core Titre\"."
 
-#: view/archive-repertory/module/config.phtml:78
+#: view/archive-repertory/module/config.phtml:76
 msgid ""
 "If this identifier does not exists, the Omeka internal item id will be used."
 msgstr ""
 "Si l’identifiant n’existe pas, le numéro interne Omeka du contenu sera "
 "utilisé."
 
-#: view/archive-repertory/module/config.phtml:89
+#: view/archive-repertory/module/config.phtml:87
 msgid "Files"
 msgstr "Fichiers"
 
