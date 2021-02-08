@@ -166,7 +166,9 @@ class FileManager
     public function moveFilesInArchiveFolders($currentArchiveFilename, $newArchiveFilename): bool
     {
         // A quick check to avoid some errors.
-        if (trim($currentArchiveFilename) == '' || trim($newArchiveFilename) == '') {
+        $currentArchiveFilename = (string) $currentArchiveFilename;
+        $newArchiveFilename = (string) $newArchiveFilename;
+        if (trim($currentArchiveFilename) === '' || trim($newArchiveFilename) === '') {
             $msg = $this->translate('Cannot move file inside archive directory: no filename.'); // @translate
             $this->addError($msg);
             return false;
