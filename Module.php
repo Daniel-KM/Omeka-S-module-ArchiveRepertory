@@ -1,10 +1,11 @@
 <?php declare(strict_types=1);
+
 /*
  * Archive Repertory
  *
  * Keeps original names of files and put them in a hierarchical structure.
  *
- * Copyright Daniel Berthereau 2012-2020
+ * Copyright Daniel Berthereau 2012-2021
  * Copyright BibLibre, 2016
  *
  * This software is governed by the CeCILL license under French law and abiding
@@ -30,6 +31,7 @@
  * The fact that you are presently reading this means that you have had
  * knowledge of the CeCILL license and that you accept its terms.
  */
+
 namespace ArchiveRepertory;
 
 if (!class_exists(\Generic\AbstractModule::class)) {
@@ -192,10 +194,11 @@ class Module extends AbstractModule
 
             // Check if there is a directory to remove. Note: only the "/" is
             // used during the saving.
-            $filename = $media->getFilename();
+            $filename = (string) $media->getFilename();
             if (strpos($filename, '/') === false) {
                 continue;
             }
+
             $storageDir = dirname($filename);
             $fileManager->removeArchiveFolders($storageDir);
             // Whatever the result, continue the other medias.
