@@ -84,6 +84,12 @@ images or to get mime type from files. After, you have five possibilities:
 For more explanation, try the [test file].
 
 
+TODO
+----
+
+- [ ] Manage renaming during background bulk import.
+
+
 Warning
 -------
 
