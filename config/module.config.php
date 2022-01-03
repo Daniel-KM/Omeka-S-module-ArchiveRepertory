@@ -44,6 +44,7 @@ return [
             'upload' => [],
             'url' => [],
             'sideload' => [],
+            'sideload_dir' => [],
         ],
         'config' => [
             // Item sets options.

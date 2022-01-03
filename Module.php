@@ -72,7 +72,7 @@ class Module extends AbstractModule
             [$this, 'afterDeleteItem'],
             100
         );
-        
+
         $sharedEventManager->attach(
             \Omeka\Api\Adapter\MediaAdapter::class,
             'api.create.post',
@@ -118,7 +118,7 @@ class Module extends AbstractModule
             $this->afterSaveMedia($media);
         }
     }
-    
+
     /**
      * Manages folders for media.
      */
