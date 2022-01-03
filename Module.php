@@ -72,6 +72,19 @@ class Module extends AbstractModule
             [$this, 'afterDeleteItem'],
             100
         );
+        
+        $sharedEventManager->attach(
+            \Omeka\Api\Adapter\MediaAdapter::class,
+            'api.create.post',
+            [$this, 'afterUploadMedia'],
+            100
+        );
+        $sharedEventManager->attach(
+            \Omeka\Api\Adapter\MediaAdapter::class,
+            'api.update.post',
+            [$this, 'afterUploadMedia'],
+            100
+        );
     }
 
     public function getConfigForm(PhpRenderer $renderer)
@@ -104,6 +117,15 @@ class Module extends AbstractModule
         foreach ($item->getMedia() as $media) {
             $this->afterSaveMedia($media);
         }
+    }
+    
+    /**
+     * Manages folders for media.
+     */
+    public function afterUploadMedia(Event $event): void
+    {
+        $media = $event->getParam('response')->getContent();
+        $this->afterSaveMedia($media);
     }
 
     /**
