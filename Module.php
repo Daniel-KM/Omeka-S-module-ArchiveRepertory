@@ -5,7 +5,7 @@
  *
  * Keeps original names of files and put them in a hierarchical structure.
  *
- * Copyright Daniel Berthereau 2012-2021
+ * Copyright Daniel Berthereau 2012-2022
  * Copyright BibLibre, 2016
  *
  * This software is governed by the CeCILL license under French law and abiding
