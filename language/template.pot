@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-08 00:00+0000\n"
+"POT-Creation-Date: 2022-01-03 00:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,17 +17,17 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: Module.php:145
+#: Module.php:169
 msgid "This file is not present in the original directory : "
 msgstr ""
 
-#: Module.php:146
+#: Module.php:170
 msgid ""
 "There was an undetected error before storage, probably during the convert "
 "process."
 msgstr ""
 
-#: Module.php:157
+#: Module.php:181
 msgid "Cannot move files inside archive directory."
 msgstr ""
 
@@ -141,10 +141,10 @@ msgid "This module requires modules \"%s\"."
 msgstr ""
 
 #: src/Generic/AbstractModule.php:80
-msgid "This module has resources that connot be installed."
+msgid "This module has resources that cannot be installed."
 msgstr ""
 
-#: src/Generic/AbstractModule.php:707
+#: src/Generic/AbstractModule.php:725
 #, php-format
 msgid ""
 "The module \"%s\" was automatically deactivated because the dependencies are "
@@ -290,6 +290,10 @@ msgstr ""
 
 #: view/archive-repertory/module/config.phtml:87
 msgid "Files"
+msgstr ""
+
+#: data/scripts/upgrade.php:66
+msgid "The process is now working with background processes."
 msgstr ""
 
 #: src/Form/ConfigForm.php:34

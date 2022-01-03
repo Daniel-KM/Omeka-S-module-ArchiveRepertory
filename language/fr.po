@@ -7,21 +7,21 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-08 00:00+0000\n"
-"PO-Revision-Date: 2021-02-08 00:00+0000\n"
+"POT-Creation-Date: 2022-01-03 00:00+0000\n"
+"PO-Revision-Date: 2022-01-03 00:00+0000\n"
 "Last-Translator: Daniel Berthereau <Daniel.fr@Berthereau.net>\n"
 "Language-Team: \n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.2\n"
+"X-Generator: Poedit 3.0.1\n"
 
-#: Module.php:145
+#: Module.php:169
 msgid "This file is not present in the original directory : "
 msgstr "Le fichier n’ est pas présent dans le dossier original : "
 
-#: Module.php:146
+#: Module.php:170
 msgid ""
 "There was an undetected error before storage, probably during the convert "
 "process."
@@ -29,7 +29,7 @@ msgstr ""
 "Une erreur inconnue est survenue avant l’enregistrement, probablement durant "
 "la conversion."
 
-#: Module.php:157
+#: Module.php:181
 msgid "Cannot move files inside archive directory."
 msgstr "Impossible de déplacer les fichiers dans l’arborescence."
 
@@ -160,10 +160,10 @@ msgid "This module requires modules \"%s\"."
 msgstr "Ce module requiert les modules \"%s\"."
 
 #: src/Generic/AbstractModule.php:80
-msgid "This module has resources that connot be installed."
+msgid "This module has resources that cannot be installed."
 msgstr "Ce module a des ressources qui ne peuvent pas être installées."
 
-#: src/Generic/AbstractModule.php:707
+#: src/Generic/AbstractModule.php:725
 #, php-format
 msgid ""
 "The module \"%s\" was automatically deactivated because the dependencies are "
@@ -360,6 +360,10 @@ msgstr ""
 #: view/archive-repertory/module/config.phtml:87
 msgid "Files"
 msgstr "Fichiers"
+
+#: data/scripts/upgrade.php:66
+msgid "The process is now working with background processes."
+msgstr "Le process fonctionne désormais également en arrière-plan."
 
 #: src/Form/ConfigForm.php:34
 msgid "Item set folder"
