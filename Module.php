@@ -109,7 +109,7 @@ class Module extends AbstractModule
     }
 
     /**
-     * Manages folders for attached files of items.
+     * Manage folders for attached files of items.
      */
     public function afterSaveItem(Event $event): void
     {
@@ -120,7 +120,7 @@ class Module extends AbstractModule
     }
 
     /**
-     * Manages folders for media.
+     * Manage folders for media.
      */
     public function afterUploadMedia(Event $event): void
     {

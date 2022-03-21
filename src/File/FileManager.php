@@ -720,10 +720,8 @@ class FileManager
     protected function getFileWriter(): FileWriter
     {
         static $fileWriter;
-        if (is_null($fileWriter)) {
-            $fileWriter = $this->services->get('ArchiveRepertory\FileWriter');
-        }
-        return $fileWriter;
+        return $fileWriter
+            ?? $fileWriter = $this->services->get('ArchiveRepertory\FileWriter');
     }
 
     protected function getSetting($name)
