@@ -88,7 +88,8 @@ TODO
 ----
 
 - [x] Manage renaming during background bulk import.
-- [ ] Manage renaming data for module Image Server.
+- [ ] Manage renaming data for module Image Server (if still needed).
+- [ ] Remove code used to bypass mbstrings function, that are default now via composer.
 
 
 Warning
