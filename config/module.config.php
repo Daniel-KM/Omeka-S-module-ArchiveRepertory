@@ -1,7 +1,14 @@
 <?php declare(strict_types=1);
+
 namespace ArchiveRepertory;
 
 return [
+    'service_manager' => [
+        'factories' => [
+            'ArchiveRepertory\FileManager' => Service\FileManagerFactory::class,
+            'ArchiveRepertory\FileWriter' => Service\FileWriterFactory::class,
+        ],
+    ],
     'view_manager' => [
         'template_path_stack' => [
             dirname(__DIR__) . '/view',
@@ -15,12 +22,6 @@ return [
     'form_elements' => [
         'factories' => [
             Form\ConfigForm::class => Service\Form\ConfigFormFactory::class,
-        ],
-    ],
-    'service_manager' => [
-        'factories' => [
-            'ArchiveRepertory\FileManager' => Service\FileManagerFactory::class,
-            'ArchiveRepertory\FileWriter' => Service\FileWriterFactory::class,
         ],
     ],
     'translator' => [

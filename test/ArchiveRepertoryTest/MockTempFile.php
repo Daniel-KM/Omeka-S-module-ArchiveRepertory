@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 namespace ArchiveRepertoryTest;
 
 use Omeka\File\TempFile;
@@ -23,7 +24,7 @@ class MockTempFile extends TempFile
             $thumbnailer->setOptions($this->thumbnailManager->getThumbnailerOptions());
             $typeConfig = $this->thumbnailManager->getTypeConfig();
             foreach (array_keys($typeConfig) as $type) {
-                $destinationTempPath = tempnam(sys_get_temp_dir(), 'omk_ar_');
+                $destinationTempPath = @tempnam(sys_get_temp_dir(), 'omk_ar_');
                 copy($this->testpath, $destinationTempPath);
                 $tempPaths[$type] = $destinationTempPath;
             }

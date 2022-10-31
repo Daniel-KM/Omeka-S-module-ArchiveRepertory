@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 namespace ArchiveRepertoryTest;
 
 use Omeka\Entity\Item;
@@ -78,9 +79,9 @@ class FileManagerTest extends OmekaControllerTestCase
         $this->file = $file;
 
         $itemSet = $api->create('item_sets', [])->getContent();
-        $this->itemSet = $entityManager->find('Omeka\Entity\ItemSet', $itemSet->id());
+        $this->itemSet = $entityManager->find(\Omeka\Entity\ItemSet::class, $itemSet->id());
         $item = $api->create('items', ['o:item_set' => [$itemSet->id()]])->getContent();
-        $this->item = $entityManager->find('Omeka\Entity\Item', $item->id());
+        $this->item = $entityManager->find(\Omeka\Entity\Item::class, $item->id());
 
         $media = new Media;
         $media->setItem($this->item);
@@ -267,7 +268,7 @@ class FileManagerTest extends OmekaControllerTestCase
         $item = $this->api()->read('items', $itemId)->getContent();
         $medias = $item->media();
         $mediaId = $medias[0]->id();
-        $media = $this->entityManager->find('Omeka\Entity\Media', $mediaId);
+        $media = $this->entityManager->find(\Omeka\Entity\Media::class, $mediaId);
         $this->assertEquals(
             $itemId . '/' . 'image_uploaded',
             $media->getStorageId());

@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 namespace ArchiveRepertory\Service\Form;
 
 use ArchiveRepertory\Form\ConfigForm;

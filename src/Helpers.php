@@ -87,14 +87,14 @@ class Helpers
 
         // First character check.
         $filename = 'éfilé.jpg';
-        if (basename($filename) != $filename) {
+        if (basename($filename) !== $filename) {
             $result['ascii'] = sprintf('An error occurs when testing function "basename(\'%s\') : %s".', $filename, basename($filename));
         }
 
         // Command line via web check (comparaison with a trivial function).
         $filename = "File~1 -À-é-ï-ô-ů-ȳ-Ø-ß-ñ-Ч-Ł-'.Test.png";
 
-        if (escapeshellarg($filename) != self::escapeshellarg($filename)) {
+        if (escapeshellarg($filename) !== self::escapeshellarg($filename)) {
             $result['cli'] = sprintf('An error occurs when testing function "escapeshellarg(\'%s\')".', $filename);
         }
 

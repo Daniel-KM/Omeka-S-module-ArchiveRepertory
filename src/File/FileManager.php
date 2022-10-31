@@ -479,7 +479,7 @@ class FileManager
     {
         $string = strip_tags((string) $string);
         // The first character is a space and the last one is a no-break space.
-        $string = trim($string, ' /\\?<>:*%|"\'`&; ');
+        $string = trim($string, ' /\\?<>:*%|"\'`&; ');
         $string = str_replace(['(', '{'], '[', $string);
         $string = str_replace([')', '}'], ']', $string);
         $string = preg_replace('/[[:cntrl:]\/\\\?<>:\*\%\|\"\'`\&\;#+\^\$\s]/', ' ', $string);

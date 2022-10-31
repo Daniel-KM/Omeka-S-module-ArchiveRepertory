@@ -3,11 +3,13 @@
  * @var \Laminas\View\Renderer\PhpRenderer $this
  * @var \ArchiveRepertory\Form\ConfigForm $form
  */
-$translate = $this->plugin('translate');
-?>
-<?php $this->headStyle()->appendStyle('.inputs label { display: block; }'); ?>
 
-<?php $form->prepare(); ?>
+$translate = $this->plugin('translate');
+
+$this->headStyle()->appendStyle('.inputs label { display: block; }');
+
+$form->prepare();
+?>
 
 <?php
     echo $translate('"Archive Repertory" module allows to save files in a hierarchical structure and to keep original name of files.') . '<br />';
@@ -48,48 +50,48 @@ $translate = $this->plugin('translate');
 ?>
 
 <fieldset id="fieldset-item-sets">
-    <legend><?php echo $translate('Item Sets'); ?></legend>
+    <legend><?= $translate('Item Sets') ?></legend>
     <p class="explanation">
-        <?php echo sprintf($translate('If you choose to add a folder, Omeka will add subfolders for the %sfirst%s item set of each item in "files" folders, for example "files/original/item_set_identifier/".'), '<strong><em><u>', '</u></em></strong>'); ?>
-        <?php echo $translate('New files will be stored inside them. Old files will be moved when item set will be updated.'); ?>
+        <?= sprintf($translate('If you choose to add a folder, Omeka will add subfolders for the %1$sfirst%2$s item set of each item in "files" folders, for example "files/original/item_set_identifier/".'), '<strong><em><u>', '</u></em></strong>') ?>
+        <?= $translate('New files will be stored inside them. Old files will be moved when item set will be updated.') ?>
         <br />
-        <?php echo $translate('Note that if you choose a non unique name, files will be mixed in the same folder, with higher risk of name collision.'); ?>
-        <?php echo $translate('So recommended ids are a specific metadata, "Dublin Core:Identifier", "Internal resource id" and eventually "Dublin Core:Title".'); ?>
-        <?php echo $translate('If this identifier does not exists, the Omeka internal item set id will be used.'); ?>
+        <?= $translate('Note that if you choose a non unique name, files will be mixed in the same folder, with higher risk of name collision.') ?>
+        <?= $translate('So recommended ids are a specific metadata, "Dublin Core:Identifier", "Internal resource id" and eventually "Dublin Core:Title".') ?>
+        <?= $translate('If this identifier does not exists, the Omeka internal item set id will be used.') ?>
     </p>
 
-    <?php echo $this->formRow($form->get('archiverepertory_item_set_folder')); ?>
+    <?= $this->formRow($form->get('archiverepertory_item_set_folder')) ?>
     <div id="item-set-prefix-convert-wrapper">
-        <?php echo $this->formRow($form->get('archiverepertory_item_set_prefix')); ?>
-        <?php echo $this->formRow($form->get('archiverepertory_item_set_convert')); ?>
+        <?= $this->formRow($form->get('archiverepertory_item_set_prefix')) ?>
+        <?= $this->formRow($form->get('archiverepertory_item_set_convert')) ?>
     </div>
 </fieldset>
 
 <fieldset id="fieldset-items">
-    <legend><?php echo $translate('Items'); ?></legend>
+    <legend><?= $translate('Items') ?></legend>
     <p class="explanation">
-        <?php echo $translate('If you choose to add a folder, Omeka will add subfolders for each item in "files" folders, for example "files/original/unique_identifier/".'); ?>
-        <?php echo $translate('New files will be stored inside them. Old files will be moved when item will be updated.'); ?>
+        <?= $translate('If you choose to add a folder, Omeka will add subfolders for each item in "files" folders, for example "files/original/unique_identifier/".') ?>
+        <?= $translate('New files will be stored inside them. Old files will be moved when item will be updated.') ?>
         <br />
-        <?php echo $translate("Note that if you choose a non unique name, files will be mixed in the same folder, with higher risk of name collision."); ?>
-        <?php echo $translate('So recommended ids are a specifc metadata, "Dublin Core Identifier", "Internal resource id" and eventually "Dublin Core Title".'); ?>
-        <?php echo $translate('If this identifier does not exists, the Omeka internal item id will be used.'); ?>
+        <?= $translate("Note that if you choose a non unique name, files will be mixed in the same folder, with higher risk of name collision.") ?>
+        <?= $translate('So recommended ids are a specifc metadata, "Dublin Core Identifier", "Internal resource id" and eventually "Dublin Core Title".') ?>
+        <?= $translate('If this identifier does not exists, the Omeka internal item id will be used.') ?>
     </p>
 
-    <?php echo $this->formRow($form->get('archiverepertory_item_folder')); ?>
+    <?= $this->formRow($form->get('archiverepertory_item_folder')) ?>
     <div id="item-prefix-convert-wrapper">
-        <?php echo $this->formRow($form->get('archiverepertory_item_prefix')); ?>
-        <?php echo $this->formRow($form->get('archiverepertory_item_convert')); ?>
+        <?= $this->formRow($form->get('archiverepertory_item_prefix')) ?>
+        <?= $this->formRow($form->get('archiverepertory_item_convert')) ?>
     </div>
 </fieldset>
 
 <fieldset id="fieldset-files">
-    <legend><?php echo $translate('Files'); ?></legend>
+    <legend><?= $translate('Files') ?></legend>
 
-    <?php echo $this->formRow($form->get('archiverepertory_media_convert')); ?>
+    <?= $this->formRow($form->get('archiverepertory_media_convert')) ?>
 </fieldset>
 
-<?php echo $this->formRow($form->get('csrf')); ?>
+<?= $this->formRow($form->get('csrf')) ?>
 
 <script type="text/javascript">
 (function($) {
