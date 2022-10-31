@@ -347,7 +347,10 @@ class FileManager
         // Check the name.
         $checkName = $name;
         $fileWriter = $this->getFileWriter();
-        $existingFilepaths = $fileWriter->glob($folder . DIRECTORY_SEPARATOR . $checkName . '{.*,.,\,,}', GLOB_BRACE);
+        // The name should already be sanitized, but escape all glob patterns
+        // anyway, starting with "\".
+        $existingFilepaths = $fileWriter->glob(str_replace(['\\', '[', ']', '{', '}', '?', '*'], ['\\\\', '\[', '\]', '\{', '\}', '\?', '\*'], $folder . DIRECTORY_SEPARATOR . $checkName) . '{.*,.,\,,}', GLOB_BRACE);
+
         // Check if the filename exists.
         if (empty($existingFilepaths)) {
             // Nothing to do.
@@ -363,7 +366,7 @@ class FileManager
         // Check folder for file with any extension or without any extension.
         else {
             $i = 0;
-            while ($fileWriter->glob($folder . DIRECTORY_SEPARATOR . $checkName . '{.*,.,\,,}', GLOB_BRACE)) {
+            while ($fileWriter->glob(str_replace(['\\', '[', ']', '{', '}', '?', '*'], ['\\\\', '\[', '\]', '\{', '\}', '\?', '\*'], $folder . DIRECTORY_SEPARATOR . $checkName) . '{.*,.,\,,}', GLOB_BRACE)) {
                 $checkName = $name . '.' . ++$i;
             }
         }
