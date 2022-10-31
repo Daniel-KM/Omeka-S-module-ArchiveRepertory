@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-01-03 00:00+0000\n"
+"POT-Creation-Date: 2022-10-31 00:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -35,260 +35,272 @@ msgstr ""
 msgid "Cannot move file inside archive directory: no filename."
 msgstr ""
 
-#: src/File/FileManager.php:647
+#: src/File/FileManager.php:650
 #, php-format
 msgid "Error directory non writable: \"%s\"."
 msgstr ""
 
-#: src/File/FileManager.php:650
+#: src/File/FileManager.php:653
 #, php-format
 msgid "Failed to create folder \"%s\": a file with the same name exists…"
 msgstr ""
 
-#: src/File/FileManager.php:655
+#: src/File/FileManager.php:658
 #, php-format
 msgid "Error making directory: \"%s\"."
 msgstr ""
 
-#: src/File/FileManager.php:682
+#: src/File/FileManager.php:685
 #, php-format
 msgid ""
 "Error during move of a file from \"%s\" to \"%s\" (local dir: \"%s\"): "
 "source does not exist."
 msgstr ""
 
-#: src/File/FileManager.php:696
+#: src/File/FileManager.php:699
 #, php-format
 msgid "Error during move of a file from \"%s\" to \"%s\" (local dir: \"%s\")."
 msgstr ""
 
-#: src/Form/ConfigForm.php:51 src/Form/ConfigForm.php:82
+#: src/Form/ConfigForm.php:52 src/Form/ConfigForm.php:83
 msgid ""
 "Choose a prefix, for example \"item:\", \"record:\" or \"doc:\", to select "
 "the appropriate metadata when they are multiple."
 msgstr ""
 
-#: src/Form/ConfigForm.php:52 src/Form/ConfigForm.php:83
+#: src/Form/ConfigForm.php:53 src/Form/ConfigForm.php:84
 msgid "Let empty to use simply the first one."
 msgstr ""
 
-#: src/Form/ConfigForm.php:58
+#: src/Form/ConfigForm.php:59
 msgid "Convert item set names"
 msgstr ""
 
-#: src/Form/ConfigForm.php:89
+#: src/Form/ConfigForm.php:90
 msgid "Convert item names"
 msgstr ""
 
-#: src/Form/ConfigForm.php:93
+#: src/Form/ConfigForm.php:94
 msgid "Convert file names"
 msgstr ""
 
-#: src/Form/ConfigForm.php:95
+#: src/Form/ConfigForm.php:96
 msgid "Hash filename (default Omeka)"
 msgstr ""
 
-#: src/Form/ConfigForm.php:145
+#: src/Form/ConfigForm.php:146
 msgid ""
 "Depending on your server and your needs, to avoid some potential issues, you "
 "can choose or not to rename every folder to its Ascii equivalent (or only "
 "the first letter)."
 msgstr ""
 
-#: src/Form/ConfigForm.php:146
+#: src/Form/ConfigForm.php:147
 msgid ""
 "In all cases, names are sanitized: \"/\", \"\\\", \"|\" and other special "
 "characters are removed."
 msgstr ""
 
-#: src/Form/ConfigForm.php:153
+#: src/Form/ConfigForm.php:154
 msgid ""
 "(not recommended because your server is not fully compatible with Unicode)"
 msgstr ""
 
-#: src/Form/ConfigForm.php:156
+#: src/Form/ConfigForm.php:157
 msgid "(recommended because your server is not fully compatible with Unicode)"
 msgstr ""
 
-#: src/Form/ConfigForm.php:160
+#: src/Form/ConfigForm.php:161
 msgid "Keep name as it"
 msgstr ""
 
-#: src/Form/ConfigForm.php:161
+#: src/Form/ConfigForm.php:162
 msgid "Convert spaces to underscores"
 msgstr ""
 
-#: src/Form/ConfigForm.php:162
+#: src/Form/ConfigForm.php:163
 msgid "Convert first letter only"
 msgstr ""
 
-#: src/Form/ConfigForm.php:163
+#: src/Form/ConfigForm.php:164
 msgid "Convert first letter and spaces"
 msgstr ""
 
-#: src/Form/ConfigForm.php:164
-msgid "Full conversion to Ascii."
+#: src/Form/ConfigForm.php:165
+msgid "Full conversion to Ascii"
 msgstr ""
 
-#: src/Generic/AbstractModule.php:66
+#: src/Generic/AbstractModule.php:80 src/Generic/AbstractModule.php:774
 #, php-format
 msgid "This module requires the module \"%s\"."
 msgstr ""
 
-#: src/Generic/AbstractModule.php:73
+#: src/Generic/AbstractModule.php:87
 #, php-format
 msgid "This module requires modules \"%s\"."
 msgstr ""
 
-#: src/Generic/AbstractModule.php:80
+#: src/Generic/AbstractModule.php:94
 msgid "This module has resources that cannot be installed."
 msgstr ""
 
-#: src/Generic/AbstractModule.php:725
+#: src/Generic/AbstractModule.php:101
+msgid ""
+"This module cannot install its tables, because they exist already. Try to "
+"remove them first."
+msgstr ""
+
+#: src/Generic/AbstractModule.php:362
+#, php-format
+msgid "The module removed tables \"%s\" from a previous broken install."
+msgstr ""
+
+#: src/Generic/AbstractModule.php:769
+#, php-format
+msgid "This module requires the module \"%1$s\", version %2$s or above."
+msgstr ""
+
+#: src/Generic/AbstractModule.php:866
 #, php-format
 msgid ""
 "The module \"%s\" was automatically deactivated because the dependencies are "
 "unavailable."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:13
+#: view/archive-repertory/module/config.phtml:15
 msgid ""
 "\"Archive Repertory\" module allows to save files in a hierarchical "
 "structure and to keep original name of files."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:14
+#: view/archive-repertory/module/config.phtml:16
 #, php-format
 msgid "See %s for more information."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:16
+#: view/archive-repertory/module/config.phtml:18
 msgid ""
 "When all options are set, files will be saved in \"files / original / "
 "item_set_identifier / item_identifier / original_filename.ext\" instead of "
 "\"files / original / hashed_filename.ext\"."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:19
+#: view/archive-repertory/module/config.phtml:21
 msgid ""
 "Currently, changes in these settings affect only new uploaded files. So, "
 "after a change, old files will continue to be stored and available as "
 "previously."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:20
+#: view/archive-repertory/module/config.phtml:22
 msgid ""
 "Nevertheless, when an item is updated, attached files will follow the "
 "current settings, so all files of a record will move and stay together "
 "inside the same folder."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:21
+#: view/archive-repertory/module/config.phtml:23
 msgid ""
 "Currently, no check is done on the name of folders, either for items. No "
 "files will be lost if two folders have the same name, but files attached to "
 "a record will be mixed in this folder."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:23
+#: view/archive-repertory/module/config.phtml:25
 msgid ""
-"Omeka works fine with filenames with Unicode characters (\"é\", \"ñ\", \"Å"
-"\"…)."
+"Omeka works fine with filenames with Unicode characters (\"é\", \"ñ\", "
+"\"Å\"…)."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:24
+#: view/archive-repertory/module/config.phtml:26
 msgid "If this is not the case, filenames should use only Ascii characters."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:28
+#: view/archive-repertory/module/config.phtml:30
 msgid "This server is compatible with Unicode."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:31
+#: view/archive-repertory/module/config.phtml:33
 msgid "This server is not fully compatible with Unicode:"
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:35
+#: view/archive-repertory/module/config.phtml:37
 msgid ""
 "Use only an Ascii character as first character of your filenames or set the "
 "option \"Convert first character of filename\"."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:39
+#: view/archive-repertory/module/config.phtml:41
 msgid "Usually, this is not a problem with this module and common modules."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:40
+#: view/archive-repertory/module/config.phtml:42
 msgid ""
 "But if you use a module that calls a program via the command line of the "
 "server, filenames issues can occur."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:44
+#: view/archive-repertory/module/config.phtml:46
 msgid "It is strongly recommanded to convert your filename to ascii."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:51
-msgid "Item Sets"
-msgstr ""
-
-#: view/archive-repertory/module/config.phtml:53
+#: view/archive-repertory/module/config.phtml:55
 #, php-format
 msgid ""
-"If you choose to add a folder, Omeka will add subfolders for the %sfirst%s "
-"item set of each item in \"files\" folders, for example \"files/original/"
-"item_set_identifier/\"."
+"If you choose to add a folder, Omeka will add subfolders for the "
+"%1$sfirst%2$s item set of each item in \"files\" folders, for example "
+"\"files/original/item_set_identifier/\"."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:54
+#: view/archive-repertory/module/config.phtml:56
 msgid ""
 "New files will be stored inside them. Old files will be moved when item set "
 "will be updated."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:56
-#: view/archive-repertory/module/config.phtml:74
+#: view/archive-repertory/module/config.phtml:58
+#: view/archive-repertory/module/config.phtml:76
 msgid ""
 "Note that if you choose a non unique name, files will be mixed in the same "
 "folder, with higher risk of name collision."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:57
+#: view/archive-repertory/module/config.phtml:59
 msgid ""
 "So recommended ids are a specific metadata, \"Dublin Core:Identifier\", "
 "\"Internal resource id\" and eventually \"Dublin Core:Title\"."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:58
+#: view/archive-repertory/module/config.phtml:60
 msgid ""
 "If this identifier does not exists, the Omeka internal item set id will be "
 "used."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:71
+#: view/archive-repertory/module/config.phtml:73
 msgid ""
 "If you choose to add a folder, Omeka will add subfolders for each item in "
 "\"files\" folders, for example \"files/original/unique_identifier/\"."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:72
+#: view/archive-repertory/module/config.phtml:74
 msgid ""
 "New files will be stored inside them. Old files will be moved when item will "
 "be updated."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:75
+#: view/archive-repertory/module/config.phtml:77
 msgid ""
 "So recommended ids are a specifc metadata, \"Dublin Core Identifier\", "
 "\"Internal resource id\" and eventually \"Dublin Core Title\"."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:76
+#: view/archive-repertory/module/config.phtml:78
 msgid ""
 "If this identifier does not exists, the Omeka internal item id will be used."
 msgstr ""
 
-#: view/archive-repertory/module/config.phtml:87
+#: view/archive-repertory/module/config.phtml:89
 msgid "Files"
 msgstr ""
 
@@ -296,31 +308,31 @@ msgstr ""
 msgid "The process is now working with background processes."
 msgstr ""
 
-#: src/Form/ConfigForm.php:34
+#: src/Form/ConfigForm.php:35
 msgid "Item set folder"
 msgstr ""
 
-#: src/Form/ConfigForm.php:35 src/Form/ConfigForm.php:66
+#: src/Form/ConfigForm.php:36 src/Form/ConfigForm.php:67
 msgid "Don’t add folder"
 msgstr ""
 
-#: src/Form/ConfigForm.php:37 src/Form/ConfigForm.php:68
+#: src/Form/ConfigForm.php:38 src/Form/ConfigForm.php:69
 msgid "Internal numeric id of the resource"
 msgstr ""
 
-#: src/Form/ConfigForm.php:50
+#: src/Form/ConfigForm.php:51
 msgid "Prefix for item sets"
 msgstr ""
 
-#: src/Form/ConfigForm.php:65
+#: src/Form/ConfigForm.php:66
 msgid "Item folder"
 msgstr ""
 
-#: src/Service/FileManagerFactory.php:16
+#: src/Service/FileManagerFactory.php:17
 msgid "Missing thumbnails configuration"
 msgstr ""
 
-#: src/Service/FileManagerFactory.php:20
+#: src/Service/FileManagerFactory.php:21
 msgid "Missing Archive Repertory ingesters configuration"
 msgstr ""
 

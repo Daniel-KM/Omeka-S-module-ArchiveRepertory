@@ -162,7 +162,7 @@ class ConfigForm extends Form implements TranslatorAwareInterface
             'spaces' => $this->translate('Convert spaces to underscores'), // @translate
             'first letter' => $this->translate('Convert first letter only'), // @translate
             'first and spaces' => $this->translate('Convert first letter and spaces'), // @translate
-            'full' => $this->translate('Full conversion to Ascii.') . $recommended, // @translate
+            'full' => $this->translate('Full conversion to Ascii') . $recommended, // @translate
          ]);
 
         return $radio;
