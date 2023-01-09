@@ -19,7 +19,7 @@ class FileWriter
         return is_dir((string) $path);
     }
 
-    public function is_writable($path): bool
+    public function is_writeable($path): bool
     {
         return is_writeable((string) $path);
     }
@@ -73,7 +73,7 @@ class FileWriter
             && file_exists($path)
             && is_dir($path)
             && is_readable($path)
-            && is_writable($path)
+            && is_writeable($path)
             && ($evenNonEmpty || count(array_diff(@scandir($path), ['.', '..'])) == 0)
         ) {
             return $this->recursiveRemoveDir($path);

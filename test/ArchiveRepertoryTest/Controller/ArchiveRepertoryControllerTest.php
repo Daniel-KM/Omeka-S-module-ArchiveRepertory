@@ -236,7 +236,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
 
     protected function getMessengerFirstSuccessMessage()
     {
-        $messenger = new Messenger();
+        $messenger = $this->getServiceLocator()->get('ControllerPluginManager')->get('messenger');
         $messages = $messenger->get();
         return $messages[Messenger::SUCCESS][0];
     }

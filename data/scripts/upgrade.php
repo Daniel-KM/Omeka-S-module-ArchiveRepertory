@@ -2,29 +2,28 @@
 
 namespace ArchiveRepertory;
 
-use Omeka\Mvc\Controller\Plugin\Messenger;
 use Omeka\Stdlib\Message;
 
 /**
  * @var Module $this
- * @var \Laminas\ServiceManager\ServiceLocatorInterface $serviceLocator
+ * @var \Laminas\ServiceManager\ServiceLocatorInterface $services
  * @var string $oldVersion
  * @var string $newVersion
  */
-$services = $serviceLocator;
 
 /**
- * @var \Omeka\Settings\Settings $settings
  * @var \Doctrine\DBAL\Connection $connection
  * @var array $config
- * @var array $config
  * @var \Omeka\Mvc\Controller\Plugin\Api $api
+ * @var \Omeka\Settings\Settings $settings
+ * @var \Omeka\Mvc\Controller\Plugin\Messenger $messenger
  */
-$settings = $services->get('Omeka\Settings');
 $connection = $services->get('Omeka\Connection');
 $config = require dirname(__DIR__, 2) . '/config/module.config.php';
 $plugins = $services->get('ControllerPluginManager');
 $api = $plugins->get('api');
+$settings = $services->get('Omeka\Settings');
+$messenger = $plugins->get('messenger');
 
 if (version_compare($oldVersion, '3.14.0', '<')) {
     $defaultSettings = $config[strtolower(__NAMESPACE__)]['config'];
@@ -61,7 +60,6 @@ if (version_compare($oldVersion, '3.15.3', '<')) {
 }
 
 if (version_compare($oldVersion, '3.15.14.3', '<')) {
-    $messenger = new Messenger();
     $message = new Message(
         'The process is now working with background processes.' // @translate
     );

@@ -23,7 +23,7 @@ class MockFileWriter
         return in_array($path, $this->files);
     }
 
-    public function is_writable($path)
+    public function is_writeable($path)
     {
         return true;
     }

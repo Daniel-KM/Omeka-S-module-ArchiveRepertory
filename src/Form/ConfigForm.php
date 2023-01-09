@@ -16,16 +16,6 @@ class ConfigForm extends Form implements TranslatorAwareInterface
 
     protected $local_storage = '';
 
-    public function setLocalStorage($local_storage): void
-    {
-        $this->local_storage = $local_storage;
-    }
-
-    public function setSettings($settings): void
-    {
-        $this->settings = $settings;
-    }
-
     public function init(): void
     {
         $this->add([
@@ -166,5 +156,17 @@ class ConfigForm extends Form implements TranslatorAwareInterface
          ]);
 
         return $radio;
+    }
+
+    public function setLocalStorage($local_storage): self
+    {
+        $this->local_storage = $local_storage;
+        return $this;
+    }
+
+    public function setSettings($settings): self
+    {
+        $this->settings = $settings;
+        return $this;
     }
 }

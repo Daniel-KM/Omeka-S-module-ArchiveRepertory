@@ -6,7 +6,6 @@ use Laminas\ServiceManager\ServiceLocatorInterface;
 use Omeka\Entity\Media;
 use Omeka\Entity\Resource;
 use Omeka\File\Exception\RuntimeException;
-use Omeka\Mvc\Controller\Plugin\Messenger;
 use Omeka\Stdlib\Message;
 
 class FileManager
@@ -644,7 +643,7 @@ class FileManager
         if ($fileWriter->fileExists($path)) {
             if ($fileWriter->is_dir($path)) {
                 @chmod($path, 0775);
-                if ($fileWriter->is_writable($path)) {
+                if ($fileWriter->is_writeable($path)) {
                     return true;
                 }
                 $msg = $this->translate('Error directory non writable: "%s".', $path);
@@ -740,7 +739,7 @@ class FileManager
 
     protected function addError($msg): void
     {
-        $messenger = new Messenger();
+        $messenger = $this->services->get('ControllerPluginManager')->get('messenger');
         $messenger->addError($msg);
     }
 }
