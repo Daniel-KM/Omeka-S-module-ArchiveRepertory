@@ -44,6 +44,10 @@ return [
             // See the module Image Server for a full example.
             'upload' => [],
             'url' => [],
+            // Module EasyAdmin.
+            'bulk_upload' => [],
+            'bulk_uploaded' => [],
+            // Module FileSideload.
             'sideload' => [],
             'sideload_dir' => [],
         ],
