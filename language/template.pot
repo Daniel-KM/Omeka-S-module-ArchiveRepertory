@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-31 00:00+0000\n"
+"POT-Creation-Date: 2024-04-29 00:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,154 +17,9 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: Module.php:169
-msgid "This file is not present in the original directory : "
-msgstr ""
-
-#: Module.php:170
-msgid ""
-"There was an undetected error before storage, probably during the convert "
-"process."
-msgstr ""
-
-#: Module.php:181
-msgid "Cannot move files inside archive directory."
-msgstr ""
-
-#: src/File/FileManager.php:172
-msgid "Cannot move file inside archive directory: no filename."
-msgstr ""
-
-#: src/File/FileManager.php:650
+#: data/scripts/upgrade.php:31 Module.php:70
 #, php-format
-msgid "Error directory non writable: \"%s\"."
-msgstr ""
-
-#: src/File/FileManager.php:653
-#, php-format
-msgid "Failed to create folder \"%s\": a file with the same name exists…"
-msgstr ""
-
-#: src/File/FileManager.php:658
-#, php-format
-msgid "Error making directory: \"%s\"."
-msgstr ""
-
-#: src/File/FileManager.php:685
-#, php-format
-msgid ""
-"Error during move of a file from \"%s\" to \"%s\" (local dir: \"%s\"): "
-"source does not exist."
-msgstr ""
-
-#: src/File/FileManager.php:699
-#, php-format
-msgid "Error during move of a file from \"%s\" to \"%s\" (local dir: \"%s\")."
-msgstr ""
-
-#: src/Form/ConfigForm.php:52 src/Form/ConfigForm.php:83
-msgid ""
-"Choose a prefix, for example \"item:\", \"record:\" or \"doc:\", to select "
-"the appropriate metadata when they are multiple."
-msgstr ""
-
-#: src/Form/ConfigForm.php:53 src/Form/ConfigForm.php:84
-msgid "Let empty to use simply the first one."
-msgstr ""
-
-#: src/Form/ConfigForm.php:59
-msgid "Convert item set names"
-msgstr ""
-
-#: src/Form/ConfigForm.php:90
-msgid "Convert item names"
-msgstr ""
-
-#: src/Form/ConfigForm.php:94
-msgid "Convert file names"
-msgstr ""
-
-#: src/Form/ConfigForm.php:96
-msgid "Hash filename (default Omeka)"
-msgstr ""
-
-#: src/Form/ConfigForm.php:146
-msgid ""
-"Depending on your server and your needs, to avoid some potential issues, you "
-"can choose or not to rename every folder to its Ascii equivalent (or only "
-"the first letter)."
-msgstr ""
-
-#: src/Form/ConfigForm.php:147
-msgid ""
-"In all cases, names are sanitized: \"/\", \"\\\", \"|\" and other special "
-"characters are removed."
-msgstr ""
-
-#: src/Form/ConfigForm.php:154
-msgid ""
-"(not recommended because your server is not fully compatible with Unicode)"
-msgstr ""
-
-#: src/Form/ConfigForm.php:157
-msgid "(recommended because your server is not fully compatible with Unicode)"
-msgstr ""
-
-#: src/Form/ConfigForm.php:161
-msgid "Keep name as it"
-msgstr ""
-
-#: src/Form/ConfigForm.php:162
-msgid "Convert spaces to underscores"
-msgstr ""
-
-#: src/Form/ConfigForm.php:163
-msgid "Convert first letter only"
-msgstr ""
-
-#: src/Form/ConfigForm.php:164
-msgid "Convert first letter and spaces"
-msgstr ""
-
-#: src/Form/ConfigForm.php:165
-msgid "Full conversion to Ascii"
-msgstr ""
-
-#: src/Generic/AbstractModule.php:80 src/Generic/AbstractModule.php:774
-#, php-format
-msgid "This module requires the module \"%s\"."
-msgstr ""
-
-#: src/Generic/AbstractModule.php:87
-#, php-format
-msgid "This module requires modules \"%s\"."
-msgstr ""
-
-#: src/Generic/AbstractModule.php:94
-msgid "This module has resources that cannot be installed."
-msgstr ""
-
-#: src/Generic/AbstractModule.php:101
-msgid ""
-"This module cannot install its tables, because they exist already. Try to "
-"remove them first."
-msgstr ""
-
-#: src/Generic/AbstractModule.php:362
-#, php-format
-msgid "The module removed tables \"%s\" from a previous broken install."
-msgstr ""
-
-#: src/Generic/AbstractModule.php:769
-#, php-format
-msgid "This module requires the module \"%1$s\", version %2$s or above."
-msgstr ""
-
-#: src/Generic/AbstractModule.php:866
-#, php-format
-msgid ""
-"The module \"%s\" was automatically deactivated because the dependencies are "
-"unavailable."
+msgid "The module %1$s should be upgraded to version %2$s or later."
 msgstr ""
 
 #: view/archive-repertory/module/config.phtml:15
@@ -304,28 +159,147 @@ msgstr ""
 msgid "Files"
 msgstr ""
 
-#: data/scripts/upgrade.php:66
+#: data/scripts/upgrade.php:73
 msgid "The process is now working with background processes."
 msgstr ""
 
-#: src/Form/ConfigForm.php:35
+#: Module.php:194
+msgid ""
+"This file is not present in the original directory: {filepath}. There was an "
+"undetected error before storage, probably during the convert process."
+msgstr ""
+
+#: Module.php:208
+msgid "Cannot move files inside archive directory."
+msgstr ""
+
+#: src/Form/ConfigForm.php:25
 msgid "Item set folder"
 msgstr ""
 
-#: src/Form/ConfigForm.php:36 src/Form/ConfigForm.php:67
+#: src/Form/ConfigForm.php:26 src/Form/ConfigForm.php:55
 msgid "Don’t add folder"
 msgstr ""
 
-#: src/Form/ConfigForm.php:38 src/Form/ConfigForm.php:69
+#: src/Form/ConfigForm.php:28 src/Form/ConfigForm.php:57
 msgid "Internal numeric id of the resource"
 msgstr ""
 
-#: src/Form/ConfigForm.php:51
+#: src/Form/ConfigForm.php:41
 msgid "Prefix for item sets"
 msgstr ""
 
-#: src/Form/ConfigForm.php:66
+#: src/Form/ConfigForm.php:42 src/Form/ConfigForm.php:71
+msgid ""
+"Choose a prefix, for example \"item:\", \"record:\" or \"doc:\", to select "
+"the appropriate metadata when they are multiple. Let empty to use simply the "
+"first one."
+msgstr ""
+
+#: src/Form/ConfigForm.php:47
+msgid "Convert item set names"
+msgstr ""
+
+#: src/Form/ConfigForm.php:54
 msgid "Item folder"
+msgstr ""
+
+#: src/Form/ConfigForm.php:76
+msgid "Convert item names"
+msgstr ""
+
+#: src/Form/ConfigForm.php:79
+msgid "Convert file names"
+msgstr ""
+
+#: src/Form/ConfigForm.php:81
+msgid "Hash filename (default Omeka)"
+msgstr ""
+
+#: src/Form/ConfigForm.php:90
+msgid "Keep parenthesis when sanitizing filename"
+msgstr ""
+
+#: src/Form/ConfigForm.php:91
+msgid ""
+"This option is not recommended, because it is less secure and not url-"
+"compliant."
+msgstr ""
+
+#: src/Form/ConfigForm.php:139
+msgid ""
+"Depending on your server and your needs, to avoid some potential issues, you "
+"can choose or not to rename every folder to its Ascii equivalent (or only "
+"the first letter). In all cases, names are sanitized: \"/\", \"\\\", \"|\" "
+"and other special characters are removed."
+msgstr ""
+
+#: src/Form/ConfigForm.php:144
+msgid ""
+"Keep name as it (not recommended because your server is not fully compatible "
+"with Unicode)"
+msgstr ""
+
+#: src/Form/ConfigForm.php:145
+msgid "Keep name as it"
+msgstr ""
+
+#: src/Form/ConfigForm.php:146
+msgid "Convert spaces to underscores"
+msgstr ""
+
+#: src/Form/ConfigForm.php:147
+msgid "Convert first letter only"
+msgstr ""
+
+#: src/Form/ConfigForm.php:148
+msgid "Convert first letter and spaces"
+msgstr ""
+
+#: src/Form/ConfigForm.php:150
+msgid ""
+"Full conversion to Ascii (recommended because your server is not fully "
+"compatible with Unicode)"
+msgstr ""
+
+#: src/File/FileManager.php:141
+msgid ""
+"Cannot move file \"{file}\" inside archive directory (\"{dir}\"): filepath "
+"longer than 190 characters."
+msgstr ""
+
+#: src/File/FileManager.php:146
+msgid ""
+"Cannot move file \"{file}\" inside archive directory: filepath longer than "
+"190 characters."
+msgstr ""
+
+#: src/File/FileManager.php:189
+msgid "Cannot move file inside archive directory: no filename."
+msgstr ""
+
+#: src/File/FileManager.php:421
+msgid "Unallowed resource type \"{resource_name}\"."
+msgstr ""
+
+#: src/File/FileManager.php:670
+msgid "Error directory non writeable: \"{dir}\"."
+msgstr ""
+
+#: src/File/FileManager.php:682
+msgid "Error making directory: \"dir\"."
+msgstr ""
+
+#: src/File/FileManager.php:709
+msgid ""
+"Error during move of a file from \"{source}\" to \"{destination}\" (local "
+"dir: \"{dir}\"): source does not exist."
+msgstr ""
+
+#: src/File/FileManager.php:720
+msgid ""
+"Error during move of a file from \"{source}\" to \"{destination}\" (local "
+"dir: \"{dir}\")."
 msgstr ""
 
 #: src/Service/FileManagerFactory.php:17
@@ -334,18 +308,4 @@ msgstr ""
 
 #: src/Service/FileManagerFactory.php:21
 msgid "Missing Archive Repertory ingesters configuration"
-msgstr ""
-
-#: src/File/FileManager.php:125
-#, php-format
-msgid ""
-"Cannot move file \"%s\" inside archive directory (\"%s\"): filepath longer "
-"than 190 characters."
-msgstr ""
-
-#: src/File/FileManager.php:129
-#, php-format
-msgid ""
-"Cannot move file \"%s\" inside archive directory: filepath longer than 190 "
-"characters."
 msgstr ""
