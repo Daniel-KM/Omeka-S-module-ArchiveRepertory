@@ -479,8 +479,9 @@ class FileManager
         $string = strip_tags((string) $string);
         // The first character is a space and the last one is a no-break space.
         $string = trim($string, ' /\\?<>:*%|"\'`&; ');
-        $string = str_replace(['(', '{'], '[', $string);
-        $string = str_replace([')', '}'], ']', $string);
+        $string = $this->settings->get('archiverepertory_keep_parenthesis')
+            ? str_replace(['{', '}'], ['[', ']'], $string)
+            : str_replace(['(', '{', '}', ')'], ['[', '[', ']', ']'], $string);
         $string = preg_replace('/[[:cntrl:]\/\\\?<>:\*\%\|\"\'`\&\;#+\^\$\s]/', ' ', $string);
         return substr(preg_replace('/\s+/', ' ', $string), -180);
     }
@@ -532,7 +533,9 @@ class FileManager
         $string = preg_replace('#\&([A-Za-z])(?:acute|cedil|circ|grave|lig|orn|ring|slash|th|tilde|uml|caron)\;#', '\1', $string);
         $string = preg_replace('#\&([A-Za-z]{2})(?:lig)\;#', '\1', $string);
         $string = preg_replace('#\&[^;]+\;#', '_', $string);
-        $string = preg_replace('/[^[:alnum:]\[\]_\-\.#~@+:]/', '_', $string);
+        $string = $this->settings->get('archiverepertory_keep_parenthesis')
+            ? preg_replace('/[^[:alnum:]\[\]_\-\.\(\)#~@+:]/', '_', $string)
+            : preg_replace('/[^[:alnum:]\[\]_\-\.#~@+:]/', '_', $string);
         return substr(preg_replace('/_+/', '_', $string), -180);
     }
 

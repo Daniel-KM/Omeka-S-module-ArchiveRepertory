@@ -60,6 +60,9 @@ return [
 
             // Media options.
             'archiverepertory_media_convert' => 'full',
+
+            // Other options.
+            'archiverepertory_keep_parenthesis' => false,
         ],
     ],
 ];

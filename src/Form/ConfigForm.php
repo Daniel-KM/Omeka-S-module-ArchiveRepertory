@@ -87,6 +87,15 @@ class ConfigForm extends Form implements TranslatorAwareInterface
         $radios->setValueOptions($valueOptions);
         $this->add($radios);
 
+        $this->add([
+            'name' => 'archiverepertory_keep_parenthesis',
+            'type' => Element\Text::class,
+            'options' => [
+                'label' => 'Keep parenthesis when sanitizing filename', // @translate
+                'info' => 'This option is not recommended, because it is less secure and not url-compliant.', // @translate
+            ],
+        ]);
+
         $inputFilter = $this->getInputFilter();
         $inputFilter->add([
             'name' => 'archiverepertory_item_set_folder',
@@ -114,6 +123,10 @@ class ConfigForm extends Form implements TranslatorAwareInterface
         ]);
         $inputFilter->add([
             'name' => 'archiverepertory_media_convert',
+            'required' => false,
+        ]);
+        $inputFilter->add([
+            'name' => 'archiverepertory_keep_parenthesis',
             'required' => false,
         ]);
     }
