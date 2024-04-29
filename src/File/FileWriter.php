@@ -84,20 +84,27 @@ class FileWriter
     /**
      * Removes directories recursively.
      *
-     * @param string $dirPath Directory name.
+     * @param string $dirPath Absolute directory name.
      * @return bool
      */
     protected function recursiveRemoveDir($dirPath): bool
     {
-        $files = array_diff(scandir((string) $dirPath), ['.', '..']);
+        $dirPath = (string) $dirPath;
+        if (!file_exists($dirPath)) {
+            return true;
+        }
+        if (strpos($dirPath, '/..') !== false || substr($dirPath, 0, 1) !== '/') {
+            return false;
+        }
+        $files = array_diff(scandir($dirPath), ['.', '..']);
         foreach ($files as $file) {
-            $path = $dirPath . DIRECTORY_SEPARATOR . $file;
+            $path = $dirPath . '/' . $file;
             if (is_dir($path)) {
                 $this->recursiveRemoveDir($path);
             } else {
                 unlink($path);
             }
         }
-        return rmdir((string) $dirPath);
+        return rmdir($dirPath);
     }
 }
