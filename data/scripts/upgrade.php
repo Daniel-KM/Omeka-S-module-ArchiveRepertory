@@ -21,6 +21,7 @@ $connection = $services->get('Omeka\Connection');
 $plugins = $services->get('ControllerPluginManager');
 $api = $plugins->get('api');
 $settings = $services->get('Omeka\Settings');
+$translate = $plugins->get('translate');
 $messenger = $plugins->get('messenger');
 
 $localConfig = include dirname(__DIR__, 2) . '/config/module.config.php';
