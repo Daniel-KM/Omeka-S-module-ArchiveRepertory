@@ -22,14 +22,17 @@ class FileManagerFactory implements FactoryInterface
         }
 
         $basePath = $services->get('Config')['file_store']['local']['base_path'] ?: (OMEKA_PATH . '/files');
-        $thumbnailTypes = $config['thumbnails']['types'];
         $ingesters = $config['archiverepertory']['ingesters'];
+        $thumbnailTypes = $config['thumbnails']['types'];
 
         return new FileManager(
-            $thumbnailTypes,
+            $services->get('ArchiveRepertory\FileWriter'),
+            $services->get('ControllerPluginManager')->get('messenger'),
+            $services->get('Omeka\Settings'),
+            $services->get('MvcTranslator'),
             $basePath,
             $ingesters,
-            $services
+            $thumbnailTypes
         );
     }
 }

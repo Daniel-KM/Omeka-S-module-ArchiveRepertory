@@ -2,18 +2,36 @@
 
 namespace ArchiveRepertory\File;
 
-use Laminas\ServiceManager\ServiceLocatorInterface;
+use Common\Stdlib\PsrMessage;
+use Laminas\Mvc\I18n\Translator;
 use Omeka\Entity\Media;
 use Omeka\Entity\Resource;
 use Omeka\File\Exception\RuntimeException;
-use Omeka\Stdlib\Message;
+use Omeka\Mvc\Controller\Plugin\Messenger;
+use Omeka\Settings\Settings;
 
 class FileManager
 {
     /**
-     * @var array
+     * @var \ArchiveRepertory\File\FileWriter
      */
-    protected $thumbnailTypes;
+    protected $fileWriter;
+
+    /**
+     *
+     * @var \Omeka\Mvc\Controller\Plugin\Messenger
+     */
+    protected $messenger;
+
+    /**
+     * @var Omeka\Settings\Settings
+     */
+    protected $settings;
+
+    /**
+     * @var \Laminas\Mvc\I18n\Translator
+     */
+    protected $translator;
 
     /**
      * @var string
@@ -26,9 +44,9 @@ class FileManager
     protected $ingesters;
 
     /**
-     * @var ServiceLocatorInterface
+     * @var array
      */
-    protected $services;
+    protected $thumbnailTypes;
 
     /**
      * List of types (original, derivative and others), paths and extensions.
@@ -37,24 +55,22 @@ class FileManager
      */
     protected $derivatives;
 
-    /**
-     * Set configuration during construction.
-     *
-     * @param array $thumbnailTypes
-     * @param string $basePath
-     * @param array $ingesters
-     * @param ServiceLocatorInterface $services
-     */
     public function __construct(
-        array $thumbnailTypes,
-        $basePath,
+        FileWriter $fileWriter,
+        Messenger $messenger,
+        Settings $settings,
+        Translator $translator,
+        string $basePath,
         array $ingesters,
-        ServiceLocatorInterface $services
+        array $thumbnailTypes
     ) {
-        $this->thumbnailTypes = $thumbnailTypes;
+        $this->fileWriter = $fileWriter;
+        $this->messenger = $messenger;
+        $this->settings = $settings;
+        $this->translator = $translator;
         $this->basePath = $basePath;
         $this->ingesters = $ingesters;
-        $this->services = $services;
+        $this->thumbnailTypes = $thumbnailTypes;
     }
 
     /**
@@ -95,7 +111,7 @@ class FileManager
         $folderName = ($itemSetFolderName ? $itemSetFolderName . '/' : '')
             . ($itemFolderName ? $itemFolderName . '/' : '');
 
-        $mediaConvert = $this->getSetting('archiverepertory_media_convert');
+        $mediaConvert = $this->settings->get('archiverepertory_media_convert');
         if ($mediaConvert == 'hash') {
             $storageName = $this->hashStorageName($media);
             $storageId = $storageName;
@@ -121,15 +137,16 @@ class FileManager
         }
         if (mb_strlen($newStorageId) > 190) {
             if ($folderName) {
-                $msg = new Message('Cannot move file "%s" inside archive directory ("%s"): filepath longer than 190 characters.', // @translate
-                    pathinfo($media->getSource(), PATHINFO_BASENAME), $folderName
-                );
+                $this->messenger->addError(new PsrMessage(
+                    'Cannot move file "{file}" inside archive directory ("{dir}"): filepath longer than 190 characters.', // @translate
+                    ['file' => pathinfo($media->getSource(), PATHINFO_BASENAME), 'dir' => $folderName]
+                    ));
             } else {
-                $msg = new Message('Cannot move file "%s" inside archive directory: filepath longer than 190 characters.', // @translate
-                    pathinfo($media->getSource(), PATHINFO_BASENAME)
-                );
+                $this->messenger->addError(new PsrMessage(
+                    'Cannot move file "{file}" inside archive directory: filepath longer than 190 characters.', // @translate
+                    ['file' => pathinfo($media->getSource(), PATHINFO_BASENAME)]
+                ));
             }
-            $this->addError($msg);
             return $storageId;
         }
 
@@ -168,8 +185,9 @@ class FileManager
         $currentArchiveFilename = (string) $currentArchiveFilename;
         $newArchiveFilename = (string) $newArchiveFilename;
         if (trim($currentArchiveFilename) === '' || trim($newArchiveFilename) === '') {
-            $msg = $this->translate('Cannot move file inside archive directory: no filename.'); // @translate
-            $this->addError($msg);
+            $this->messenger->addError(new PsrMessage(
+                'Cannot move file inside archive directory: no filename.' // @translate
+            ));
             return false;
         }
 
@@ -190,7 +208,6 @@ class FileManager
         $newBase = $this->getBaseName($newArchiveFilename);
 
         // If any, move derivative files using Omeka API.
-        $fileWriter = $this->getFileWriter();
         $derivatives = $this->getDerivatives();
         foreach ($derivatives as $derivative) {
             foreach ($derivative['extension'] as $extension) {
@@ -212,7 +229,7 @@ class FileManager
                 // errors when moving something without derivatives: here, we
                 // don't know anything of the media.
                 $checkpath = $this->concatWithSeparator($derivative['path'], $currentDerivativeFilename);
-                if (!$fileWriter->fileExists($checkpath)) {
+                if (!$this->fileWriter->fileExists($checkpath)) {
                     continue;
                 }
                 $this->moveFile($currentDerivativeFilename, $newDerivativeFilename, $derivative['path']);
@@ -238,7 +255,6 @@ class FileManager
             return;
         }
 
-        $fileWriter = $this->getFileWriter();
         foreach ($this->getDerivatives() as $derivative) {
             $folderPath = $this->concatWithSeparator($derivative['path'], $archiveFolder);
             // Of course, the main storage dir is not removed (in the case there
@@ -248,7 +264,7 @@ class FileManager
                 // that case. The directory may be not empty in multiple cases,
                 // for example when the config changes or when there is a
                 // duplicate name.
-                $fileWriter->removeDir($folderPath, false);
+                $this->fileWriter->removeDir($folderPath, false);
             }
         }
     }
@@ -345,10 +361,9 @@ class FileManager
 
         // Check the name.
         $checkName = $name;
-        $fileWriter = $this->getFileWriter();
         // The name should already be sanitized, but escape all glob patterns
         // anyway, starting with "\".
-        $existingFilepaths = $fileWriter->glob(str_replace(['\\', '[', ']', '{', '}', '?', '*'], ['\\\\', '\[', '\]', '\{', '\}', '\?', '\*'], $folder . DIRECTORY_SEPARATOR . $checkName) . '{.*,.,\,,}', GLOB_BRACE);
+        $existingFilepaths = $this->fileWriter->glob(str_replace(['\\', '[', ']', '{', '}', '?', '*'], ['\\\\', '\[', '\]', '\{', '\}', '\?', '\*'], $folder . DIRECTORY_SEPARATOR . $checkName) . '{.*,.,\,,}', GLOB_BRACE);
 
         // Check if the filename exists.
         if (empty($existingFilepaths)) {
@@ -365,7 +380,7 @@ class FileManager
         // Check folder for file with any extension or without any extension.
         else {
             $i = 0;
-            while ($fileWriter->glob(str_replace(['\\', '[', ']', '{', '}', '?', '*'], ['\\\\', '\[', '\]', '\{', '\}', '\?', '\*'], $folder . DIRECTORY_SEPARATOR . $checkName) . '{.*,.,\,,}', GLOB_BRACE)) {
+            while ($this->fileWriter->glob(str_replace(['\\', '[', ']', '{', '}', '?', '*'], ['\\\\', '\[', '\]', '\{', '\}', '\?', '\*'], $folder . DIRECTORY_SEPARATOR . $checkName) . '{.*,.,\,,}', GLOB_BRACE)) {
                 $checkName = $name . '.' . ++$i;
             }
         }
@@ -382,7 +397,7 @@ class FileManager
      * @param Resource $resource
      * @return string Unique sanitized name of the resource.
      */
-    protected function getResourceFolderName(Resource $resource = null): string
+    protected function getResourceFolderName(?Resource $resource = null): string
     {
         // This check may allow to make Archive Repertory more compatible.
         if (is_null($resource)) {
@@ -392,17 +407,20 @@ class FileManager
         $resourceName = $resource->getResourceName();
         switch ($resourceName) {
             case 'item_sets':
-                $folder = $this->getSetting('archiverepertory_item_set_folder');
-                $prefix = $this->getSetting('archiverepertory_item_set_prefix');
-                $convert = $this->getSetting('archiverepertory_item_set_convert');
+                $folder = $this->settings->get('archiverepertory_item_set_folder');
+                $prefix = $this->settings->get('archiverepertory_item_set_prefix');
+                $convert = $this->settings->get('archiverepertory_item_set_convert');
                 break;
             case 'items':
-                $folder = $this->getSetting('archiverepertory_item_folder');
-                $prefix = $this->getSetting('archiverepertory_item_prefix');
-                $convert = $this->getSetting('archiverepertory_item_convert');
+                $folder = $this->settings->get('archiverepertory_item_folder');
+                $prefix = $this->settings->get('archiverepertory_item_prefix');
+                $convert = $this->settings->get('archiverepertory_item_convert');
                 break;
             default:
-                throw new RuntimeException('[ArchiveRepertory] ' . new Message('Unallowed resource type "%s".', $resourceName));
+                throw new RuntimeException('[ArchiveRepertory] ' . (new PsrMessage(
+                    'Unallowed resource type "{resource_name}".', // @translate
+                    ['resource_name' => $resourceName]
+                ))->setTranslator($this->translator));
         }
 
         if (empty($folder)) {
@@ -642,23 +660,28 @@ class FileManager
             return true;
         }
 
-        $fileWriter = $this->getFileWriter();
-        if ($fileWriter->fileExists($path)) {
-            if ($fileWriter->is_dir($path)) {
+        if ($this->fileWriter->fileExists($path)) {
+            if ($this->fileWriter->is_dir($path)) {
                 @chmod($path, 0775);
-                if ($fileWriter->is_writeable($path)) {
+                if ($this->fileWriter->is_writeable($path)) {
                     return true;
                 }
-                $msg = $this->translate('Error directory non writable: "%s".', $path);
-                throw new RuntimeException('[ArchiveRepertory] ' . $msg);
+                throw new RuntimeException('[ArchiveRepertory] ' . (new PsrMessage(
+                    'Error directory non writeable: "{dir}".', // @translate
+                    ['dir' => $path]
+                ))->setTranslator($this->translator));
             }
-            $msg = $this->translate('Failed to create folder "%s": a file with the same name exists…', $path);
-            throw new RuntimeException('[ArchiveRepertory] ' . $msg);
+            throw new RuntimeException('[ArchiveRepertory] ' . (new PsrMessage(
+                'Failed to create folder "dir": a file with the same name exists…', // @ŧranslate
+                ['dir' => $path]
+            ))->setTranslator($this->translator));
         }
 
-        if (!$fileWriter->mkdir($path, 0775, true)) {
-            $msg = sprintf($this->translate('Error making directory: "%s".'), $path);
-            throw new RuntimeException('[ArchiveRepertory] ' . $msg);
+        if (!$this->fileWriter->mkdir($path, 0775, true)) {
+            throw new RuntimeException('[ArchiveRepertory] ' . (new PsrMessage(
+                'Error making directory: "dir".', // @translate
+                ['dir' => $path]
+            ))->setTranslator($this->translator));
         }
         @chmod($path, 0775);
 
@@ -675,74 +698,31 @@ class FileManager
      */
     protected function moveFile($source, $destination, $path = ''): bool
     {
-        $fileWriter = $this->getFileWriter();
         $realSource = $this->concatWithSeparator($path, $source);
         $realDestination = $this->concatWithSeparator($path, $destination);
-        if ($fileWriter->fileExists($realDestination)) {
+        if ($this->fileWriter->fileExists($realDestination)) {
             return true;
         }
 
-        if (!$fileWriter->fileExists($realSource)) {
-            $msg = sprintf(
-                $this->translate('Error during move of a file from "%s" to "%s" (local dir: "%s"): source does not exist.'),
-                $source,
-                $destination,
-                $path
-            );
-            $this->addError($msg);
+        if (!$this->fileWriter->fileExists($realSource)) {
+            $this->messenger->addError(new PsrMessage(
+                'Error during move of a file from "{source}" to "{destination}" (local dir: "{dir}"): source does not exist.', // @translate
+                ['source' => $source, 'destination' => $destination, 'dir' => $path]
+            ));
             return false;
         }
 
         try {
             $result = $this->createFolder(dirname($realDestination));
-            $result = $fileWriter->rename($realSource, $realDestination);
+            $result = $this->fileWriter->rename($realSource, $realDestination);
         } catch (\Exception $e) {
-            $msg = sprintf(
-                $this->translate('Error during move of a file from "%s" to "%s" (local dir: "%s").'),
-                $source,
-                $destination,
-                $path
-            );
-            $this->addError($msg);
+            $this->messenger->addError(new PsrMessage(
+                'Error during move of a file from "{source}" to "{destination}" (local dir: "{dir}").', // @translate
+                ['source' => $source, 'destination' => $destination, 'dir' => $path]
+            ));
             return false;
         }
 
         return $result;
-    }
-
-    /**
-     * @param string $string
-     * @return string
-     */
-    protected function translate($string): string
-    {
-        return $this->services->get('MvcTranslator')->translate($string);
-    }
-
-    /**
-     * @return \ArchiveRepertory\File\FileWriter
-     */
-    protected function getFileWriter(): FileWriter
-    {
-        static $fileWriter;
-        return $fileWriter
-            ?? $fileWriter = $this->services->get('ArchiveRepertory\FileWriter');
-    }
-
-    protected function getSetting($name)
-    {
-        // Tests don't pass with a static settings.
-        // static $settings;
-        // if (is_null($settings)) {
-        //     $settings = $this->services->get('Omeka\Settings');
-        // }
-        // return $settings->get($name);
-        return $this->services->get('Omeka\Settings')->get($name);
-    }
-
-    protected function addError($msg): void
-    {
-        $messenger = $this->services->get('ControllerPluginManager')->get('messenger');
-        $messenger->addError($msg);
     }
 }
