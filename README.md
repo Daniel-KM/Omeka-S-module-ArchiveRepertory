@@ -28,9 +28,9 @@ because files of different items or collections will be mixed in the same
 folder.
 
 Currently, when a collection is moved, files are not moved until each item is
-updated. The files are still available. This avoids a long process. To update
-each folder, it’s possible to batch edit items without any operation, so a job
-will be launched and files will be moved automatically.
+updated. The files are still available. It avoids a long process. To update each
+folder, it is possible to batch edit items without any operation, so a job will
+be launched and files will be moved automatically.
 
 This module can be used with [Clean Url] for an improved user experience and for
 a better search engine optimization.
@@ -39,7 +39,26 @@ a better search engine optimization.
 Installation
 ------------
 
-Uncompress files and rename module folder "ArchiveRepertory".
+See general end user documentation for [installing a module].
+
+The module [Common] must be installed first.
+
+You may use the release zip to install it or clone the source via git.
+
+* From the zip
+
+Download the last release [ArchiveRepertory.zip] from the list of releases and
+uncompress it in the `modules` directory.
+
+* From the source and for development
+
+If the module was installed from the source, rename the name of the folder of
+the module to `ArchiveRepertory`.
+
+```sh
+cd modules
+git clone https://gitlab.com/Daniel-KM/Omeka-S-module-ArchiveRepertory ArchiveRepertory
+```
 
 Then install it like any other Omeka module and follow the config instructions.
 
@@ -90,6 +109,7 @@ TODO
 - [x] Manage renaming during background bulk import.
 - [ ] Manage renaming data for module Image Server (if still needed).
 - [ ] Remove code used to bypass mbstrings function, that are default now via composer.
+- [ ] Make compatible with bulk upload.
 
 
 Warning
@@ -133,7 +153,7 @@ altered, and that no provisions are either added or removed herefrom.
 Copyright
 ---------
 
-* Copyright Daniel Berthereau, 2012-2022 (see [Daniel-KM] on GitLab)
+* Copyright Daniel Berthereau, 2012-2024 (see [Daniel-KM] on GitLab)
 * Copyright BibLibre, 2016-2017
 
 First version of this plugin has been built for [École des Ponts ParisTech].
@@ -149,6 +169,7 @@ the same features as the original plugin.
 [Amazon S3]: https://github.com/Daniel-KM/Omeka-S-module-AmazonS3
 [test file]: https://gist.github.com/Daniel-KM/9754f18f9632423fb1a08909e9f01c04
 [module issues]: https://gitlab.com/Daniel-KM/Omeka-S-module-ArchiveRepertory/-/issues
+[Common]: https://github.com/biblibre/Omeka-S-module-Common
 [Clean Url]: https://github.com/biblibre/Omeka-S-module-CleanUrl
 [IIIF Server]: https://gitlab.com/Daniel-KM/Omeka-S-module-IiifServer
 [CeCILL v2.1]: https://www.cecill.info/licences/Licence_CeCILL_V2.1-en.html
