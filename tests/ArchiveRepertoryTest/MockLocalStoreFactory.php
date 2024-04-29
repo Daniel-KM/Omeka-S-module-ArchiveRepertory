@@ -18,14 +18,15 @@ class MockLocalStoreFactory implements FactoryInterface
      */
     public function __invoke(ContainerInterface $serviceLocator, $requestedName, array $options = null)
     {
+        /** @see \Omeka\Service\File\Store\LocalFactory::__invoke() */
         $logger = $serviceLocator->get('Omeka\Logger');
         $viewHelpers = $serviceLocator->get('ViewHelperManager');
         $serverUrl = $viewHelpers->get('ServerUrl');
         $basePath = $viewHelpers->get('BasePath');
 
+        $baseUri = $serverUrl($basePath('files'));
         $basePath = $serviceLocator->get('Config')['file_store']['local']['base_path'] ?: (OMEKA_PATH . '/files');
-        $webPath = $serverUrl($basePath('files'));
-        $fileStore = new Local($basePath, $webPath, $logger);
-        return $fileStore;
+
+        return new Local($basePath, $baseUri, $logger);
     }
 }

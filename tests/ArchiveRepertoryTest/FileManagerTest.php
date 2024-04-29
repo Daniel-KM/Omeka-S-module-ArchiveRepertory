@@ -125,13 +125,12 @@ class FileManagerTest extends OmekaControllerTestCase
         $services->setFactory('ArchiveRepertory\FileManager', \ArchiveRepertoryTest\MockFileManagerFactory::class);
         $services->setAllowOverride(false);
 
-        $validator = $services->get('Omeka\File\Validator');
         $uploader = $services->get('Omeka\File\Uploader');
         $tempFileFactory = $services->get('Omeka\File\TempFileFactory');
 
         $mediaIngesterManager = $services->get('Omeka\Media\Ingester\Manager');
         $mediaIngesterManager->setAllowOverride(true);
-        $mockUpload = new MockUpload($validator, $uploader);
+        $mockUpload = new MockUpload($uploader);
         $mockUpload->setTempFileFactory($tempFileFactory);
         $mediaIngesterManager->setService('upload', $mockUpload);
         $mediaIngesterManager->setAllowOverride(false);
@@ -255,6 +254,7 @@ class FileManagerTest extends OmekaControllerTestCase
                 ],
             ],
             'csrf' => (new \Laminas\Form\Element\Csrf('csrf'))->getValue(),
+            'values_json' => '{}',
         ]);
 
         $this->assertResponseStatusCode(302);

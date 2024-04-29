@@ -11,15 +11,18 @@ class MockFileManagerFactory implements FactoryInterface
     {
         $config = $services->get('Config');
 
-        $thumbnailTypes = $config['thumbnails']['types'];
-        $basePath = $config['file_store']['local']['base_path'] ?: (OMEKA_PATH . '/files');
+        $basePath = $services->get('Config')['file_store']['local']['base_path'] ?: (OMEKA_PATH . '/files');
         $ingesters = $config['archiverepertory']['ingesters'];
+        $thumbnailTypes = $config['thumbnails']['types'];
 
         return new MockFileManager(
-            $thumbnailTypes,
+            $services->get('ArchiveRepertory\FileWriter'),
+            $services->get('ControllerPluginManager')->get('messenger'),
+            $services->get('Omeka\Settings'),
+            $services->get('MvcTranslator'),
             $basePath,
             $ingesters,
-            $services
+            $thumbnailTypes
         );
     }
 }

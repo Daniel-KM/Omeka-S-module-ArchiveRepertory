@@ -26,6 +26,8 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
 
     protected $source;
     protected $tempname;
+    protected $tempname1;
+    protected $tempname2;
 
     public function setUp(): void
     {
@@ -92,13 +94,12 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
         $services->setFactory('ArchiveRepertory\FileManager', \ArchiveRepertoryTest\MockFileManagerFactory::class);
         $services->setAllowOverride(false);
 
-        $validator = $services->get('Omeka\File\Validator');
         $uploader = $services->get('Omeka\File\Uploader');
         $tempFileFactory = $services->get('Omeka\File\TempFileFactory');
 
         $mediaIngesterManager = $services->get('Omeka\Media\Ingester\Manager');
         $mediaIngesterManager->setAllowOverride(true);
-        $mockUpload = new MockUpload($validator, $uploader);
+        $mockUpload = new MockUpload($uploader);
         $mockUpload->setTempFileFactory($tempFileFactory);
         $mediaIngesterManager->setService('upload', $mockUpload);
         $mediaIngesterManager->setAllowOverride(false);
@@ -201,6 +202,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
                 ],
             ],
             'csrf' => (new \Laminas\Form\Element\Csrf('csrf'))->getValue(),
+            'values_json' => '{}',
         ]);
 
         $this->assertResponseStatusCode(302);
@@ -413,6 +415,7 @@ class ArchiveRepertoryControllerTest extends OmekaControllerTestCase
                     ],
                 ],
             ]),
+            'values_json' => '{}',
         ];
 
         $files = [
