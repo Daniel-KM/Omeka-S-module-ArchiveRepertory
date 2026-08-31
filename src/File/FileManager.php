@@ -150,6 +150,7 @@ class FileManager
                     ['file' => pathinfo($media->getSource(), PATHINFO_BASENAME)]
                 );
             $this->messenger->addError($message);
+            $this->logger->err($message);
             return $storageId;
         }
 
@@ -168,6 +169,7 @@ class FileManager
                 ['file' => pathinfo($media->getSource(), PATHINFO_BASENAME)]
             );
             $this->messenger->addError($message);
+            $this->logger->err($message);
             return $storageId;
         }
 
