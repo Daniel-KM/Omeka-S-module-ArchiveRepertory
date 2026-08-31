@@ -1,11 +1,43 @@
 {
-    "require-dev": {
-        "biblibre/omeka-s-test-helper": "dev-master"
+    "name": "daniel-km/omeka-s-module-archive-repertory",
+    "type": "omeka-s-module",
+    "description": "Module for Omeka S: Keeps original names of imported files and put them in a hierarchical structure (collection / item / files) in order to get readable urls for files and to avoid an overloading of the file server.",
+    "keywords": [
+        "Omeka S",
+        "Omeka S module",
+        "hierarchical archive",
+        "file",
+        "path",
+        "import"
+    ],
+    "license": "CECILL-2.1",
+    "homepage": "https://gitlab.com/Daniel-KM/Omeka-S-module-ArchiveRepertory",
+    "authors": [
+        {
+            "name": "Daniel Berthereau",
+            "email": "Daniel.packagist@Berthereau.net"
+        }
+    ],
+    "support": {
+        "issues": "https://gitlab.com/Daniel-KM/Omeka-S-module-ArchiveRepertory/-/issues",
+        "forum": "https://forum.omeka.org/"
+    },
+    "_require (not set until Omeka S merges PR #2432)": {
+        "omeka/omeka-s": "^3.0 || ^4.0",
+        "daniel-km/omeka-s-module-common": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "ArchiveRepertory\\": "src/"
+        }
     },
     "autoload-dev": {
         "psr-4": {
-            "ArchiveRepertoryTest\\": "test/ArchiveRepertoryTest"
+            "ArchiveRepertoryTest\\": "tests/ArchiveRepertoryTest/"
         }
+    },
+    "extra": {
+        "installer-name": "ArchiveRepertory",
+        "configurable": true
     }
-
 }
