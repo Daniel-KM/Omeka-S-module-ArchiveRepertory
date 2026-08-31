@@ -7,7 +7,7 @@ use Psr\Container\ContainerInterface;
 
 class MockTempFileFactoryFactory extends TempFileFactoryFactory
 {
-    public function __invoke(ContainerInterface $services, $requestedName, array $options = null)
+    public function __invoke(ContainerInterface $services, $requestedName, ?array $options = null)
     {
         return new MockTempFileFactory($services);
     }

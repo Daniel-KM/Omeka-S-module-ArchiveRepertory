@@ -16,7 +16,7 @@ class MockLocalStoreFactory implements FactoryInterface
      *
      * @return Local
      */
-    public function __invoke(ContainerInterface $serviceLocator, $requestedName, array $options = null)
+    public function __invoke(ContainerInterface $serviceLocator, $requestedName, ?array $options = null)
     {
         /** @see \Omeka\Service\File\Store\LocalFactory::__invoke() */
         $logger = $serviceLocator->get('Omeka\Logger');
