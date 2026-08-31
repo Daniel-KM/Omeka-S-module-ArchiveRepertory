@@ -50,7 +50,7 @@ use Omeka\Module\AbstractModule;
 /**
  * Archive Repertory.
  *
- * @copyright Daniel Berthereau, 2012-2024
+ * @copyright Daniel Berthereau, 2012-2026
  * @copyright BibLibre, 2016
  * @license http://www.cecill.info/licences/Licence_CeCILL_V2.1-en.txt
  */
@@ -135,6 +135,14 @@ class Module extends AbstractModule
      */
     public function afterSaveItem(Event $event): void
     {
+        // Do nothing during dry run, for example validation of a contribution
+        // by module Contribute or tests. The resource should not be persisted,
+        // so files should not be moved and the entity manager should not be
+        // flushed.
+        if ($event->getParam('request')?->getOption('validateOnly')) {
+            return;
+        }
+
         $item = $event->getParam('response')->getContent();
         foreach ($item->getMedia() as $media) {
             $this->afterSaveMedia($media);
@@ -146,6 +154,9 @@ class Module extends AbstractModule
      */
     public function afterUploadMedia(Event $event): void
     {
+        if ($event->getParam('request')?->getOption('validateOnly')) {
+            return;
+        }
         $media = $event->getParam('response')->getContent();
         $this->afterSaveMedia($media);
     }
