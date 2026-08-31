@@ -457,7 +457,7 @@ class FileManager
             }
             if ($prefix) {
                 $matches = [];
-                preg_match('/^' . $prefix . '(.*)/', $value->getValue(), $matches);
+                preg_match('/^' . preg_quote($prefix, '/') . '(.*)/u', (string) $value->getValue(), $matches);
                 if (isset($matches[1])) {
                     return trim($matches[1]);
                 }
@@ -501,7 +501,9 @@ class FileManager
             ? str_replace(['{', '}'], ['[', ']'], $string)
             : str_replace(['(', '{', '}', ')'], ['[', '[', ']', ']'], $string);
         $string = preg_replace('/[[:cntrl:]\/\\\?<>:\*\%\|\"\'`\&\;#+\^\$\s]/', ' ', $string);
-        return substr(preg_replace('/\s+/', ' ', $string), -180);
+        $string = substr(preg_replace('/\s+/', ' ', $string), -180);
+        // Avoid name only with dots (".", "..", …) to avoid path traversal.
+        return preg_match('/^\.+$/', $string) ? '' : $string;
     }
 
     /**
