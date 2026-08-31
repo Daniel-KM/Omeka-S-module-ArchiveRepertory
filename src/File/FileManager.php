@@ -496,7 +496,14 @@ class FileManager
      */
     protected function sanitizeName($string): string
     {
-        $string = strip_tags((string) $string);
+        $string = (string) $string;
+        // Ensure valid utf-8 storage id in database for each mode, so convert
+        // to utf-8 even when the mode is "keep". It avoids issue when a "©" is
+        // stored as Latin-1 or Windows-1252.
+        if (!mb_check_encoding($string, 'UTF-8')) {
+            $string = mb_convert_encoding($string, 'UTF-8', 'Windows-1252');
+        }
+        $string = strip_tags($string);
         // The first character is a space and the last one is a no-break space.
         $string = trim($string, ' /\\?<>:*%|"\'`&; ');
         $string = $this->settings->get('archiverepertory_keep_parenthesis')
@@ -542,7 +549,8 @@ class FileManager
     /**
      * Returns an unaccentued string for folder or file name.
      *
-     * Note: The string should be already sanitized.
+     * Note: The string should be already sanitized. Nevertheless, redo a utf-8
+     * conversion here to avoid issue with character like "©".
      *
      * See \ArchiveRepertoryPlugin::convertFilenameTo()
      *
@@ -551,7 +559,9 @@ class FileManager
      */
     protected function convertNameToAscii($string): string
     {
-        $string = htmlentities($string, ENT_NOQUOTES, 'utf-8');
+        // ENT_SUBSTITUTE keeps the name when a byte is not valid utf-8 (for
+        // example a "©" encoded as Latin-1), avoiding a bad output.
+        $string = htmlentities((string) $string, ENT_NOQUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $string = preg_replace('#\&([A-Za-z])(?:acute|cedil|circ|grave|lig|orn|ring|slash|th|tilde|uml|caron)\;#', '\1', $string);
         $string = preg_replace('#\&([A-Za-z]{2})(?:lig)\;#', '\1', $string);
         $string = preg_replace('#\&[^;]+\;#', '_', $string);
