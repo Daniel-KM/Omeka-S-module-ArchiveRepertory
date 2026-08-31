@@ -86,7 +86,9 @@ class FileManager
     public function getBaseName($name): string
     {
         $positionExtension = strrpos($name, '.');
-        return $positionExtension ? substr($name, 0, $positionExtension) : $name;
+        return $positionExtension !== false && $positionExtension > 0
+            ? substr($name, 0, $positionExtension)
+            : $name;
     }
 
     /**

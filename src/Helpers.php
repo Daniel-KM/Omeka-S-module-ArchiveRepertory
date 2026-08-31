@@ -50,20 +50,20 @@ class Helpers
                 $path = rtrim($path, '/\\');
                 $result = preg_replace('/^.+[\\\\\\/]/', '', $path);
                 $positionExtension = strrpos($result, '.');
-                if ($positionExtension) {
+                if ($positionExtension !== false && $positionExtension > 0) {
                     $result = substr($result, 0, $positionExtension);
                 }
                 break;
             case PATHINFO_EXTENSION:
                 $positionExtension = strrpos($path, '.');
-                $result = $positionExtension
+                $result = $positionExtension !== false && $positionExtension > 0
                     ? substr($path, $positionExtension + 1)
                     : '';
                 break;
             case PATHINFO_DIRNAME:
                 $positionDir = strrpos($path, '/');
-                $result = $positionDir
-                    ? substr($path, 0, $positionDir - 1)
+                $result = $positionDir !== false
+                    ? substr($path, 0, $positionDir)
                     : $path;
                 break;
         }
