@@ -3,8 +3,8 @@
 namespace ArchiveRepertory\Service;
 
 use ArchiveRepertory\File\FileWriter;
-use Psr\Container\ContainerInterface;
 use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
 
 class FileWriterFactory implements FactoryInterface
 {

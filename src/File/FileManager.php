@@ -18,7 +18,6 @@ class FileManager
     protected $fileWriter;
 
     /**
-     *
      * @var \Omeka\Mvc\Controller\Plugin\Messenger
      */
     protected $messenger;
@@ -680,7 +679,7 @@ class FileManager
      */
     protected function substr_unicode($string, $start, $length = null): string
     {
-        return join(
+        return implode(
             '',
             array_slice(
                 preg_split('//u', $string, -1, PREG_SPLIT_NO_EMPTY),

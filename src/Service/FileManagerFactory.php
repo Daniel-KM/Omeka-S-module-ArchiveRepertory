@@ -3,9 +3,9 @@
 namespace ArchiveRepertory\Service;
 
 use ArchiveRepertory\File\FileManager;
-use Psr\Container\ContainerInterface;
 use Laminas\ServiceManager\Factory\FactoryInterface;
 use Omeka\Service\Exception\ConfigException;
+use Psr\Container\ContainerInterface;
 
 class FileManagerFactory implements FactoryInterface
 {
