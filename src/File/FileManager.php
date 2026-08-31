@@ -85,9 +85,9 @@ class FileManager
      */
     public function getBaseName($name): string
     {
-        $positionExtension = strrpos($name, '.');
+        $positionExtension = mb_strrpos($name, '.');
         return $positionExtension !== false && $positionExtension > 0
-            ? substr($name, 0, $positionExtension)
+            ? mb_substr($name, 0, $positionExtension)
             : $name;
     }
 
@@ -137,21 +137,19 @@ class FileManager
         if ($folderName) {
             $newStorageId = $folderName . $newStorageId;
         }
-        // Count bytes, not characters: the limits of the file systems and of
-        // the object storages apply to bytes, and the storage id may be
-        // utf-8 in mode "keep".
-        if (strlen($newStorageId) > 190) {
+        // The column "storage_id" is a varchar(190) with charset utf8mb4, so
+        // the limit is 190 characters, not bytes.
+        if (mb_strlen($newStorageId) > 190) {
             $message = $folderName
                 ? new PsrMessage(
-                    'Cannot move file "{file}" inside archive directory ("{dir}"): filepath longer than 190 bytes.', // @translate
+                    'Cannot move file "{file}" inside archive directory ("{dir}"): filepath longer than 190 characters.', // @translate
                     ['file' => pathinfo($media->getSource(), PATHINFO_BASENAME), 'dir' => $folderName]
                 )
                 : new PsrMessage(
-                    'Cannot move file "{file}" inside archive directory: filepath longer than 190 bytes.', // @translate
+                    'Cannot move file "{file}" inside archive directory: filepath longer than 190 characters.', // @translate
                     ['file' => pathinfo($media->getSource(), PATHINFO_BASENAME)]
                 );
             $this->messenger->addError($message);
-            $this->logger->err($message);
             return $storageId;
         }
 
@@ -569,7 +567,7 @@ class FileManager
         $string = $this->settings->get('archiverepertory_keep_parenthesis')
             ? preg_replace('/[^[:alnum:]\[\]_\-\.\(\)#~@+:]/', '_', $string)
             : preg_replace('/[^[:alnum:]\[\]_\-\.#~@+:]/', '_', $string);
-        return substr(preg_replace('/_+/', '_', $string), -180);
+        return mb_substr(preg_replace('/_+/', '_', $string), -180);
     }
 
     /**
