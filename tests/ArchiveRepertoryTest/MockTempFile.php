@@ -9,34 +9,26 @@ class MockTempFile extends TempFile
     /**
      * @var string
      */
-    protected $testpath = '/_files/image_test.png';
+    protected $testpath = '/../fixtures/image_test.png';
 
+    /**
+     * Store fake thumbnails without invoking a real thumbnailer.
+     *
+     * The fixture is simply copied for each configured thumbnail type, so tests
+     * don't depend on ImageMagick or Gd being installed.
+     */
     public function storeThumbnails()
     {
-        $this->testpath = __DIR__ . $this->testpath;
-
-        $thumbnailer = $this->thumbnailManager->buildThumbnailer();
+        $source = __DIR__ . $this->testpath;
 
         $tempPaths = [];
-
-        try {
-            $thumbnailer->setSource($this);
-            $thumbnailer->setOptions($this->thumbnailManager->getThumbnailerOptions());
-            $typeConfig = $this->thumbnailManager->getTypeConfig();
-            foreach (array_keys($typeConfig) as $type) {
-                $destinationTempPath = @tempnam(sys_get_temp_dir(), 'omk_ar_');
-                copy($this->testpath, $destinationTempPath);
-                $tempPaths[$type] = $destinationTempPath;
-            }
-        } catch (\Omeka\File\Exception\CannotCreateThumbnailException $e) {
-            // Delete temporary files created before exception was thrown.
-            foreach ($tempPaths as $tempPath) {
-                @unlink($tempPath);
-            }
-            return false;
+        $typeConfig = $this->thumbnailManager->getTypeConfig();
+        foreach (array_keys($typeConfig) as $type) {
+            $destinationTempPath = @tempnam(sys_get_temp_dir(), 'omk_ar_');
+            copy($source, $destinationTempPath);
+            $tempPaths[$type] = $destinationTempPath;
         }
 
-        // Finally, store the thumbnails.
         foreach ($tempPaths as $type => $tempPath) {
             $this->store($type, 'jpg', $tempPath);
             // Delete the temporary file in case the file store hasn't already.

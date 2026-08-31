@@ -5,18 +5,9 @@ namespace ArchiveRepertoryTest;
 use Omeka\Entity\Item;
 use Omeka\Entity\ItemSet;
 use Omeka\Entity\Media;
-use OmekaTestHelper\Controller\OmekaControllerTestCase;
-use Symfony\Component\Filesystem\Filesystem;
 
-class FileManagerTest extends OmekaControllerTestCase
+class FileManagerTest extends AbstractArchiveRepertoryTestCase
 {
-    private $umask;
-    protected $filesystem;
-    protected $workspace;
-
-    protected $entityManager;
-    protected $fileManager;
-
     /**
      * @var ItemSet
      */
@@ -32,162 +23,71 @@ class FileManagerTest extends OmekaControllerTestCase
      */
     protected $media;
 
-    /**
-     * @var array
-     */
-    protected $file;
-
-    protected $source;
-    protected $tempname;
-
     public function setUp(): void
     {
         parent::setUp();
 
-        $this->loginAsAdmin();
+        $entityManager = $this->getEntityManager();
 
-        $this->prepareArchiveDir();
-        $originalPath = $this->workspace
-            . DIRECTORY_SEPARATOR . 'files'
-            . DIRECTORY_SEPARATOR . 'original';
-        mkdir($originalPath, 0777, true);
-        mkdir($this->workspace . DIRECTORY_SEPARATOR . 'tmp', 0777, true);
+        $itemSet = $this->api()->create('item_sets', [])->getContent();
+        $this->createdItemSetIds[] = $itemSet->id();
+        $this->itemSet = $entityManager->find(ItemSet::class, $itemSet->id());
 
-        $this->overrideConfig();
+        $item = $this->api()->create('items', ['o:item_set' => [$itemSet->id()]])->getContent();
+        $this->createdItemIds[] = $item->id();
+        $this->item = $entityManager->find(Item::class, $item->id());
 
-        $services = $this->getServiceLocator();
-        // $config = $services->get('Config');
-        $entityManager = $services->get('Omeka\EntityManager');
-
-        $this->entityManager = $entityManager;
-
-        $api = $this->api();
-        // $settings = $this->settings();
-
-        $source = __DIR__
-            . DIRECTORY_SEPARATOR . '_files'
-            . DIRECTORY_SEPARATOR . 'image_test.png';
-        $this->source = $source;
-
-        $file = [];
-        $file['extension'] = pathinfo($source, PATHINFO_EXTENSION);
-        $file['media_type'] = 'image/png';
-        $file['size'] = filesize($source);
-        $file['content'] = file_get_contents($source);
-        $file['filename'] = pathinfo($source, PATHINFO_BASENAME);
-        $file['filepath'] = $originalPath . DIRECTORY_SEPARATOR . $file['filename'];
-        $this->file = $file;
-
-        $itemSet = $api->create('item_sets', [])->getContent();
-        $this->itemSet = $entityManager->find(\Omeka\Entity\ItemSet::class, $itemSet->id());
-        $item = $api->create('items', ['o:item_set' => [$itemSet->id()]])->getContent();
-        $this->item = $entityManager->find(\Omeka\Entity\Item::class, $item->id());
-
-        $media = new Media;
+        $filename = pathinfo($this->source, PATHINFO_BASENAME);
+        $media = new Media();
         $media->setItem($this->item);
         $media->setIngester('upload');
         $media->setRenderer('file');
-        $media->setSource($file['filename']);
-        $media->setMediaType($file['media_type']);
-        $media->setExtension($file['extension']);
+        $media->setSource($filename);
+        $media->setMediaType($this->file['media_type']);
+        $media->setExtension($this->file['extension']);
         $media->setHasOriginal(1);
         $media->setHasThumbnails(1);
         $media->setStorageId($this->hashStorageName($media));
         $this->media = $media;
     }
 
-    /**
-     * @see \Symfony\Component\Filesystem\Tests\FilesystemTestCase
-     */
-    protected function prepareArchiveDir(): void
-    {
-        $this->umask = umask(0);
-        $this->filesystem = new Filesystem();
-        $this->workspace = sys_get_temp_dir()
-            . DIRECTORY_SEPARATOR . microtime(true) . '.' . mt_rand();
-        mkdir($this->workspace, 0777, true);
-        $this->workspace = realpath($this->workspace);
-    }
-
-    protected function overrideConfig(): void
-    {
-        $services = $this->getServiceLocator();
-
-        $services->setAllowOverride(true);
-
-        $config = $services->get('Config');
-        $config['temp_dir'] = $this->workspace;
-        $config['file_store']['local']['base_path'] = $this->workspace . DIRECTORY_SEPARATOR . 'files';
-        $config = $services->setService('Config', $config);
-
-        $services->setFactory('Omeka\File\Store\Local', \ArchiveRepertoryTest\MockLocalStoreFactory::class);
-        $services->setFactory('Omeka\File\TempFileFactory', \ArchiveRepertoryTest\MockTempFileFactoryFactory::class);
-        $services->setFactory('ArchiveRepertory\FileManager', \ArchiveRepertoryTest\MockFileManagerFactory::class);
-        $services->setAllowOverride(false);
-
-        $uploader = $services->get('Omeka\File\Uploader');
-        $tempFileFactory = $services->get('Omeka\File\TempFileFactory');
-
-        $mediaIngesterManager = $services->get('Omeka\Media\Ingester\Manager');
-        $mediaIngesterManager->setAllowOverride(true);
-        $mockUpload = new MockUpload($uploader);
-        $mockUpload->setTempFileFactory($tempFileFactory);
-        $mediaIngesterManager->setService('upload', $mockUpload);
-        $mediaIngesterManager->setAllowOverride(false);
-
-        $fileManager = $services->get('ArchiveRepertory\FileManager');
-        $this->fileManager = $fileManager;
-    }
-
-    public function tearDown(): void
-    {
-        $this->api()->delete('item_sets', $this->itemSet->getId());
-        $this->api()->delete('items', $this->item->getId());
-
-        $this->filesystem->remove($this->workspace);
-        umask($this->umask);
-    }
-
     public function testKeepOriginalFileName(): void
     {
-        $this->settings()->set('archiverepertory_item_set_folder', '');
-        $this->settings()->set('archiverepertory_item_folder', '');
         $this->settings()->set('archiverepertory_media_convert', 'hash');
 
-        $this->assertNotEquals('image_test', $this->fileManager->getStorageId($this->media));
+        $this->assertNotEquals('image_test', $this->fileManager()->getStorageId($this->media));
     }
 
     public function testDontKeepOriginalName(): void
     {
-        $this->settings()->set('archiverepertory_item_set_folder', '');
-        $this->settings()->set('archiverepertory_item_folder', '');
         $this->settings()->set('archiverepertory_media_convert', 'keep');
 
         $this->assertEquals(
-            pathinfo($this->file['filename'], PATHINFO_FILENAME),
-            $this->fileManager->getStorageId($this->media));
+            'image_test',
+            $this->fileManager()->getStorageId($this->media)
+        );
     }
 
     public function testAddItemIdWithoutOriginalName(): void
     {
-        $this->settings()->set('archiverepertory_item_set_folder', '');
         $this->settings()->set('archiverepertory_item_folder', 'id');
         $this->settings()->set('archiverepertory_media_convert', 'hash');
 
         $this->assertEquals(
             $this->item->getId() . '/' . $this->media->getStorageId(),
-            $this->fileManager->getStorageId($this->media));
+            $this->fileManager()->getStorageId($this->media)
+        );
     }
 
     public function testAddItemIdAndOriginalName(): void
     {
-        $this->settings()->set('archiverepertory_item_set_folder', '');
         $this->settings()->set('archiverepertory_item_folder', 'id');
         $this->settings()->set('archiverepertory_media_convert', 'keep');
 
         $this->assertEquals(
-            $this->item->getId() . '/' . pathinfo($this->file['filename'], PATHINFO_FILENAME),
-            $this->fileManager->getStorageId($this->media));
+            $this->item->getId() . '/image_test',
+            $this->fileManager()->getStorageId($this->media)
+        );
     }
 
     public function testAddItemSetIdAndItemIdAndOriginalName(): void
@@ -197,114 +97,127 @@ class FileManagerTest extends OmekaControllerTestCase
         $this->settings()->set('archiverepertory_media_convert', 'keep');
 
         $this->assertEquals(
-            $this->itemSet->getId() . '/' . $this->item->getId() . '/' . pathinfo($this->file['filename'], PATHINFO_FILENAME),
-            $this->fileManager->getStorageId($this->media));
-    }
-
-    public function testStorageBasePathWithIdDirectory(): void
-    {
-        $this->settings()->set('archiverepertory_item_folder', 'id');
-        $this->settings()->set('archiverepertory_media_convert', 'keep');
-
-        $tempname = $this->workspace
-            . DIRECTORY_SEPARATOR . 'tmp'
-            . DIRECTORY_SEPARATOR . 'uploaded_' . md5($this->source . microtime(true) . '.' . mt_rand());
-        copy($this->source, $tempname);
-
-        $upload = new \Laminas\Stdlib\Parameters([
-            'file' => [
-                1 => [
-                    'name' => 'image_uploaded.png',
-                    'type' => $this->file['media_type'],
-                    'tmp_name' => $tempname,
-                    'content' => $this->file['content'],
-                    'error' => 0,
-                    'size' => $this->file['size'],
-                ],
-            ],
-        ]);
-        $this->getRequest()->setFiles($upload);
-
-        $this->postDispatch('/admin/item/add', [
-            'dcterms:identifier' => [
-                [
-                    'type' => 'literal',
-                    'property_id' => '10',
-                    '@value' => 'item1',
-                ],
-            ],
-            'dcterms:title' => [
-                [
-                    'type' => 'literal',
-                    'property_id' => '1',
-                    '@value' => 'My_title?',
-                ],
-            ],
-            'o:media' => [
-                [
-                    'o:ingester' => 'upload',
-                    'file_index' => 1,
-                    'dcterms:identifier' => [
-                        [
-                            'type' => 'literal',
-                            'property_id' => 10,
-                            '@value' => 'media1',
-                        ],
-                    ],
-                ],
-            ],
-            'csrf' => (new \Laminas\Form\Element\Csrf('csrf'))->getValue(),
-            'values_json' => '{}',
-        ]);
-
-        $this->assertResponseStatusCode(302);
-
-        $headers = $this->getResponse()->getHeaders();
-        $location = $headers->get('Location');
-        $this->assertNotEmpty($location);
-
-        $path = $location->uri()->getPath();
-        $itemId = substr(strrchr($path, '/'), 1);
-        $item = $this->api()->read('items', $itemId)->getContent();
-        $medias = $item->media();
-        $mediaId = $medias[0]->id();
-        $media = $this->entityManager->find(\Omeka\Entity\Media::class, $mediaId);
-        $this->assertEquals(
-            $itemId . '/' . 'image_uploaded',
-            $media->getStorageId());
+            $this->itemSet->getId() . '/' . $this->item->getId() . '/image_test',
+            $this->fileManager()->getStorageId($this->media)
+        );
     }
 
     public function testInsertDuplicateFile(): void
     {
         $this->settings()->set('archiverepertory_media_convert', 'keep');
 
-        $originalPath = $this->workspace
-            . DIRECTORY_SEPARATOR . 'files'
-            . DIRECTORY_SEPARATOR . 'original';
+        $originalPath = $this->storePath('original');
         touch($originalPath . DIRECTORY_SEPARATOR . 'photo.png');
 
         $this->assertEquals(
             'photo.1.png',
-            $this->fileManager->getSingleFilenameBypassProtectedMethod('photo.png', null));
-        touch($originalPath . DIRECTORY_SEPARATOR . 'photo.1.png');
+            $this->fileManager()->getSingleFilenameBypassProtectedMethod('photo.png', null)
+        );
 
-        // $filepath = $originalPath . DIRECTORY_SEPARATOR . 'photo.png';
+        touch($originalPath . DIRECTORY_SEPARATOR . 'photo.1.png');
         $this->assertEquals(
             'photo.2.png',
-            $this->fileManager->getSingleFilenameBypassProtectedMethod('photo.png', null));
+            $this->fileManager()->getSingleFilenameBypassProtectedMethod('photo.png', null)
+        );
     }
 
     /**
-     * Hash a stable single storage name for a specific media.
-     *
-     * @see \ArchiveRepertory\File\FileManager::hashStorageName()
-     *
-     * @param Media $media
-     * @return string
+     * A name reduced to dots must not be allowed to escape the store.
      */
-    protected function hashStorageName(Media $media)
+    public function testSanitizeNameRejectsPathTraversal(): void
     {
-        $storageName = substr(hash('sha256', $media->getId() . '/' . $media->getSource()), 0, 40);
-        return $storageName;
+        $fileManager = $this->fileManager();
+        $this->assertSame('', $fileManager->sanitizeNameBypassProtectedMethod('..'));
+        $this->assertSame('', $fileManager->sanitizeNameBypassProtectedMethod('.'));
+        $this->assertSame('', $fileManager->sanitizeNameBypassProtectedMethod('...'));
+        // Slashes are stripped, so a compound path cannot form directory
+        // segments: it collapses to a single harmless literal name.
+        $this->assertStringNotContainsString('/', $fileManager->sanitizeNameBypassProtectedMethod('../../etc'));
+    }
+
+    public function testSanitizeNameRemovesSeparatorsButKeepsName(): void
+    {
+        $fileManager = $this->fileManager();
+        $this->assertSame('etc passwd', $fileManager->sanitizeNameBypassProtectedMethod('/etc/passwd'));
+        $this->assertSame('name.ext', $fileManager->sanitizeNameBypassProtectedMethod('name.ext'));
+    }
+
+    public function testSanitizeNameStripsSurroundingDots(): void
+    {
+        $fileManager = $this->fileManager();
+        // A leading dot would make a hidden file, blocked by most web servers.
+        $this->assertSame('hidden.png', $fileManager->sanitizeNameBypassProtectedMethod('.hidden.png'));
+        $this->assertSame('htaccess', $fileManager->sanitizeNameBypassProtectedMethod('.htaccess'));
+        $this->assertSame('name', $fileManager->sanitizeNameBypassProtectedMethod('..name..'));
+    }
+
+    public function testStorageIdNeverStartsWithDot(): void
+    {
+        $this->settings()->set('archiverepertory_media_convert', 'keep');
+        $this->media->setSource('.hidden.png');
+
+        $this->assertSame('hidden', $this->fileManager()->getStorageId($this->media));
+    }
+
+    public function testConvertFilenameToAscii(): void
+    {
+        $fileManager = $this->fileManager();
+        $this->assertSame('ete', $fileManager->convertFilenameToBypassProtectedMethod('été', 'full'));
+        $this->assertSame('a_b', $fileManager->convertFilenameToBypassProtectedMethod('a b', 'spaces'));
+    }
+
+    public function testSanitizeNameNormalizesToUtf8(): void
+    {
+        $fileManager = $this->fileManager();
+        // A copyright sign encoded as a lone Latin-1/Windows-1252 byte becomes
+        // a valid UTF-8 name (kept, not lost).
+        $result = $fileManager->sanitizeNameBypassProtectedMethod('photo' . chr(0xA9) . '.png');
+        $this->assertTrue(mb_check_encoding($result, 'UTF-8'));
+        $this->assertSame('photo©.png', $result);
+    }
+
+    public function testStorageIdKeepModeIsValidUtf8(): void
+    {
+        $this->settings()->set('archiverepertory_media_convert', 'keep');
+        // Latin-1 encoded source name.
+        $this->media->setSource('photo' . chr(0xA9) . '.png');
+
+        $storageId = $this->fileManager()->getStorageId($this->media);
+        $this->assertTrue(mb_check_encoding($storageId, 'UTF-8'));
+        $this->assertSame('photo©', $storageId);
+    }
+
+    public function testTransliterationToAscii(): void
+    {
+        $fileManager = $this->fileManager();
+        // Latin scripts: handled by both the ICU and the iconv paths.
+        $this->assertSame('cafe', $fileManager->convertFilenameToBypassProtectedMethod('café', 'full'));
+        $this->assertSame('Strasse', $fileManager->convertFilenameToBypassProtectedMethod('Straße', 'full'));
+        $this->assertSame('OEuvre', $fileManager->convertFilenameToBypassProtectedMethod('Œuvre', 'full'));
+        // The copyright sign folds to "(C)"; parentheses are then removed.
+        $this->assertSame('photo_C_', $fileManager->convertFilenameToBypassProtectedMethod('photo©', 'full'));
+        // A lone Latin-1 byte (invalid UTF-8) is not transliterated but the
+        // name is not lost either.
+        $this->assertSame('photo_', $fileManager->convertFilenameToBypassProtectedMethod('photo' . chr(0xA9), 'full'));
+
+        if (!class_exists(\Transliterator::class)) {
+            $this->markTestSkipped('ext-intl is required to transliterate non-Latin scripts.');
+        }
+        $this->assertSame('Privet', $fileManager->convertFilenameToBypassProtectedMethod('Привет', 'full'));
+        $this->assertSame('Ellada', $fileManager->convertFilenameToBypassProtectedMethod('Ελλάδα', 'full'));
+        $this->assertSame('Dang', $fileManager->convertFilenameToBypassProtectedMethod('Đặng', 'full'));
+    }
+
+    public function testGetBaseNameKeepsLeadingDotFile(): void
+    {
+        $fileManager = $this->fileManager();
+        $this->assertSame('.htaccess', $fileManager->getBaseName('.htaccess'));
+        $this->assertSame('photo', $fileManager->getBaseName('photo.png'));
+        $this->assertSame('1706/alpha', $fileManager->getBaseName('1706/alpha.jpg'));
+    }
+
+    protected function hashStorageName(Media $media): string
+    {
+        return substr(hash('sha256', $media->getId() . '/' . $media->getSource()), 0, 40);
     }
 }

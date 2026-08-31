@@ -26,6 +26,10 @@ class MockUpload extends Upload
 
         $tempFile = $this->tempFileFactory->build();
         $tempFile->setSourceName($fileData['file'][$index]['name']);
+        // Use the uploaded file as the temp file, so the stored original keeps
+        // the real content and its size can be checked (no move_uploaded_file
+        // in tests).
+        $tempFile->setTempPath($fileData['file'][$index]['tmp_name']);
 
         $media->setStorageId($tempFile->getStorageId());
         $media->setExtension($tempFile->getExtension());
