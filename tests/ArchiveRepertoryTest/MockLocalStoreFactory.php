@@ -2,9 +2,9 @@
 
 namespace ArchiveRepertoryTest;
 
-use Interop\Container\ContainerInterface;
 use Laminas\ServiceManager\Factory\FactoryInterface;
 use Omeka\File\Store\Local;
+use Psr\Container\ContainerInterface;
 
 /**
  * Service factory for the Local file store.

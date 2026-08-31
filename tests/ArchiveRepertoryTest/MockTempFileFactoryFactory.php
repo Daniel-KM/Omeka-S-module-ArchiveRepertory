@@ -2,8 +2,8 @@
 
 namespace ArchiveRepertoryTest;
 
-use Interop\Container\ContainerInterface;
 use Omeka\Service\File\TempFileFactoryFactory;
+use Psr\Container\ContainerInterface;
 
 class MockTempFileFactoryFactory extends TempFileFactoryFactory
 {

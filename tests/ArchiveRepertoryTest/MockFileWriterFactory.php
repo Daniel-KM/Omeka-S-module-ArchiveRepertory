@@ -2,8 +2,8 @@
 
 namespace ArchiveRepertoryTest;
 
-use Interop\Container\ContainerInterface;
 use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
 
 class MockFileWriterFactory implements FactoryInterface
 {
