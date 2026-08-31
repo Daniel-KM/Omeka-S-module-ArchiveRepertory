@@ -3,6 +3,7 @@
 namespace ArchiveRepertory\File;
 
 use Common\Stdlib\PsrMessage;
+use Laminas\Log\LoggerInterface;
 use Laminas\Mvc\I18n\Translator;
 use Omeka\Entity\Media;
 use Omeka\Entity\Resource;
@@ -33,6 +34,11 @@ class FileManager
     protected $translator;
 
     /**
+     * @var \Laminas\Log\LoggerInterface
+     */
+    protected $logger;
+
+    /**
      * @var string
      */
     protected $basePath;
@@ -59,6 +65,7 @@ class FileManager
         Messenger $messenger,
         Settings $settings,
         Translator $translator,
+        LoggerInterface $logger,
         string $basePath,
         array $ingesters,
         array $thumbnailTypes
@@ -67,6 +74,7 @@ class FileManager
         $this->messenger = $messenger;
         $this->settings = $settings;
         $this->translator = $translator;
+        $this->logger = $logger;
         $this->basePath = $basePath;
         $this->ingesters = $ingesters;
         $this->thumbnailTypes = $thumbnailTypes;
@@ -207,9 +215,11 @@ class FileManager
         $currentArchiveFilename = (string) $currentArchiveFilename;
         $newArchiveFilename = (string) $newArchiveFilename;
         if (trim($currentArchiveFilename) === '' || trim($newArchiveFilename) === '') {
-            $this->messenger->addError(new PsrMessage(
+            $message = new PsrMessage(
                 'Cannot move file inside archive directory: no filename.' // @translate
-            ));
+            );
+            $this->messenger->addError($message);
+            $this->logger->err($message);
             return false;
         }
 
@@ -783,10 +793,12 @@ class FileManager
         }
 
         if (!$this->fileWriter->fileExists($realSource)) {
-            $this->messenger->addError(new PsrMessage(
+            $message = new PsrMessage(
                 'Error during move of a file from "{source}" to "{destination}" (local dir: "{dir}"): source does not exist.', // @translate
                 ['source' => $source, 'destination' => $destination, 'dir' => $path]
-            ));
+            );
+            $this->messenger->addError($message);
+            $this->logger->err($message);
             return false;
         }
 
@@ -794,10 +806,12 @@ class FileManager
             $result = $this->createFolder(dirname($realDestination));
             $result = $this->fileWriter->rename($realSource, $realDestination);
         } catch (\Throwable $e) {
-            $this->messenger->addError(new PsrMessage(
+            $message = new PsrMessage(
                 'Error during move of a file from "{source}" to "{destination}" (local dir: "{dir}").', // @translate
                 ['source' => $source, 'destination' => $destination, 'dir' => $path]
-            ));
+            );
+            $this->messenger->addError($message);
+            $this->logger->err($message);
             return false;
         }
 

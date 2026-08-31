@@ -214,16 +214,18 @@ class Module extends AbstractModule
         $extension = $media->getExtension();
         $newFilename = $extension ? $newStorageId . '.' . $extension : $newStorageId;
 
-        // Check if the original file exists, else this is an undetected
-        // error during the convert process.
+        // The original file may be absent from the local storage for a
+        // legitimate reason (remote store, media without a local original,
+        // storage still in progress): warn and log, but do not move it.
         $path = $fileManager->getFullArchivePath('original');
         $filepath = $fileManager->concatWithSeparator($path, $media->getFilename());
         if (!$fileWriter->fileExists($filepath)) {
-            $messenger = $services->get('ControllerPluginManager')->get('messenger');
-            $messenger->addError(new PsrMessage(
-                'This file is not present in the original directory: {filepath}. There was an undetected error before storage, probably during the convert process.', // @translate
+            $message = new PsrMessage(
+                'The original file is not in the local storage, so it is not moved: {filepath}.', // @translate
                 ['filepath' => $filepath]
-            ));
+            );
+            $services->get('ControllerPluginManager')->get('messenger')->addWarning($message);
+            $services->get('Omeka\Logger')->warn($message);
             return;
         }
 
@@ -233,10 +235,11 @@ class Module extends AbstractModule
         );
 
         if (!$result) {
-            $messenger = $services->get('ControllerPluginManager')->get('messenger');
-            $messenger->addError(new PsrMessage(
+            $message = new PsrMessage(
                 'Cannot move files inside archive directory.' // @translate
-            ));
+            );
+            $services->get('ControllerPluginManager')->get('messenger')->addError($message);
+            $services->get('Omeka\Logger')->err($message);
             return;
         }
 

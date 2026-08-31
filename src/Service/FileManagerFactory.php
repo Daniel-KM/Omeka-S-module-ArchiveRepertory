@@ -30,6 +30,7 @@ class FileManagerFactory implements FactoryInterface
             $services->get('ControllerPluginManager')->get('messenger'),
             $services->get('Omeka\Settings'),
             $services->get('MvcTranslator'),
+            $services->get('Omeka\Logger'),
             $basePath,
             $ingesters,
             $thumbnailTypes
