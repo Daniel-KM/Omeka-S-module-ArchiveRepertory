@@ -31,7 +31,8 @@ if (!method_exists($this, 'checkModuleActiveVersion') || !$this->checkModuleActi
         $translate('The module %1$s should be upgraded to version %2$s or later.'), // @translate
         'Common', '3.4.91'
     );
-    throw new \Omeka\Module\Exception\ModuleCannotInstallException((string) $message);
+    $messenger->addError($message);
+    throw new \Omeka\Module\Exception\ModuleCannotInstallException((string) $translate('Missing requirement. Unable to upgrade.')); // @translate
 }
 
 if (version_compare($oldVersion, '3.14.0', '<')) {
@@ -44,7 +45,7 @@ if (version_compare($oldVersion, '3.14.0', '<')) {
     $settings->set('archiverepertory_item_set_convert',
         $defaultSettings['archiverepertory_item_set_convert']);
 
-    $itemConvert = strtolower($settings->get['archive_repertory_item_convert']);
+    $itemConvert = strtolower((string) $settings->get('archive_repertory_item_convert', ''));
     if ($itemConvert == 'keep name') {
         $itemConvert = 'keep';
     }
