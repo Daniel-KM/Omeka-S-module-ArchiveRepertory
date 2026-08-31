@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-04-29 00:00+0000\n"
+"POT-Creation-Date: 2026-08-31 00:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,9 +17,13 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: data/scripts/upgrade.php:31 Module.php:70
+#: data/scripts/upgrade.php:31 Module.php:89
 #, php-format
 msgid "The module %1$s should be upgraded to version %2$s or later."
+msgstr ""
+
+#: data/scripts/upgrade.php:35
+msgid "Missing requirement. Unable to upgrade."
 msgstr ""
 
 #: view/archive-repertory/module/config.phtml:15
@@ -159,17 +163,17 @@ msgstr ""
 msgid "Files"
 msgstr ""
 
-#: data/scripts/upgrade.php:73
+#: data/scripts/upgrade.php:74
 msgid "The process is now working with background processes."
 msgstr ""
 
-#: Module.php:194
+#: Module.php:224
 msgid ""
-"This file is not present in the original directory: {filepath}. There was an "
-"undetected error before storage, probably during the convert process."
+"The original file is not in the local storage, so it is not moved: "
+"{filepath}."
 msgstr ""
 
-#: Module.php:208
+#: Module.php:239
 msgid "Cannot move files inside archive directory."
 msgstr ""
 
@@ -202,6 +206,10 @@ msgstr ""
 
 #: src/Form/ConfigForm.php:54
 msgid "Item folder"
+msgstr ""
+
+#: src/Form/ConfigForm.php:70
+msgid "Prefix for items"
 msgstr ""
 
 #: src/Form/ConfigForm.php:76
@@ -262,41 +270,55 @@ msgid ""
 "compatible with Unicode)"
 msgstr ""
 
-#: src/File/FileManager.php:141
+#: src/Form/ConfigForm.php:151
+msgid "Full conversion to Ascii"
+msgstr ""
+
+#: src/File/FileManager.php:152
 msgid ""
 "Cannot move file \"{file}\" inside archive directory (\"{dir}\"): filepath "
 "longer than 190 characters."
 msgstr ""
 
-#: src/File/FileManager.php:146
+#: src/File/FileManager.php:156
 msgid ""
 "Cannot move file \"{file}\" inside archive directory: filepath longer than "
 "190 characters."
 msgstr ""
 
-#: src/File/FileManager.php:189
+#: src/File/FileManager.php:175
+msgid ""
+"Cannot move file \"{file}\" inside archive directory: a part of the filepath "
+"is longer than 255 bytes, the limit of the file system."
+msgstr ""
+
+#: src/File/FileManager.php:219
 msgid "Cannot move file inside archive directory: no filename."
 msgstr ""
 
-#: src/File/FileManager.php:421
+#: src/File/FileManager.php:453
 msgid "Unallowed resource type \"{resource_name}\"."
 msgstr ""
 
-#: src/File/FileManager.php:670
+#: src/File/FileManager.php:760
 msgid "Error directory non writeable: \"{dir}\"."
 msgstr ""
 
-#: src/File/FileManager.php:682
-msgid "Error making directory: \"dir\"."
+#: src/File/FileManager.php:765
+msgid "Failed to create folder \"{dir}\": a file with the same name exists…"
 msgstr ""
 
-#: src/File/FileManager.php:709
+#: src/File/FileManager.php:772
+msgid "Error making directory: \"{dir}\"."
+msgstr ""
+
+#: src/File/FileManager.php:799
 msgid ""
 "Error during move of a file from \"{source}\" to \"{destination}\" (local "
 "dir: \"{dir}\"): source does not exist."
 msgstr ""
 
-#: src/File/FileManager.php:720
+#: src/File/FileManager.php:812
 msgid ""
 "Error during move of a file from \"{source}\" to \"{destination}\" (local "
 "dir: \"{dir}\")."
