@@ -505,7 +505,7 @@ class FileManager
         }
         $string = strip_tags($string);
         // The first character is a space and the last one is a no-break space.
-        $string = trim($string, ' /\\?<>:*%|"\'`&; ');
+        $string = trim($string, ' /\\?<>:*%|"\'`&#; ');
         $string = $this->settings->get('archiverepertory_keep_parenthesis')
             ? str_replace(['{', '}'], ['[', ']'], $string)
             : str_replace(['(', '{', '}', ')'], ['[', '[', ']', ']'], $string);
