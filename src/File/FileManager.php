@@ -137,18 +137,21 @@ class FileManager
         if ($folderName) {
             $newStorageId = $folderName . $newStorageId;
         }
-        if (mb_strlen($newStorageId) > 190) {
-            if ($folderName) {
-                $this->messenger->addError(new PsrMessage(
-                    'Cannot move file "{file}" inside archive directory ("{dir}"): filepath longer than 190 characters.', // @translate
+        // Count bytes, not characters: the limits of the file systems and of
+        // the object storages apply to bytes, and the storage id may be
+        // utf-8 in mode "keep".
+        if (strlen($newStorageId) > 190) {
+            $message = $folderName
+                ? new PsrMessage(
+                    'Cannot move file "{file}" inside archive directory ("{dir}"): filepath longer than 190 bytes.', // @translate
                     ['file' => pathinfo($media->getSource(), PATHINFO_BASENAME), 'dir' => $folderName]
-                    ));
-            } else {
-                $this->messenger->addError(new PsrMessage(
-                    'Cannot move file "{file}" inside archive directory: filepath longer than 190 characters.', // @translate
+                )
+                : new PsrMessage(
+                    'Cannot move file "{file}" inside archive directory: filepath longer than 190 bytes.', // @translate
                     ['file' => pathinfo($media->getSource(), PATHINFO_BASENAME)]
-                ));
-            }
+                );
+            $this->messenger->addError($message);
+            $this->logger->err($message);
             return $storageId;
         }
 
@@ -510,7 +513,10 @@ class FileManager
             ? str_replace(['{', '}'], ['[', ']'], $string)
             : str_replace(['(', '{', '}', ')'], ['[', '[', ']', ']'], $string);
         $string = preg_replace('/[[:cntrl:]\/\\\?<>:\*\%\|\"\'`\&\;#+\^\$\s]/', ' ', $string);
-        $string = substr(preg_replace('/\s+/', ' ', $string), -180);
+        // Use mb_substr(): in mode "keep" the name is still utf-8, so a cut
+        // on bytes may split a multibyte character and store an invalid
+        // storage id.
+        $string = mb_substr(preg_replace('/\s+/', ' ', $string), -180);
         // Avoid name only with dots (".", "..", …) to avoid path traversal.
         return trim($string, '.');
     }
