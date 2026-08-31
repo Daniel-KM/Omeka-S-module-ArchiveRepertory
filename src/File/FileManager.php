@@ -549,8 +549,8 @@ class FileManager
     /**
      * Returns an unaccentued string for folder or file name.
      *
-     * Note: The string should be already sanitized. Nevertheless, redo a utf-8
-     * conversion here to avoid issue with character like "©".
+     * Note: The string should be already sanitized (so a valid utf-8 string).
+     * Transliteration is delegated to transliterateToAscii().
      *
      * See \ArchiveRepertoryPlugin::convertFilenameTo()
      *
@@ -559,16 +559,57 @@ class FileManager
      */
     protected function convertNameToAscii($string): string
     {
-        // ENT_SUBSTITUTE keeps the name when a byte is not valid utf-8 (for
-        // example a "©" encoded as Latin-1), avoiding a bad output.
-        $string = htmlentities((string) $string, ENT_NOQUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        $string = preg_replace('#\&([A-Za-z])(?:acute|cedil|circ|grave|lig|orn|ring|slash|th|tilde|uml|caron)\;#', '\1', $string);
-        $string = preg_replace('#\&([A-Za-z]{2})(?:lig)\;#', '\1', $string);
-        $string = preg_replace('#\&[^;]+\;#', '_', $string);
+        $string = $this->transliterateToAscii((string) $string);
         $string = $this->settings->get('archiverepertory_keep_parenthesis')
             ? preg_replace('/[^[:alnum:]\[\]_\-\.\(\)#~@+:]/', '_', $string)
             : preg_replace('/[^[:alnum:]\[\]_\-\.#~@+:]/', '_', $string);
         return substr(preg_replace('/_+/', '_', $string), -180);
+    }
+
+    /**
+     * Convert utf-8 string to a plain ASCII equivalent.
+     *
+     * So: "École" => "Ecole", "Привет" => "Privet", "北京" => "bei jing").
+     *
+     * Uses the ICU transliterator when available, else iconv, else a last
+     * resort html entity mapping that only covers Latin-1. The caller filters
+     * the remaining non-ASCII characters.
+     *
+     * @param string $string A valid UTF-8 string (see sanitizeName()).
+     * @return string
+     */
+    protected function transliterateToAscii(string $string): string
+    {
+        // Skip invalid utf-8 string, so the caller replaces its bytes.
+        if ($string === '' || preg_match('//u', $string) !== 1) {
+            return $string;
+        }
+
+        if (class_exists(\Transliterator::class)) {
+            $transliterator = \Transliterator::create('Any-Latin; Latin-ASCII; [:Nonspacing Mark:] Remove; NFC');
+            if ($transliterator) {
+                $result = $transliterator->transliterate($string);
+                if ($result !== false) {
+                    return $result;
+                }
+            }
+        }
+
+        $previousLocale = setlocale(LC_CTYPE, '0');
+        setlocale(LC_CTYPE, 'C.UTF-8', 'en_US.UTF-8', 'C');
+        $result = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $string);
+        if ($previousLocale !== false) {
+            setlocale(LC_CTYPE, $previousLocale);
+        }
+        if ($result !== false && $result !== null) {
+            return $result;
+        }
+
+        // When intl and iconv are missing, only Latin-1 characters are mapped.
+        $string = htmlentities($string, ENT_NOQUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $string = preg_replace('#\&([A-Za-z])(?:acute|cedil|circ|grave|lig|orn|ring|slash|th|tilde|uml|caron)\;#', '\1', $string);
+        $string = preg_replace('#\&([A-Za-z]{2})(?:lig)\;#', '\1', $string);
+        return preg_replace('#\&[^;]+\;#', '_', $string);
     }
 
     /**
