@@ -792,7 +792,7 @@ class FileManager
         try {
             $result = $this->createFolder(dirname($realDestination));
             $result = $this->fileWriter->rename($realSource, $realDestination);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $this->messenger->addError(new PsrMessage(
                 'Error during move of a file from "{source}" to "{destination}" (local dir: "{dir}").', // @translate
                 ['source' => $source, 'destination' => $destination, 'dir' => $path]
