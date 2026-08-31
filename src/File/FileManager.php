@@ -153,6 +153,24 @@ class FileManager
             return $storageId;
         }
 
+        // The database allows 190 characters, but most file systems limit each
+        // part of a path to 255 bytes, so a name in a non-latin script may be
+        // rejected earlier. The stored file appends the extension to the
+        // storage id, and the derivative files use ".jpg".
+        $mediaExtension = (string) $media->getExtension();
+        $extensionLength = max(strlen($mediaExtension) + 1, strlen('.jpg'));
+        foreach (explode('/', $newStorageId) as $part) {
+            if (strlen($part) + $extensionLength <= 255) {
+                continue;
+            }
+            $message = new PsrMessage(
+                'Cannot move file "{file}" inside archive directory: a part of the filepath is longer than 255 bytes, the limit of the file system.', // @translate
+                ['file' => pathinfo($media->getSource(), PATHINFO_BASENAME)]
+            );
+            $this->messenger->addError($message);
+            return $storageId;
+        }
+
         return $newStorageId;
     }
 
