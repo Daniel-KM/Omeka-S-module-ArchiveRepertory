@@ -503,7 +503,7 @@ class FileManager
         $string = preg_replace('/[[:cntrl:]\/\\\?<>:\*\%\|\"\'`\&\;#+\^\$\s]/', ' ', $string);
         $string = substr(preg_replace('/\s+/', ' ', $string), -180);
         // Avoid name only with dots (".", "..", …) to avoid path traversal.
-        return preg_match('/^\.+$/', $string) ? '' : $string;
+        return trim($string, '.');
     }
 
     /**
