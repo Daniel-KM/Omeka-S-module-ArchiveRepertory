@@ -5,7 +5,6 @@ Archive Repertory (module for Omeka S)
 > are available on [GitLab], which seems to respect users and privacy better
 > than the previous repository.__
 
-[![Build Status](https://travis-ci.org/Daniel-KM/Omeka-S-module-ArchiveRepertory.svg?branch=master)](https://travis-ci.org/Daniel-KM/Omeka-S-module-ArchiveRepertory)
 
 [Archive Repertory] is a module for [Omeka S] that allows Omeka to keep the
 original names of imported files and to put them into a simple and hierarchical
@@ -66,6 +65,15 @@ Tiles for big images created with the module [IIIF Server] are compatible with
 this module. To enable it, just open and submit the config page of the
 IIIF Server, the integration between the two modules will be registered
 automatically.
+
+* For test
+
+The module includes a comprehensive test suite with unit and functional tests.
+Run them from the root of Omeka:
+
+```sh
+vendor/bin/phpunit -c modules/ArchiveRepertory/phpunit.xml --testdox
+```
 
 
 Unicode filenames
@@ -153,25 +161,27 @@ altered, and that no provisions are either added or removed herefrom.
 Copyright
 ---------
 
-* Copyright Daniel Berthereau, 2012-2024 (see [Daniel-KM] on GitLab)
+* Copyright Daniel Berthereau, 2012-2026 (see [Daniel-KM] on GitLab)
 * Copyright BibLibre, 2016-2017
 
-First version of this plugin has been built for [École des Ponts ParisTech].
-The upgrade for Omeka 2.0 has been built for [Mines ParisTech]. This module is a
-rewrite of the [Archive Repertory plugin] for [Omeka Classic] by [BibLibre] with
-the same features as the original plugin.
+First version of this add-on was built for Omeka 2 ([Archive Repertory plugin]
+for [Omeka Classic]) for [École des Ponts ParisTech]. The upgrade for Omeka S
+has been built for [Mines ParisTech]. The rewrite for Omeka S was initiated by
+[BibLibre], with the same features as the original plugin.
 
 
+[installing a module]: https://omeka.org/s/docs/user-manual/modules/#installing-modules
+[ArchiveRepertory.zip]: https://gitlab.com/Daniel-KM/Omeka-S-module-ArchiveRepertory/-/releases
 [Archive Repertory]: https://gitlab.com/Daniel-KM/Omeka-S-module-ArchiveRepertory
 [Omeka S]: https://omeka.org/s
-[Omeka Classic]: https://omeka.org
-[Archive Repertory plugin]: https://gitlab.com/Daniel-KM/Omeka-plugin-ArchiveRepertory
-[Amazon S3]: https://github.com/Daniel-KM/Omeka-S-module-AmazonS3
+[Amazon S3]: https://gitlab.com/Daniel-KM/Omeka-S-module-AmazonS3
 [test file]: https://gist.github.com/Daniel-KM/9754f18f9632423fb1a08909e9f01c04
-[module issues]: https://gitlab.com/Daniel-KM/Omeka-S-module-ArchiveRepertory/-/issues
-[Common]: https://github.com/biblibre/Omeka-S-module-Common
-[Clean Url]: https://github.com/biblibre/Omeka-S-module-CleanUrl
+[module issues]: https://gitlab.com/Daniel-KM/Omeka-S-module-ArchiveRepertory/-/work_items
+[Common]: https://gitlab.com/Daniel-KM/Omeka-S-module-Common
+[Clean Url]: https://gitlab.com/Daniel-KM/Omeka-S-module-CleanUrl
 [IIIF Server]: https://gitlab.com/Daniel-KM/Omeka-S-module-IiifServer
+[Archive Repertory plugin]: https://gitlab.com/Daniel-KM/Omeka-plugin-ArchiveRepertory
+[Omeka Classic]: https://omeka.org
 [CeCILL v2.1]: https://www.cecill.info/licences/Licence_CeCILL_V2.1-en.html
 [GNU/GPL]: https://www.gnu.org/licenses/gpl-3.0.html
 [FSF]: https://www.fsf.org
