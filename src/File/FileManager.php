@@ -24,7 +24,7 @@ class FileManager
     protected $messenger;
 
     /**
-     * @var Omeka\Settings\Settings
+     * @var \Omeka\Settings\Settings
      */
     protected $settings;
 
@@ -608,6 +608,8 @@ class FileManager
      * resort html entity mapping that only covers Latin-1. The caller filters
      * the remaining non-ASCII characters.
      *
+     * @deprecated Use Common\Stdlib\TextTransliterator since Common 3.4.92.
+     *
      * @param string $string A valid UTF-8 string (see sanitizeName()).
      * @return string
      */
@@ -760,14 +762,14 @@ class FileManager
                 ))->setTranslator($this->translator));
             }
             throw new RuntimeException('[ArchiveRepertory] ' . (new PsrMessage(
-                'Failed to create folder "dir": a file with the same name exists…', // @ŧranslate
+                'Failed to create folder "{dir}": a file with the same name exists…', // @translate
                 ['dir' => $path]
             ))->setTranslator($this->translator));
         }
 
-        if (!$this->fileWriter->mkdir($path, 0775, true)) {
+        if (!$this->fileWriter->mkdir($path, 0775)) {
             throw new RuntimeException('[ArchiveRepertory] ' . (new PsrMessage(
-                'Error making directory: "dir".', // @translate
+                'Error making directory: "{dir}".', // @translate
                 ['dir' => $path]
             ))->setTranslator($this->translator));
         }

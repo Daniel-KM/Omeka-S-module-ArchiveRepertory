@@ -96,7 +96,7 @@ class FileWriter
         if (strpos($dirPath, '/..') !== false || substr($dirPath, 0, 1) !== '/') {
             return false;
         }
-        $files = array_diff(scandir($dirPath), ['.', '..']);
+        $files = array_diff(scandir($dirPath) ?: [], ['.', '..']);
         foreach ($files as $file) {
             $path = $dirPath . '/' . $file;
             if (is_dir($path)) {

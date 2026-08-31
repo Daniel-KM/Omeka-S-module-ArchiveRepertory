@@ -67,7 +67,7 @@ class ConfigForm extends Form
                 'name' => 'archiverepertory_item_prefix',
                 'type' => Element\Text::class,
                 'options' => [
-                    'label' => 'Prefix for items',
+                    'label' => 'Prefix for items', // @translate
                     'info' => 'Choose a prefix, for example "item:", "record:" or "doc:", to select the appropriate metadata when they are multiple. Let empty to use simply the first one.', // @translate
                 ],
             ])
@@ -146,10 +146,10 @@ class ConfigForm extends Form
                 'spaces' => 'Convert spaces to underscores', // @translate
                 'first letter' => 'Convert first letter only', // @translate
                 'first and spaces' => 'Convert first letter and spaces', // @translate
-                'full' => (isset($allow_unicode['cli']) || isset($allow_unicode['fs']))
+                'full' => (isset($allowUnicode['cli']) || isset($allowUnicode['fs']))
                     ? 'Full conversion to Ascii (recommended because your server is not fully compatible with Unicode)' // @translate
-                    : 'Full conversion to Ascii', // @ŧranslate
-             ]);
+                    : 'Full conversion to Ascii', // @translate
+            ]);
         return $radio;
     }
 
